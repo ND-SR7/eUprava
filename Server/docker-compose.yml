@@ -1,0 +1,202 @@
+version: "3.1"
+
+services:
+  sso:
+    container_name: "sso"
+    hostname: "sso"
+    build:
+      context: ./sso
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - MONGO_DB_URI=${MONGO_DB_URI_SSO}
+    depends_on:
+      sso_db:
+        condition: service_healthy
+    networks:
+      - network
+
+  sso_db:
+    container_name: "sso_db"
+    hostname: "sso_db"
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: sso_db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok'
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - sso_db:/data/db
+  
+  mup:
+    container_name: "mup"
+    hostname: "mup"
+    build:
+      context: ./mup
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - MONGO_DB_URI=${MONGO_DB_URI_MUP}
+      # TODO: Other services URIs
+    depends_on:
+      mup_db:
+        condition: service_healthy
+    networks:
+      - network
+
+  mup_db:
+    container_name: "mup_db"
+    hostname: "mup_db"
+    image: mongo
+    restart: always
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: mup_db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok'
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - mup_db:/data/db
+
+  police:
+    container_name: "police"
+    hostname: "police"
+    build:
+      context: ./police
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+      - MONGO_DB_URI=${MONGO_DB_URI_POLICE}
+      # TODO: Other services URIs
+    depends_on:
+      police_db:
+        condition: service_healthy
+    networks:
+      - network
+
+  police_db:
+    container_name: "police_db"
+    hostname: "police_db"
+    image: mongo
+    restart: always
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: police_db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok'
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - police_db:/data/db
+
+  court:
+    container_name: "court"
+    hostname: "court"
+    build:
+      context: ./court
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - MONGO_DB_URI=${MONGO_DB_URI_POLICE}
+      # TODO: Other services URIs
+    depends_on:
+      court_db:
+        condition: service_healthy
+    networks:
+      - network
+
+  court_db:
+    container_name: "court_db"
+    hostname: "court_db"
+    image: mongo
+    restart: always
+    ports:
+      - "27020:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: court_db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok'
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - court_db:/data/db
+
+  statistics:
+    container_name: "statistics"
+    hostname: "statistics"
+    build:
+      context: ./statistics
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8084:8084"
+    environment:
+      - PORT=8084
+      - MONGO_DB_URI=${MONGO_DB_URI_STATISTICS}
+      # TODO: Other services URIs
+    depends_on:
+      statistics_db:
+        condition: service_healthy
+    networks:
+      - network
+
+  statistics_db:
+    container_name: "statistics_db"
+    hostname: "statistics_db"
+    image: mongo
+    restart: always
+    ports:
+      - "27021:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: statistics_db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok'
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - statistics_db:/data/db
+
+volumes:
+  sso_db:
+  mup_db:
+  police_db:
+  court_db:
+  statistics_db:
+
+networks:
+  network:
+    driver: bridge
