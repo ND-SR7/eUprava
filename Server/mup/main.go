@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"mup/data"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,9 +24,19 @@ func main() {
 	timeoutContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// TODO: DB init & ping
+	// Logger init
 
-	// TODO: Handler init
+	logger := log.New(os.Stdout, "[mup-service] ", log.LstdFlags)
+	storeLogger := log.New(os.Stdout, "[mup-store] ", log.LstdFlags)
+
+	// DB init & ping
+
+	store, err := data.New(timeoutContext, storeLogger)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer store.Disconnect(timeoutContext)
+	store.Ping()
 
 	router := mux.NewRouter()
 	// TODO: Router methods
