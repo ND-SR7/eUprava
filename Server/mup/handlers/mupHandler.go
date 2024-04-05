@@ -3,9 +3,9 @@ package handlers
 import "mup/data"
 
 type MupHandler struct {
-	repo *data.MupRepo
+	repo *data.MUPRepo
 }
 
-func NewUserHandler(r *data.MupRepo) *MupHandler {
+func NewUserHandler(r *data.MUPRepo) *MupHandler {
 	return &MupHandler{r}
 }
