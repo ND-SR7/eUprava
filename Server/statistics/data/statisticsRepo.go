@@ -13,7 +13,7 @@ import (
 )
 
 type StatisticsRepo struct {
-	cli *mongo.Client
+	cli    *mongo.Client
 	logger *log.Logger
 }
 
@@ -21,22 +21,17 @@ type StatisticsRepo struct {
 func New(ctx context.Context, logger *log.Logger) (*StatisticsRepo, error) {
 	dburi := os.Getenv("MONGO_DB_URI")
 
-	client, err := mongo.NewClient(options.Client().ApplyURI(dburi))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dburi))
 	if err != nil {
 		return nil, err
 	}
 
-	err = client.Connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	nr := &StatisticsRepo{
-		cli: client,
+	sr := &StatisticsRepo{
+		cli:    client,
 		logger: logger,
 	}
 
-	return nr, nil
+	return sr, nil
 }
 
 // Disconnect
@@ -57,13 +52,13 @@ func (sr *StatisticsRepo) Ping() {
 	// Check connection -> if no error, connection is established
 	err := sr.cli.Ping(ctx, readpref.Primary())
 	if err != nil {
-		sr.logger.Println(err)
+		sr.logger.Println(err.Error())
 	}
 
 	// Print available databases
 	databases, err := sr.cli.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
-		sr.logger.Println(err)
+		sr.logger.Println(err.Error())
 	}
 	sr.logger.Println(databases)
 }
