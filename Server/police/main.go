@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"police/data"
 	"syscall"
 	"time"
 
@@ -23,7 +24,17 @@ func main() {
 	timeoutContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// TODO: DB init & ping
+	// Logger init
+	logger := log.New(os.Stdout, "[court-service]", log.LstdFlags)
+	storeLogger := log.New(os.Stdout, "[court-store]", log.LstdFlags)
+
+	// DB init & ping
+	store, err := data.New(timeoutContext, storeLogger)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	defer store.Disconnect(timeoutContext)
+	store.Ping()
 
 	// TODO: Handler init
 
