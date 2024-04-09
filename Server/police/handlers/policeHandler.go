@@ -2,13 +2,13 @@ package handlers
 
 import "police/data"
 
-type SSOHandler struct {
+type PoliceHandler struct {
 	repo *data.PoliceRepo
 }
 
 // Constructor
-func NewSSOHandler(r *data.PoliceRepo) *SSOHandler {
-	return &SSOHandler{r}
+func NewPoliceHandler(r *data.PoliceRepo) *PoliceHandler {
+	return &PoliceHandler{r}
 }
 
 // TODO: Handler methods
