@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"court/data"
 	"log"
 	"net/http"
 	"os"
@@ -23,7 +24,17 @@ func main() {
 	timeoutContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// TODO: DB init & ping
+	// Logger init
+	logger := log.New(os.Stdout, "[court-service]", log.LstdFlags)
+	storeLogger := log.New(os.Stdout, "[court-store]", log.LstdFlags)
+
+	// DB init & ping
+	store, err := data.New(timeoutContext, storeLogger)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	defer store.Disconnect(timeoutContext)
+	store.Ping()
 
 	// TODO: Handler init
 
@@ -44,12 +55,12 @@ func main() {
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
-	log.Printf("Server listening on port: %s\n", port)
+	logger.Printf("Server listening on port: %s\n", port)
 
 	go func() {
 		err := server.ListenAndServe()
 		if err != nil {
-			log.Fatalf("Error while serving request: %v\n", err)
+			logger.Fatalf("Error while serving request: %v\n", err)
 		}
 	}()
 
@@ -58,11 +69,11 @@ func main() {
 	signal.Notify(sigCh, syscall.SIGTERM)
 
 	sig := <-sigCh
-	log.Printf("Recieved terminate, starting gracefull shutdown: %v\n", sig)
+	logger.Printf("Recieved terminate, starting gracefull shutdown: %v\n", sig)
 
 	// Gracefull shutdown
 	if server.Shutdown(timeoutContext) != nil {
-		log.Fatalln("Cannot gracefully shutdown")
+		logger.Fatalln("Cannot gracefully shutdown")
 	}
-	log.Println("Server gracefully stopped")
+	logger.Println("Server gracefully stopped")
 }
