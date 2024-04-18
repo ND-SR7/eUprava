@@ -1,5 +1,12 @@
 package data
 
+import (
+	"encoding/json"
+	"io"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
 // Role
 const (
 	User  string = "USER"
@@ -13,39 +20,79 @@ const (
 )
 
 type Account struct {
-	Id                string
-	Email             string
-	Password          string
-	ActivationCode    string
-	PasswordResetCode string
-	Role              string
+	ID                primitive.ObjectID `bson:"_id, omitempty" json:"id"`
+	Email             string             `bson:"email" json:"email"`
+	Password          string             `bson:"password" json:"password"`
+	ActivationCode    string             `bson:"activationCode" json:"activationCode"`
+	PasswordResetCode string             `bson:"passwordResetCode" json:"passwordResetCode"`
+	Role              string             `bson:"role" json:"role"`
 }
 
 type Address struct {
-	Municipality string
-	Locality     string
-	StreetName   string
-	StreetNumber int
+	Municipality string `bson:"municipality" json:"municipality"`
+	Locality     string `bson:"locality" json:"locality"`
+	StreetName   string `bson:"streetName" json:"streetName"`
+	StreetNumber int    `bson:"streetNumber" json:"streetNumber"`
 }
 
 type Person struct {
-	FirstName     string
-	LastName      string
-	Sex           string
-	Citizenship   string
-	DOB           string
-	JMBG          string
-	Account       Account
-	Address       Address
-	CourtHearings []CourtHearingPerson
+	FirstName     string               `bson:"firstName" json:"firstName"`
+	LastName      string               `bson:"lastName" json:"lastName"`
+	Sex           string               `bson:"sex" json:"sex"`
+	Citizenship   string               `bson:"citizenship" json:"citizenship"`
+	DOB           string               `bson:"dob" json:"dob"`
+	JMBG          string               `bson:"jmbg" json:"jmbg"`
+	Account       Account              `bson:"account" json:"account"`
+	Address       Address              `bson:"address" json:"address"`
+	CourtHearings []CourtHearingPerson `bson:"courtHearings" json:"courtHearings"`
 }
 
 type LegalEntity struct {
-	Name          string
-	Citizenship   string
-	PIB           string
-	MB            string
-	Account       Account
-	Address       Address
-	CourtHearings []CourtHearingLegalEntity
+	Name          string                    `bson:"name" json:"name"`
+	Citizenship   string                    `bson:"citizenship" json:"citizenship"`
+	PIB           string                    `bson:"pib" json:"pib"`
+	MB            string                    `bson:"mb" json:"mb"`
+	Account       Account                   `bson:"account" json:"account"`
+	Address       Address                   `bson:"address" json:"address"`
+	CourtHearings []CourtHearingLegalEntity `bson:"courtHearings" json:"courtHearings"`
+}
+
+func (a *Account) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(a)
+}
+
+func (a *Account) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(a)
+}
+
+func (a *Address) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(a)
+}
+
+func (a *Address) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(a)
+}
+
+func (p *Person) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(p)
+}
+
+func (p *Person) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(p)
+}
+
+func (le *LegalEntity) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(le)
+}
+
+func (le *LegalEntity) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(le)
 }
