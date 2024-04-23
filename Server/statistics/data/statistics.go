@@ -9,101 +9,101 @@ import (
 )
 
 type InstituteForStatistics struct {
-    Id         primitive.ObjectID 				`bson:"_id, omitempty" json:"id"`
-    Name       string             				`bson:"name" json:"name"`
-    Address    Address            				`bson:"address" json:"address"`
-    CrimeData  []CrimeData        				`bson:"crimeData" json:"crimeData"`
-    TrafficData []TrafficData     				`bson:"trafficData" json:"trafficData"`
+	ID          primitive.ObjectID `bson:"_id, omitempty" json:"id"`
+	Name        string             `bson:"name" json:"name"`
+	Address     Address            `bson:"address" json:"address"`
+	CrimeData   []CrimeData        `bson:"crimeData" json:"crimeData"`
+	TrafficData []TrafficData      `bson:"trafficData" json:"trafficData"`
 }
 
 type StatisticsData struct {
-    Id     primitive.ObjectID 				`bson:"_id, omitempty" json:"id"`
-    Date   time.Time          				`bson:"date" json:"date"`
-    Region string             				`bson:"region" json:"region"`
-    Year   int                				`bson:"year" json:"year"`
-    Month  int                				`bson:"month" json:"month"`
+	ID     primitive.ObjectID `bson:"_id, omitempty" json:"id"`
+	Date   time.Time          `bson:"date" json:"date"`
+	Region string             `bson:"region" json:"region"`
+	Year   int                `bson:"year" json:"year"`
+	Month  int                `bson:"month" json:"month"`
 }
 
 type CrimeData struct {
-    StatisticsData
-    CrimeType string 				`bson:"crimeType" json:"crimeType"`
+	StatisticsData
+	CrimeType string `bson:"crimeType" json:"crimeType"`
 }
 
 type TrafficData struct {
-    StatisticsData
-    ViolationType string    				`bson:"violationType" json:"violationType"`
-    Vehicles      []Vehicle 				`bson:"vehicles" json:"vehicles"`
+	StatisticsData
+	ViolationType string    `bson:"violationType" json:"violationType"`
+	Vehicles      []Vehicle `bson:"vehicles" json:"vehicles"`
 }
 
 type Vehicle struct {
-    Id             primitive.ObjectID 				`bson:"_id, omitempty" json:"id"`
-    Brand          string             				`bson:"brand" json:"brand"`
-    Model          string             				`bson:"model" json:"model"`
-    Year           string             				`bson:"year" json:"year"`
-    Registration   Registration       				`bson:"registration" json:"registration"`
+	ID           primitive.ObjectID `bson:"_id, omitempty" json:"id"`
+	Brand        string             `bson:"brand" json:"brand"`
+	Model        string             `bson:"model" json:"model"`
+	Year         string             `bson:"year" json:"year"`
+	Registration Registration       `bson:"registration" json:"registration"`
 }
 
 type Registration struct {
-    RegistrationNumber string    				`bson:"registrationNumber" json:"registrationNumber"`
-    ExpiryDate         time.Time 				`bson:"expiryDate" json:"expiryDate"`
+	RegistrationNumber string    `bson:"registrationNumber" json:"registrationNumber"`
+	ExpiryDate         time.Time `bson:"expiryDate" json:"expiryDate"`
 }
 
 func (i *InstituteForStatistics) ToJSON(w io.Writer) error {
-    e := json.NewEncoder(w)
-    return e.Encode(i)
+	e := json.NewEncoder(w)
+	return e.Encode(i)
 }
 
 func (i *InstituteForStatistics) FromJSON(r io.Reader) error {
-    e := json.NewDecoder(r)
-    return e.Decode(i)
+	e := json.NewDecoder(r)
+	return e.Decode(i)
 }
 
-func (s *StatisticsData) ToJSON(w io.Writer) error {
-    e := json.NewEncoder(w)
-    return e.Encode(s)
+func (sd *StatisticsData) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(sd)
 }
 
-func (s *StatisticsData) FromJSON(r io.Reader) error {
-    e := json.NewDecoder(r)
-    return e.Decode(s)
+func (sd *StatisticsData) FromJSON(r io.Reader) error {
+	e := json.NewDecoder(r)
+	return e.Decode(sd)
 }
 
-func (c *CrimeData) ToJSON(w io.Writer) error {
-    e := json.NewEncoder(w)
-    return e.Encode(c)
+func (cd *CrimeData) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(cd)
 }
 
-func (c *CrimeData) FromJSON(r io.Reader) error {
-    e := json.NewDecoder(r)
-    return e.Decode(c)
+func (cd *CrimeData) FromJSON(r io.Reader) error {
+	e := json.NewDecoder(r)
+	return e.Decode(cd)
 }
 
-func (t *TrafficData) ToJSON(w io.Writer) error {
-    e := json.NewEncoder(w)
-    return e.Encode(t)
+func (td *TrafficData) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(td)
 }
 
-func (t *TrafficData) FromJSON(r io.Reader) error {
-    e := json.NewDecoder(r)
-    return e.Decode(t)
+func (td *TrafficData) FromJSON(r io.Reader) error {
+	e := json.NewDecoder(r)
+	return e.Decode(td)
 }
 
 func (v *Vehicle) ToJSON(w io.Writer) error {
-    e := json.NewEncoder(w)
-    return e.Encode(v)
+	e := json.NewEncoder(w)
+	return e.Encode(v)
 }
 
 func (v *Vehicle) FromJSON(r io.Reader) error {
-    e := json.NewDecoder(r)
-    return e.Decode(v)
+	e := json.NewDecoder(r)
+	return e.Decode(v)
 }
 
 func (re *Registration) ToJSON(w io.Writer) error {
-    e := json.NewEncoder(w)
-    return e.Encode(re)
+	e := json.NewEncoder(w)
+	return e.Encode(re)
 }
 
 func (re *Registration) FromJSON(r io.Reader) error {
-    e := json.NewDecoder(r)
-    return e.Decode(re)
+	e := json.NewDecoder(r)
+	return e.Decode(re)
 }
