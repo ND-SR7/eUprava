@@ -12,12 +12,12 @@ type TrafficPolice struct {
 	Name string             `bson:"name" json:"name"`
 }
 
-func (p *TrafficPolice) ToJSON(w io.Writer) error {
+func (tp *TrafficPolice) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
-	return e.Encode(p)
+	return e.Encode(tp)
 }
 
-func (p *TrafficPolice) FromJSON(r io.Reader) error {
+func (tp *TrafficPolice) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
-	return d.Decode(p)
+	return d.Decode(tp)
 }

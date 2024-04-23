@@ -3,11 +3,12 @@ package data
 import (
 	"encoding/json"
 	"io"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// TIRE
+// Tire type
 const (
 	Winter string = "WINTER"
 	Summer string = "SUMMER"
@@ -17,7 +18,7 @@ type Vehicle struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Brand        string             `bson:"brand" json:"brand"`
 	Model        string             `bson:"model" json:"model"`
-	Year         int8               `bson:"year" json:"year"`
+	Year         int                `bson:"year" json:"year"`
 	Registration Registration       `bson:"registration" json:"registration"`
 	Plates       Plates             `bson:"plates" json:"plates"`
 	Owner        Person             `bson:"owner" json:"owner"`
@@ -25,33 +26,33 @@ type Vehicle struct {
 }
 
 type Registration struct {
-	RegistrationNumber string             `bson:"registration_number" json:"registration_number"`
-	ExpirationDate     primitive.DateTime `bson:"expiration_date" json:"expiration_date"`
+	RegistrationNumber string    `bson:"registrationNumber" json:"registrationNumber"`
+	ExpirationDate     time.Time `bson:"expirationDate" json:"expirationDate"`
 }
 
 type Plates struct {
-	RegistrationNumber string `bson:"registration_number" json:"registration_number"`
-	PlateType          string `bson:"plate_type" json:"plate_type"`
+	RegistrationNumber string `bson:"registrationNumber" json:"registrationNumber"`
+	PlateType          string `bson:"plateType" json:"plateType"`
 }
 
-func (p *Vehicle) ToJSON(w io.Writer) error {
+func (v *Vehicle) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
-	return e.Encode(p)
+	return e.Encode(v)
 }
 
-func (p *Vehicle) FromJSON(r io.Reader) error {
+func (v *Vehicle) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
-	return d.Decode(p)
+	return d.Decode(v)
 }
 
-func (p *Registration) ToJSON(w io.Writer) error {
+func (re *Registration) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
-	return e.Encode(p)
+	return e.Encode(re)
 }
 
-func (p *Registration) FromJSON(r io.Reader) error {
+func (re *Registration) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
-	return d.Decode(p)
+	return d.Decode(re)
 }
 
 func (p *Plates) ToJSON(w io.Writer) error {

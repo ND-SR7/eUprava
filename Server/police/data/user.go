@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"io"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -23,8 +24,8 @@ type Account struct {
 	ID                primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Email             string             `bson:"email" json:"email"`
 	Password          string             `bson:"password" json:"password"`
-	activationCode    string             `bson:"activationCode" json:"activationCode"`
-	passwordResetCode string             `bson:"passwordResetCode" json:"passwordResetCode"`
+	ActivationCode    string             `bson:"activationCode" json:"activationCode"`
+	PasswordResetCode string             `bson:"passwordResetCode" json:"passwordResetCode"`
 	Role              string             `bson:"role" json:"role"`
 	Sex               string             `bson:"sex" json:"sex"`
 }
@@ -39,7 +40,7 @@ type Person struct {
 	Account        Account         `bson:"account" json:"account"`
 	Address        Address         `bson:"address" json:"address"`
 	Vehicles       []Vehicle       `bson:"vehicles" json:"vehicles"`
-	TrafficPermits []TrafficPermit `bson:"TrafficPermits" json:"TrafficPermits"`
+	TrafficPermits []TrafficPermit `bson:"trafficPermits" json:"trafficPermits"`
 }
 
 type LegalEntity struct {
@@ -54,7 +55,7 @@ type LegalEntity struct {
 type TrafficPermit struct {
 	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Number         string             `bson:"number" json:"number"`
-	ExpirationDate primitive.DateTime `bson:"expirationDate" json:"expirationDate"`
+	ExpirationDate time.Time          `bson:"expirationDate" json:"expirationDate"`
 	Person         Person             `bson:"person" json:"person"`
 }
 
@@ -71,8 +72,8 @@ func (a *Account) ToJSON(w io.Writer) error {
 }
 
 func (a *Account) FromJSON(r io.Reader) error {
-	e := json.NewDecoder(r)
-	return e.Decode(a)
+	d := json.NewDecoder(r)
+	return d.Decode(a)
 }
 
 func (a *Address) ToJSON(w io.Writer) error {
@@ -81,8 +82,8 @@ func (a *Address) ToJSON(w io.Writer) error {
 }
 
 func (a *Address) FromJSON(r io.Reader) error {
-	e := json.NewDecoder(r)
-	return e.Decode(a)
+	d := json.NewDecoder(r)
+	return d.Decode(a)
 }
 
 func (p *Person) ToJSON(w io.Writer) error {
@@ -91,8 +92,8 @@ func (p *Person) ToJSON(w io.Writer) error {
 }
 
 func (p *Person) FromJSON(r io.Reader) error {
-	e := json.NewDecoder(r)
-	return e.Decode(p)
+	d := json.NewDecoder(r)
+	return d.Decode(p)
 }
 
 func (le *LegalEntity) ToJSON(w io.Writer) error {
@@ -101,16 +102,16 @@ func (le *LegalEntity) ToJSON(w io.Writer) error {
 }
 
 func (le *LegalEntity) FromJSON(r io.Reader) error {
-	e := json.NewDecoder(r)
-	return e.Decode(le)
-}
-
-func (p *TrafficPermit) ToJSON(w io.Writer) error {
-	e := json.NewEncoder(w)
-	return e.Encode(p)
-}
-
-func (p *TrafficPermit) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
-	return d.Decode(p)
+	return d.Decode(le)
+}
+
+func (tp *TrafficPermit) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(tp)
+}
+
+func (tp *TrafficPermit) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(tp)
 }
