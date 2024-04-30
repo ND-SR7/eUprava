@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"sso/data"
+	"sso/handlers"
 	"syscall"
 	"time"
 
@@ -36,10 +37,14 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
-	// TODO: Handler init
-
+	// Handler & router init
+	ssoHandler := handlers.NewSSOHandler(store)
 	router := mux.NewRouter()
-	// TODO: Router methods
+
+	// Router methods
+	router.HandleFunc("/api/v1/login", ssoHandler.Login).Methods("POST")
+	// router.HandleFunc("/api/v1/register", ssoHandler.Register).Methods("POST")
+	// router.HandleFunc("/api/v1/activate/{activationCode}", ssoHandler.ActivateAccount).Methods("GET")
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

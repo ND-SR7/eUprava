@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"time"
@@ -61,4 +62,48 @@ func (sr *SSORepo) Ping() {
 		sr.logger.Println(err.Error())
 	}
 	sr.logger.Println(databases)
+}
+
+// Returns Account for specified email.
+func (sr *SSORepo) FindAccountByEmail(email string) (Account, error) {
+	persons := sr.getPersonsCollection()
+	legalEntities := sr.getLegalEntitiesCollection()
+	filter := bson.M{"account.email": email}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var person Person
+	err := persons.FindOne(ctx, filter).Decode(&person)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			// Error other than not finding the account
+			return Account{}, err
+		}
+		// Account not found in persons collection, try legal entities collection
+		var legalEntity LegalEntity
+		err = legalEntities.FindOne(ctx, filter).Decode(&legalEntity)
+		if err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				// Account not found in both collections
+				return Account{}, errors.New("account not found")
+			}
+			// Other error occurred
+			return Account{}, err
+		}
+
+		return legalEntity.Account, nil
+	}
+
+	return person.Account, nil
+}
+
+// Getters for collections
+
+func (sr *SSORepo) getPersonsCollection() *mongo.Collection {
+	return sr.cli.Database("sso_db").Collection("persons")
+}
+
+func (sr *SSORepo) getLegalEntitiesCollection() *mongo.Collection {
+	return sr.cli.Database("sso_db").Collection("legalEntities")
 }
