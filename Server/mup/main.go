@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"mup/data"
+	"mup/handlers"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,8 +37,31 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
+	mupHandler := handlers.NewMupHandler(store, storeLogger)
+
 	router := mux.NewRouter()
-	// TODO: Router methods
+
+	checkPersonsDrivingBans := router.Methods(http.MethodGet).Path("/drivingBans").Subrouter()
+	checkPersonsDrivingBans.HandleFunc("", mupHandler.CheckForPersonsDrivingBans)
+
+	saveVehicle := router.Methods(http.MethodPost).Path("/vehicle").Subrouter()
+	saveVehicle.HandleFunc("", mupHandler.SaveVehicle)
+	//createPersonRouter.Use(mupHandler.MiddlewarePersonDeserialization)
+
+	issueDrivingBan := router.Methods(http.MethodPost).Path("/drivingBan").Subrouter()
+	issueDrivingBan.HandleFunc("", mupHandler.IssueDrivingBan)
+
+	submitRegistrationRequest := router.Methods(http.MethodPost).Path("/registrationRequest").Subrouter()
+	submitRegistrationRequest.HandleFunc("", mupHandler.SubmitRegistrationRequest)
+
+	approveRegistrationRequest := router.Methods(http.MethodPost).Path("/approveRegistrationRequest").Subrouter()
+	approveRegistrationRequest.HandleFunc("", mupHandler.SubmitRegistrationRequest)
+
+	submitTrafficPermitRequest := router.Methods(http.MethodPost).Path("/trafficPermitRequest").Subrouter()
+	submitTrafficPermitRequest.HandleFunc("", mupHandler.SubmitTrafficPermitRequest)
+
+	approveTrafficPermitRequest := router.Methods(http.MethodPost).Path("/approveTrafficPermitRequest").Subrouter()
+	approveTrafficPermitRequest.HandleFunc("", mupHandler.SubmitRegistrationRequest)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
