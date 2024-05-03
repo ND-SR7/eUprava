@@ -124,7 +124,7 @@ func (sr *SSORepo) CreatePerson(newPerson NewPerson) error {
 			log.Fatalln("Failed to send activation email")
 			return errors.New("Failed to send email")
 		}
-		log.Println("Activation email sent")
+		sr.logger.Println("Activation email sent")
 	} else if !emailOK {
 		return errors.New("email already in use")
 	} else if !passwordOK {
@@ -189,7 +189,7 @@ func (sr *SSORepo) CreateLegalEntity(newLegalEntity NewLegalEntity) error {
 			log.Fatalln("Failed to send activation email")
 			return errors.New("Failed to send email")
 		}
-		log.Println("Activation email sent")
+		sr.logger.Println("Activation email sent")
 	} else if !emailOK {
 		return errors.New("email already in use")
 	} else if !passwordOK {
@@ -203,7 +203,7 @@ func (sr *SSORepo) CreateLegalEntity(newLegalEntity NewLegalEntity) error {
 func (sr *SSORepo) ActivateAccount(activationCode string) error {
 	persons := sr.getPersonsCollection()
 	legalEntities := sr.getLegalEntitiesCollection()
-	filter := bson.M{"activationCode": activationCode}
+	filter := bson.M{"account.activationCode": activationCode}
 
 	update := bson.M{
 		"$set": bson.M{
@@ -216,21 +216,21 @@ func (sr *SSORepo) ActivateAccount(activationCode string) error {
 
 	result, err := persons.UpdateOne(ctx, filter, update)
 	if err != nil {
-		log.Println("Failed to activate account")
+		sr.logger.Println("Failed to activate account")
 		return err
 	}
 	if result.ModifiedCount > 0 {
-		log.Println("Successfully activated person's account")
+		sr.logger.Println("Successfully activated person's account")
 		return nil
 	}
 
 	result, err = legalEntities.UpdateOne(ctx, filter, update)
 	if err != nil {
-		log.Println("Failed to activate account")
+		sr.logger.Println("Failed to activate account")
 		return err
 	}
 	if result.ModifiedCount == 0 {
-		log.Printf("Invalid activation code: %s", activationCode)
+		sr.logger.Printf("Invalid activation code: %s", activationCode)
 		return errors.New("invalid activation code: " + activationCode)
 	}
 

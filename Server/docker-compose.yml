@@ -13,6 +13,9 @@ services:
     environment:
       - PORT=8080
       - MONGO_DB_URI=${MONGO_DB_URI_SSO}
+      - MAIL_ADDRESS=${MAIL_ADDRESS}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - ACCOUNT_ACTIVATION_PATH=${ACCOUNT_ACTIVATION_PATH}
     depends_on:
       sso_db:
         condition: service_healthy
