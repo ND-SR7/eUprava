@@ -90,6 +90,12 @@ func (mr *MUPRepo) SaveVehicle(ctx context.Context, vehicle Vehicle) error {
 		return err
 	}
 
+	err = mr.SaveVehicleIntoMup(ctx, vehicle)
+	if err != nil {
+		log.Printf(fmt.Sprintf("Failed to save vehicle into mup: %v", err))
+		return err
+	}
+
 	return nil
 }
 
@@ -136,6 +142,26 @@ func (mr *MUPRepo) SaveMup(ctx context.Context, mup Mup) error {
 		return err
 	}
 
+	return nil
+}
+
+func (mr *MUPRepo) SaveVehicleIntoMup(ctx context.Context, vehicle Vehicle) error {
+	mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
+	if err != nil {
+		return err
+	}
+	collection := mr.getMupCollection("mup")
+
+	filter := bson.D{{"_id", mupID}}
+
+	update := bson.D{{"$push", bson.D{{"vehicles", vehicle.ID}}}}
+
+	_, err = collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Vehicle successfully saved into mup!")
 	return nil
 }
 
@@ -259,6 +285,18 @@ func (mr *MUPRepo) SubmitRegistrationRequest(ctx context.Context, registration R
 		return err
 	}
 
+	err = mr.SaveRegistrationIntoMup(ctx, registration)
+	if err != nil {
+		log.Printf(fmt.Sprintf("Failed to save registration into mup: %v", err))
+		return err
+	}
+
+	err = mr.SaveRegistrationIntoVehicle(ctx, registration)
+	if err != nil {
+		log.Printf(fmt.Sprintf("Failed to save registration into vehicle: %v", err))
+		return err
+	}
+
 	return nil
 }
 
@@ -277,6 +315,7 @@ func (mr *MUPRepo) ApproveRegistration(ctx context.Context, registrationID primi
 	}
 
 	fmt.Println("Traffic permit approved successfully!")
+
 	return nil
 }
 
@@ -367,7 +406,9 @@ func (mr *MUPRepo) IssueDrivingBan(ctx context.Context, drivingBan DrivingBan) e
 	return nil
 }
 
-func (mr *MUPRepo) CheckForDrivingBan(userID primitive.ObjectID) ([]DrivingBan, error) {
+//Person methods
+
+func (mr *MUPRepo) CheckForPersonsDrivingBans(userID primitive.ObjectID) ([]DrivingBan, error) {
 	collection := mr.getMupCollection("drivingBan")
 
 	filter := bson.D{{"person", userID}}

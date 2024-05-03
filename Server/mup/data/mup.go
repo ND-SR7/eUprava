@@ -12,6 +12,7 @@ type Mup struct {
 	ID             primitive.ObjectID   `bson:"_id,omitempty" json:"id"`
 	Name           string               `bson:"name" json:"name"`
 	Address        Address              `bson:"address" json:"address"`
+	Vehicles       []primitive.ObjectID `bson:"vehicles" json:"vehicles"`
 	TrafficPermits []primitive.ObjectID `bson:"trafficPermits" json:"trafficPermits"`
 	Plates         []string             `bson:"plates" json:"plates"`
 	DrivingBans    []primitive.ObjectID `bson:"drivingBans" json:"drivingBans"`
