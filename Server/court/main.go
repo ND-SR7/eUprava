@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"court/data"
+	"court/handlers"
 	"log"
 	"net/http"
 	"os"
@@ -36,10 +37,16 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
-	// TODO: Handler init
-
+	// Handler & router init
+	courtHandler := handlers.NewCourtHandler(store)
 	router := mux.NewRouter()
-	// TODO: Router methods
+
+	// Router methods
+	router.HandleFunc("/api/v1/get-hearing/{id}", courtHandler.GetCourtHearingByID).Methods("GET")
+	router.HandleFunc("/api/v1/create-hearing-person", courtHandler.CreateHearingPerson).Methods("POST")
+	router.HandleFunc("/api/v1/create-hearing-entity", courtHandler.CreateHearingLegalEntity).Methods("POST")
+	router.HandleFunc("/api/v1/update-hearing-person", courtHandler.UpdateHearingPerson).Methods("PUT")
+	router.HandleFunc("/api/v1/update-hearing-entity", courtHandler.UpdateHearingLegalEntity).Methods("PUT")
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

@@ -125,7 +125,7 @@ services:
       - "8083:8083"
     environment:
       - PORT=8083
-      - MONGO_DB_URI=${MONGO_DB_URI_POLICE}
+      - MONGO_DB_URI=${MONGO_DB_URI_COURT}
       # TODO: Other services URIs
     depends_on:
       court_db:
@@ -143,7 +143,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: court_db
+      MONGO_INITDB_DATABASE: courtDB
     healthcheck:
       test: echo 'db.runCommand("ping").ok'
       interval: 10s
@@ -151,6 +151,8 @@ services:
       retries: 10
     volumes:
       - court_db:/data/db
+    networks:
+      - network
 
   statistics:
     container_name: "statistics"
