@@ -135,6 +135,10 @@ func (mh *MupHandler) IssueDrivingBan(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	drivingBanPersonID, _ := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e11")
+
+	drivingBan.Person = drivingBanPersonID
+
 	if err := mh.repo.IssueDrivingBan(r.Context(), &drivingBan); err != nil {
 		log.Printf("Failed to save driving ban: %v", err)
 		http.Error(rw, "Failed to driving ban", http.StatusInternalServerError)
@@ -197,6 +201,15 @@ func (mh *MupHandler) ApproveTrafficPermitRequest(rw http.ResponseWriter, r *htt
 		http.Error(rw, "Failed to encode approved traffic permit", http.StatusInternalServerError)
 	}
 	log.Printf("Successfully updated traffic permit '%s'", trafficPermit.ID.Hex())
+}
+
+// Save mup
+func (mh *MupHandler) SaveMup(mup data.Mup) error {
+	err := mh.repo.SaveMup(context.Background(), mup)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Middlerware

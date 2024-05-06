@@ -82,6 +82,7 @@ func (mr *MUPRepo) Ping() {
 //Vehicle methods
 
 func (mr *MUPRepo) SaveVehicle(ctx context.Context, vehicle *Vehicle) error {
+	vehicle.ID = primitive.NewObjectID()
 	collection := mr.getMupCollection("vehicle")
 
 	_, err := collection.InsertOne(ctx, vehicle)
@@ -402,6 +403,7 @@ func (mr *MUPRepo) IssuePlates(ctx context.Context, plates Plates) error {
 //Driving ban methods
 
 func (mr *MUPRepo) IssueDrivingBan(ctx context.Context, drivingBan *DrivingBan) error {
+	drivingBan.ID = primitive.NewObjectID()
 	collection := mr.getMupCollection("drivingBan")
 
 	_, err := collection.InsertOne(ctx, drivingBan)

@@ -55,13 +55,41 @@ func main() {
 	submitRegistrationRequest.HandleFunc("", mupHandler.SubmitRegistrationRequest)
 
 	approveRegistrationRequest := router.Methods(http.MethodPost).Path("/approveRegistrationRequest").Subrouter()
-	approveRegistrationRequest.HandleFunc("", mupHandler.SubmitRegistrationRequest)
+	approveRegistrationRequest.HandleFunc("", mupHandler.ApproveRegistration)
 
 	submitTrafficPermitRequest := router.Methods(http.MethodPost).Path("/trafficPermitRequest").Subrouter()
 	submitTrafficPermitRequest.HandleFunc("", mupHandler.SubmitTrafficPermitRequest)
 
 	approveTrafficPermitRequest := router.Methods(http.MethodPost).Path("/approveTrafficPermitRequest").Subrouter()
-	approveTrafficPermitRequest.HandleFunc("", mupHandler.SubmitRegistrationRequest)
+	approveTrafficPermitRequest.HandleFunc("", mupHandler.ApproveTrafficPermitRequest)
+
+	////Save mup
+	//mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
+	//if err == nil {
+	//	address := data.Address{
+	//		Municipality: "ss",
+	//		Locality:     "Novi Sad",
+	//		StreetName:   "Dunavska",
+	//		StreetNumber: 1,
+	//	}
+	//	mup := data.Mup{
+	//		ID:             mupID,
+	//		Name:           "Mup",
+	//		Address:        address,
+	//		Vehicles:       make([]primitive.ObjectID, 0),
+	//		TrafficPermits: make([]primitive.ObjectID, 0),
+	//		Plates:         make([]string, 0),
+	//		DrivingBans:    make([]primitive.ObjectID, 0),
+	//		Registrations:  make([]string, 0),
+	//	}
+	//	err = mupHandler.SaveMup(mup)
+	//	if err != nil {
+	//		log.Printf("Failed to save mup: %v", err)
+	//	}
+	//	if err == nil {
+	//		log.Printf("Saved mup: %v", mup)
+	//	}
+	//}
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

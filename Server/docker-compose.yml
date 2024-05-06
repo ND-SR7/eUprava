@@ -75,6 +75,8 @@ services:
       retries: 10
     volumes:
       - mup_db:/data/db
+    networks:
+      - network
 
   police:
     container_name: "police"
