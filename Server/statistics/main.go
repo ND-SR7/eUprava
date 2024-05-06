@@ -6,15 +6,19 @@ import (
 	"net/http"
 	"statistics/data"
 
-	// "statistics/handlers"
 	"os"
 	"os/signal"
+	"statistics/handlers"
 	"syscall"
 	"time"
 
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
+
+const TrafficStatisticPath = "/trafficStatistic/{id}"
+const CrimeStatisticPath = "/crimeStatistic/{id}"
+
 
 func main() {
 	port := os.Getenv("PORT")
@@ -42,14 +46,41 @@ func main() {
 
 	// TODO: Handler init
 
-	// statisticsHandler := handlers.NewStatisticsHandler(logger, store)
+	statisticsHandler := handlers.NewStatisticsHandler(logger, store)
 
 	router := mux.NewRouter()
 
 	// TODO: Router methods
 
-	// router.HandleFunc("/statistics", statisticsHandler.CreateStatistic).Methods("POST")
-	// router.HandleFunc("/statistics", statisticsHandler.GetAllStatistics).Methods("GET")
+	createTrafficStatisticRouter := router.Methods(http.MethodPost).Path("/trafficStatistic").Subrouter()
+	createTrafficStatisticRouter.HandleFunc("", statisticsHandler.CreateTrafficStatistic)
+
+	createCrimeStatisticRouter := router.Methods(http.MethodPost).Path("/crimeStatistic").Subrouter()
+	createCrimeStatisticRouter.HandleFunc("", statisticsHandler.CreateTrafficStatistic)
+
+	getTrafficStatisticRouter := router.Methods(http.MethodGet).Path(TrafficStatisticPath).Subrouter()
+	getTrafficStatisticRouter.HandleFunc("", statisticsHandler.GetTrafficStatistic)
+
+	getCrimeStatisticRouter := router.Methods(http.MethodGet).Path(CrimeStatisticPath).Subrouter()
+	getCrimeStatisticRouter.HandleFunc("", statisticsHandler.GetCrimeStatistic)
+
+	getAllTrafficStatisticRouter := router.Methods(http.MethodGet).Path("/trafficStatistic").Subrouter()
+	getAllTrafficStatisticRouter.HandleFunc("", statisticsHandler.GetAllTrafficStatistics)
+
+	getAllCrimeStatisticRouter := router.Methods(http.MethodGet).Path("/crimeStatistic").Subrouter()
+	getAllCrimeStatisticRouter.HandleFunc("", statisticsHandler.GetAllCrimeStatistics)
+
+	updateTrafficStatisticRouter := router.Methods(http.MethodPut).Path(TrafficStatisticPath).Subrouter()
+	updateTrafficStatisticRouter.HandleFunc("", statisticsHandler.UpdateTrafficStatistic)
+
+	updateCrimeStatisticRouter := router.Methods(http.MethodPut).Path(CrimeStatisticPath).Subrouter()
+	updateCrimeStatisticRouter.HandleFunc("", statisticsHandler.UpdateCrimeStatistic)
+
+	deleteTrafficStatisticRouter := router.Methods(http.MethodDelete).Path(TrafficStatisticPath).Subrouter()
+	deleteTrafficStatisticRouter.HandleFunc("", statisticsHandler.DeleteTrafficStatistic)
+
+	deleteCrimeStatisticRouter := router.Methods(http.MethodDelete).Path(CrimeStatisticPath).Subrouter()
+	deleteCrimeStatisticRouter.HandleFunc("", statisticsHandler.DeleteCrimeStatistic)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

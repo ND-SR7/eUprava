@@ -189,6 +189,8 @@ services:
       retries: 10
     volumes:
       - statistics_db:/data/db
+    networks:
+      - network
 
 volumes:
   sso_db:

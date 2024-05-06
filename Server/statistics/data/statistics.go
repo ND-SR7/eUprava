@@ -25,11 +25,13 @@ type StatisticsData struct {
 }
 
 type CrimeData struct {
+	ID primitive.ObjectID `bson:"_id, omitempty" json:"id"`
 	StatisticsData
 	CrimeType string `bson:"crimeType" json:"crimeType"`
 }
 
 type TrafficData struct {
+	ID primitive.ObjectID `bson:"_id, omitempty" json:"id"`
 	StatisticsData
 	ViolationType string    `bson:"violationType" json:"violationType"`
 	Vehicles      []Vehicle `bson:"vehicles" json:"vehicles"`
