@@ -4,7 +4,7 @@ const BaseTheme = {
   colors: {
     base: "lightblue",
     accent: "blue",
-    background: "whitesmoke",
+    background: "white",
     backgroundModal: "rgba(0,0,0,0.4)"
   },
   fontSizes: {
