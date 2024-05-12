@@ -72,8 +72,8 @@ func (a *Account) ToJSON(w io.Writer) error {
 }
 
 func (a *Account) FromJSON(r io.Reader) error {
-	d := json.NewDecoder(r)
-	return d.Decode(a)
+	e := json.NewDecoder(r)
+	return e.Decode(a)
 }
 
 func (a *Address) ToJSON(w io.Writer) error {
@@ -82,8 +82,8 @@ func (a *Address) ToJSON(w io.Writer) error {
 }
 
 func (a *Address) FromJSON(r io.Reader) error {
-	d := json.NewDecoder(r)
-	return d.Decode(a)
+	e := json.NewDecoder(r)
+	return e.Decode(a)
 }
 
 func (p *Person) ToJSON(w io.Writer) error {
@@ -92,8 +92,8 @@ func (p *Person) ToJSON(w io.Writer) error {
 }
 
 func (p *Person) FromJSON(r io.Reader) error {
-	d := json.NewDecoder(r)
-	return d.Decode(p)
+	e := json.NewDecoder(r)
+	return e.Decode(p)
 }
 
 func (le *LegalEntity) ToJSON(w io.Writer) error {
@@ -102,8 +102,8 @@ func (le *LegalEntity) ToJSON(w io.Writer) error {
 }
 
 func (le *LegalEntity) FromJSON(r io.Reader) error {
-	d := json.NewDecoder(r)
-	return d.Decode(le)
+	e := json.NewDecoder(r)
+	return e.Decode(le)
 }
 
 func (tp *TrafficPermit) ToJSON(w io.Writer) error {

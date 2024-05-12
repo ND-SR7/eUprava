@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"police/data"
+	"police/handlers"
 	"syscall"
 	"time"
 
@@ -36,10 +37,15 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
-	// TODO: Handler init
+	handler := handlers.NewPoliceHandler(store)
 
 	router := mux.NewRouter()
-	// TODO: Router methods
+	// Router methods
+	router.HandleFunc("/trafficViolation", handler.CreateTrafficViolation).Methods(http.MethodPost)
+	router.HandleFunc("/trafficViolation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
+	router.HandleFunc("/trafficViolation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
+	router.HandleFunc("/trafficViolation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
+	router.HandleFunc("/trafficViolation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

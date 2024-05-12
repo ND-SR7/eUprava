@@ -113,6 +113,8 @@ services:
       retries: 10
     volumes:
       - police_db:/data/db
+    networks:
+      - network  
 
   court:
     container_name: "court"
