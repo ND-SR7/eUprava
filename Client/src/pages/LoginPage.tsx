@@ -20,7 +20,7 @@ const LoginPage = () => {
     }).then((userToken: UserToken) => {
       localStorage.setItem("token", userToken.token);
       toast.success("Successfully logged in");
-      navigate("/todo");
+      navigate("/home");
     }).catch(() => {
       toast.error("Failed to log in.\nCheck credentials or activate your account");
     });
@@ -30,7 +30,7 @@ const LoginPage = () => {
     <>
       <Form formFields={formFields} heading="Login" onSubmit={loginUser} />
       <br />
-      <Button key="btnRegister" id="btnRegister" label="Don't have an account? Click here to register" buttonType="button" onClick={() => console.log("ToDo")} />
+      <Button key="btnRegister" id="btnRegister" label="Don't have an account? Click here to register" buttonType="button" onClick={() => navigate("/register")} />
       <br />
       <Button key="btnRecovery" id="btnRecovery" label="Forgot your password? Click here to recover it" buttonType="button" onClick={() => console.log("ToDo")} />
     </>

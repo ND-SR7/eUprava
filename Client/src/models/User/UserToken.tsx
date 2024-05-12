@@ -1,5 +1,5 @@
 type UserToken = {
-    token: string;
-}
+  token: string;
+};
   
 export default UserToken;
