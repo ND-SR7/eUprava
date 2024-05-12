@@ -1,6 +1,8 @@
 import axios from "axios";
 import Credentials from "../models/User/Credentials";
 import UserToken from "../models/User/UserToken";
+import NewPerson from "../models/User/NewPerson";
+import NewLegalEntity from "../models/User/NewLegalEntity";
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL_SSO;
 
@@ -22,12 +24,20 @@ export async function logout() {
   }
 };
 
-// TODO: Complete this function
-export async function register(data: any) {
+export async function registerPerson(data: NewPerson) {
   try {
-    const response = await axios.post(`${BASE_URL}/register`, data);
+    const response = await axios.post(`${BASE_URL}/register-person`, data);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response.data.message || 'Failed to register user');
+    throw new Error(error.response.data.message || 'Failed to register person');
+  }
+};
+
+export async function registerLegalEntity(data: NewLegalEntity) {
+  try {
+    const response = await axios.post(`${BASE_URL}/register-entity`, data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response.data.message || 'Failed to register legal entity');
   }
 };
