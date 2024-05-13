@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"statistics/clients"
 	"statistics/data"
 
 	"github.com/gorilla/mux"
@@ -18,11 +19,12 @@ const FailedToDecodeRequestBody = "Failed to decode request body"
 
 type StatisticsHandler struct {
 	logger *log.Logger
-	repo              *data.StatisticsRepo
+	repo   *data.StatisticsRepo
+	mup    clients.MupClient
 }
 
-func NewStatisticsHandler(l *log.Logger, r *data.StatisticsRepo) *StatisticsHandler {
-	return &StatisticsHandler{l, r}
+func NewStatisticsHandler(l *log.Logger, r *data.StatisticsRepo, mc clients.MupClient) *StatisticsHandler {
+	return &StatisticsHandler{l, r, mc}
 }
 
 // TODO Handler methods
@@ -81,7 +83,7 @@ func (sh *StatisticsHandler) GetTrafficStatistic(rw http.ResponseWriter, r *http
 		http.Error(rw, "Failed to retrieve traffic statistic", http.StatusInternalServerError)
 		return
 	}
-	
+
 	if statistic == nil {
 		sh.logger.Printf("Traffic statistic with ID: %s not found\n", idStr)
 		http.NotFound(rw, r)
@@ -98,7 +100,6 @@ func (sh *StatisticsHandler) GetTrafficStatistic(rw http.ResponseWriter, r *http
 	}
 }
 
-
 func (sh *StatisticsHandler) GetCrimeStatistic(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := primitive.ObjectIDFromHex(vars["id"])
@@ -113,7 +114,7 @@ func (sh *StatisticsHandler) GetCrimeStatistic(rw http.ResponseWriter, r *http.R
 		http.Error(rw, "Failed to retrieve crime statistic", http.StatusInternalServerError)
 		return
 	}
-	
+
 	if statistic == nil {
 		http.NotFound(rw, r)
 		return
@@ -126,45 +127,45 @@ func (sh *StatisticsHandler) GetCrimeStatistic(rw http.ResponseWriter, r *http.R
 }
 
 func (sh *StatisticsHandler) CreateTrafficStatistic(rw http.ResponseWriter, r *http.Request) {
-    var statistic data.TrafficData
-    if err := json.NewDecoder(r.Body).Decode(&statistic); err != nil {
-        http.Error(rw, "Failed to decode request body", http.StatusBadRequest)
-        return
-    }
-    statistic.ID = primitive.NewObjectID()
-    err := sh.repo.CreateTrafficStatisticData(r.Context(), &statistic)
-    if err != nil {
-        sh.logger.Println("Failed to create traffic statistic:", err)
-        http.Error(rw, "Failed to create traffic statistic", http.StatusInternalServerError)
-        return
-    }
-    rw.Header().Set("Content-Type", "application/json")
-    rw.WriteHeader(http.StatusCreated)
-    if err := json.NewEncoder(rw).Encode(statistic); err != nil {
-        sh.logger.Println("Failed to encode traffic statistic:", err)
-        http.Error(rw, FailedToEncodeStatistics, http.StatusInternalServerError)
-    }
+	var statistic data.TrafficData
+	if err := json.NewDecoder(r.Body).Decode(&statistic); err != nil {
+		http.Error(rw, "Failed to decode request body", http.StatusBadRequest)
+		return
+	}
+	statistic.ID = primitive.NewObjectID()
+	err := sh.repo.CreateTrafficStatisticData(r.Context(), &statistic)
+	if err != nil {
+		sh.logger.Println("Failed to create traffic statistic:", err)
+		http.Error(rw, "Failed to create traffic statistic", http.StatusInternalServerError)
+		return
+	}
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(rw).Encode(statistic); err != nil {
+		sh.logger.Println("Failed to encode traffic statistic:", err)
+		http.Error(rw, FailedToEncodeStatistics, http.StatusInternalServerError)
+	}
 }
 
 func (sh *StatisticsHandler) CreateCrimeStatistic(rw http.ResponseWriter, r *http.Request) {
-    var statistic data.CrimeData
-    if err := json.NewDecoder(r.Body).Decode(&statistic); err != nil {
-        http.Error(rw, "Failed to decode request body", http.StatusBadRequest)
-        return
-    }
-    statistic.ID = primitive.NewObjectID()
-    err := sh.repo.CreateCrimeStatisticData(r.Context(), &statistic)
-    if err != nil {
-        sh.logger.Println("Failed to create crime statistic:", err)
-        http.Error(rw, "Failed to create crime statistic", http.StatusInternalServerError)
-        return
-    }
-    rw.Header().Set("Content-Type", "application/json")
-    rw.WriteHeader(http.StatusCreated)
-    if err := json.NewEncoder(rw).Encode(statistic); err != nil {
-        sh.logger.Println("Failed to encode crime statistic:", err)
-        http.Error(rw, FailedToEncodeStatistics, http.StatusInternalServerError)
-    }
+	var statistic data.CrimeData
+	if err := json.NewDecoder(r.Body).Decode(&statistic); err != nil {
+		http.Error(rw, "Failed to decode request body", http.StatusBadRequest)
+		return
+	}
+	statistic.ID = primitive.NewObjectID()
+	err := sh.repo.CreateCrimeStatisticData(r.Context(), &statistic)
+	if err != nil {
+		sh.logger.Println("Failed to create crime statistic:", err)
+		http.Error(rw, "Failed to create crime statistic", http.StatusInternalServerError)
+		return
+	}
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(rw).Encode(statistic); err != nil {
+		sh.logger.Println("Failed to encode crime statistic:", err)
+		http.Error(rw, FailedToEncodeStatistics, http.StatusInternalServerError)
+	}
 }
 
 func (sh *StatisticsHandler) UpdateTrafficStatistic(rw http.ResponseWriter, r *http.Request) {
@@ -259,6 +260,37 @@ func (sh *StatisticsHandler) DeleteCrimeStatistic(rw http.ResponseWriter, r *htt
 	}
 
 	rw.WriteHeader(http.StatusNoContent)
+}
+
+func (sh *StatisticsHandler) GetVehicleStatisticsByYear(rw http.ResponseWriter, r *http.Request) {
+	// Ovde dobavite listu svih vozila
+	vehicles, err := sh.mup.GetAllVehicles(r.Context())
+	if err != nil {
+		sh.logger.Println("Failed to retrieve vehicles:", err)
+		http.Error(rw, "Failed to retrieve vehicles", http.StatusInternalServerError)
+		return
+	}
+
+	// Inicijalizujte mapu za brojanje vozila po godinama
+	vehicleStatistics := make(map[int]int)
+
+	// Brojanje vozila po godinama
+	for _, vehicle := range vehicles {
+		year := vehicle.Year
+		if _, ok := vehicleStatistics[year]; ok {
+			vehicleStatistics[year]++
+		} else {
+			vehicleStatistics[year] = 1
+		}
+	}
+
+	// Konvertovanje rezultata u JSON i slanje kao odgovor
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(vehicleStatistics); err != nil {
+		sh.logger.Println("Failed to encode vehicle statistics:", err)
+		http.Error(rw, "Failed to encode vehicle statistics", http.StatusInternalServerError)
+	}
 }
 
 func (sh *StatisticsHandler) extractTokenFromHeader(rr *http.Request) string {
