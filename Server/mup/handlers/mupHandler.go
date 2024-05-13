@@ -49,6 +49,23 @@ func (mh *MupHandler) CheckForPersonsDrivingBans(rw http.ResponseWriter, r *http
 	fmt.Println("Successfully fetched driving bans")
 }
 
+func (mh *MupHandler) CheckForRegisteredVehicles(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	vehicles, err := mh.repo.RetrieveRegisteredVehicles(ctx)
+	if err != nil {
+		http.Error(rw, "Failed to retrieve registered vehicles", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set(ContentType, ApplicationJson)
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(vehicles); err != nil {
+		http.Error(rw, FailedToEcnodeDrivingBans, http.StatusInternalServerError)
+	}
+	fmt.Println("Successfully fetched registered vehicles")
+}
+
 // POST
 
 func (mh *MupHandler) SubmitRegistrationRequest(rw http.ResponseWriter, r *http.Request) {
@@ -134,10 +151,6 @@ func (mh *MupHandler) IssueDrivingBan(rw http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to decode request body: %v", err)
 		return
 	}
-
-	drivingBanPersonID, _ := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e11")
-
-	drivingBan.Person = drivingBanPersonID
 
 	if err := mh.repo.IssueDrivingBan(r.Context(), &drivingBan); err != nil {
 		log.Printf("Failed to save driving ban: %v", err)

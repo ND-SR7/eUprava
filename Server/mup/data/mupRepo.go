@@ -83,6 +83,8 @@ func (mr *MUPRepo) Ping() {
 
 func (mr *MUPRepo) SaveVehicle(ctx context.Context, vehicle *Vehicle) error {
 	vehicle.ID = primitive.NewObjectID()
+	vehicle.Registration = ""
+	vehicle.Plates = ""
 	collection := mr.getMupCollection("vehicle")
 
 	_, err := collection.InsertOne(ctx, vehicle)
@@ -130,6 +132,34 @@ func (mr *MUPRepo) SavePlatesIntoVehicle(ctx context.Context, plates Plates) err
 
 	fmt.Println("Plates successfully saved into vehicle!")
 	return nil
+}
+
+func (mr *MUPRepo) RetrieveRegisteredVehicles(ctx context.Context) (Vehicles, error) {
+	collection := mr.getMupCollection("vehicle")
+
+	filter := bson.M{"registration": ""}
+
+	var vehicles Vehicles
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var vehicle Vehicle
+		if err := cursor.Decode(&vehicle); err != nil {
+			return nil, err
+		}
+		vehicles = append(vehicles, vehicle)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return vehicles, nil
 }
 
 //Mup methods
@@ -304,6 +334,8 @@ func (mr *MUPRepo) SubmitRegistrationRequest(ctx context.Context, registration *
 func (mr *MUPRepo) ApproveRegistration(ctx context.Context, registration Registration) error {
 	expirationDate := time.Now().AddDate(1, 0, 0)
 
+	registration.Approved = true
+
 	collection := mr.getMupCollection("registration")
 
 	filter := bson.D{{"_id", registration.RegistrationNumber}}
@@ -404,6 +436,9 @@ func (mr *MUPRepo) IssuePlates(ctx context.Context, plates Plates) error {
 
 func (mr *MUPRepo) IssueDrivingBan(ctx context.Context, drivingBan *DrivingBan) error {
 	drivingBan.ID = primitive.NewObjectID()
+	drivingBanPersonID, _ := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e11")
+	drivingBan.Person = drivingBanPersonID
+
 	collection := mr.getMupCollection("drivingBan")
 
 	_, err := collection.InsertOne(ctx, drivingBan)
@@ -423,12 +458,12 @@ func (mr *MUPRepo) IssueDrivingBan(ctx context.Context, drivingBan *DrivingBan) 
 
 //Person methods
 
-func (mr *MUPRepo) CheckForPersonsDrivingBans(ctx context.Context, userID primitive.ObjectID) ([]DrivingBan, error) {
+func (mr *MUPRepo) CheckForPersonsDrivingBans(ctx context.Context, userID primitive.ObjectID) (DrivingBans, error) {
 	collection := mr.getMupCollection("drivingBan")
 
 	filter := bson.D{{"person", userID}}
 
-	var drivingBans []DrivingBan
+	var drivingBans DrivingBans
 
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {

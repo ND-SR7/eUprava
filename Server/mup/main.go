@@ -41,27 +41,16 @@ func main() {
 
 	router := mux.NewRouter()
 
-	checkPersonsDrivingBans := router.Methods(http.MethodGet).Path("/drivingBans").Subrouter()
-	checkPersonsDrivingBans.HandleFunc("", mupHandler.CheckForPersonsDrivingBans)
+	router.HandleFunc("/api/v1/driving-bans", mupHandler.CheckForPersonsDrivingBans).Methods("GET")
+	router.HandleFunc("/api/v1/vehicle", mupHandler.SaveVehicle).Methods("POST")
+	router.HandleFunc("/api/v1/registration-request", mupHandler.SubmitRegistrationRequest).Methods("POST")
+	router.HandleFunc("/api/v1/approve-registration-request", mupHandler.ApproveRegistration).Methods("POST")
+	router.HandleFunc("/api/v1/traffic-permit-request", mupHandler.SubmitTrafficPermitRequest).Methods("POST")
+	router.HandleFunc("/api/v1/approve-traffic-permit-request", mupHandler.ApproveTrafficPermitRequest).Methods("POST")
 
-	saveVehicle := router.Methods(http.MethodPost).Path("/vehicle").Subrouter()
-	saveVehicle.HandleFunc("", mupHandler.SaveVehicle)
-	//createPersonRouter.Use(mupHandler.MiddlewarePersonDeserialization)
-
-	issueDrivingBan := router.Methods(http.MethodPost).Path("/drivingBan").Subrouter()
-	issueDrivingBan.HandleFunc("", mupHandler.IssueDrivingBan)
-
-	submitRegistrationRequest := router.Methods(http.MethodPost).Path("/registrationRequest").Subrouter()
-	submitRegistrationRequest.HandleFunc("", mupHandler.SubmitRegistrationRequest)
-
-	approveRegistrationRequest := router.Methods(http.MethodPost).Path("/approveRegistrationRequest").Subrouter()
-	approveRegistrationRequest.HandleFunc("", mupHandler.ApproveRegistration)
-
-	submitTrafficPermitRequest := router.Methods(http.MethodPost).Path("/trafficPermitRequest").Subrouter()
-	submitTrafficPermitRequest.HandleFunc("", mupHandler.SubmitTrafficPermitRequest)
-
-	approveTrafficPermitRequest := router.Methods(http.MethodPost).Path("/approveTrafficPermitRequest").Subrouter()
-	approveTrafficPermitRequest.HandleFunc("", mupHandler.ApproveTrafficPermitRequest)
+	// For clients
+	router.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
+	router.HandleFunc("/api/v1/driving-ban", mupHandler.IssueDrivingBan).Methods("POST")
 
 	////Save mup
 	//mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
