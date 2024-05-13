@@ -52,6 +52,8 @@ func main() {
 	router.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
 	router.HandleFunc("/api/v1/driving-ban", mupHandler.IssueDrivingBan).Methods("POST")
 
+	router.Use(mupHandler.AuthorizeRoles("ADMIN", "USER"))
+
 	////Save mup
 	//mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
 	//if err == nil {

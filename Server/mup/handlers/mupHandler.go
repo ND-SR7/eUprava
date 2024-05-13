@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"mup/data"
@@ -18,6 +20,8 @@ const InvalidID = "Invalid ID"
 const FailedToDecodeRequestBody = "Failed to decode request body"
 
 type KeyProduct struct{}
+
+var secretKey = []byte("eUprava_secret")
 
 type MupHandler struct {
 	repo   *data.MUPRepo
@@ -241,4 +245,51 @@ func (mh *MupHandler) MiddlewarePersonDeserialization(next http.Handler) http.Ha
 
 		next.ServeHTTP(rw, h)
 	})
+}
+
+// JWT middleware
+func (mh *MupHandler) AuthorizeRoles(allowedRoles ...string) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, rr *http.Request) {
+			tokenString := mh.extractTokenFromHeader(rr)
+			if tokenString == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			claims := jwt.MapClaims{}
+			token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+				return secretKey, nil
+			})
+
+			if err != nil || !token.Valid {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			_, ok1 := claims["username"].(string)
+			role, ok2 := claims["role"].(string)
+			if !ok1 || !ok2 {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			for _, allowedRole := range allowedRoles {
+				if allowedRole == role {
+					next.ServeHTTP(w, rr)
+					return
+				}
+			}
+
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
+}
+
+func (mh *MupHandler) extractTokenFromHeader(rr *http.Request) string {
+	token := rr.Header.Get("Authorization")
+	if token != "" {
+		return token[len("Bearer "):]
+	}
+	return ""
 }
