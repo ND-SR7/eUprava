@@ -14,11 +14,18 @@ type TrafficPolice struct {
 }
 
 type TrafficViolation struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Reason      string             `bson:"reason" json:"reason"`
-	Description string             `bson:"description" json:"description"`
-	Time        time.Time          `bson:"time" json:"time"`
-	Location    string             `bson:"location" json:"location"`
+	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ViolatorEmail string             `bson:"violatorEmail" json:"violatorEmail"`
+	Reason        string             `bson:"reason" json:"reason"`
+	Description   string             `bson:"description" json:"description"`
+	Time          time.Time          `bson:"time" json:"time"`
+	Location      string             `bson:"location" json:"location"`
+}
+
+type AlcoholTest struct {
+	UserEmail    string
+	AlcoholLevel float64
+	Location     string
 }
 
 func (tp *TrafficPolice) ToJSON(w io.Writer) error {

@@ -37,11 +37,12 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
-	handler := handlers.NewPoliceHandler(store)
+	handler := handlers.NewPoliceHandler(store, logger)
 
 	router := mux.NewRouter()
 	// Router methods
 	router.HandleFunc("/trafficViolation", handler.CreateTrafficViolation).Methods(http.MethodPost)
+	router.HandleFunc("/trafficViolation/alcoholTest", handler.CheckAlcoholLevel).Methods(http.MethodPost)
 	router.HandleFunc("/trafficViolation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
 	router.HandleFunc("/trafficViolation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
 	router.HandleFunc("/trafficViolation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)

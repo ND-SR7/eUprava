@@ -21,6 +21,7 @@ require (
 )
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	go.mongodb.org/mongo-driver v1.14.0
 )

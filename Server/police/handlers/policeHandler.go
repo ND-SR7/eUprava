@@ -1,22 +1,32 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"police/client"
 	"police/data"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type KeyProduct struct{}
+
+var secretKey = []byte("UpravaT2")
+
 type PoliceHandler struct {
-	repo *data.PoliceRepo
+	repo   *data.PoliceRepo
+	logger *log.Logger
 }
 
 // Constructor
-func NewPoliceHandler(r *data.PoliceRepo) *PoliceHandler {
-	return &PoliceHandler{r}
+func NewPoliceHandler(r *data.PoliceRepo, log *log.Logger) *PoliceHandler {
+	return &PoliceHandler{r, log}
 }
 
 func (ph *PoliceHandler) CreateTrafficViolation(w http.ResponseWriter, r *http.Request) {
@@ -38,6 +48,47 @@ func (ph *PoliceHandler) CreateTrafficViolation(w http.ResponseWriter, r *http.R
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(violation)
+}
+
+func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Request) {
+	var violation data.TrafficViolation
+	var alcoholTest data.AlcoholTest
+	err := json.NewDecoder(r.Body).Decode(&violation)
+	if err != nil {
+		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
+		log.Printf("Failed to decode request body: %v\n", err)
+		return
+	}
+
+	if alcoholTest.AlcoholLevel > 0.2 {
+		violation.Reason = fmt.Sprintf("drunk driving: %.2f", alcoholTest.AlcoholLevel)
+		violation.Description = "Driver was caught operating a vehicle with a blood alcohol level above the legal limit."
+		violation.Time = time.Now()
+		violation.ViolatorEmail = alcoholTest.UserEmail
+		violation.Location = alcoholTest.Location
+		err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
+		if err != nil {
+			http.Error(w, "Failed to create traffic violation", http.StatusInternalServerError)
+			log.Printf("Failed to create traffic violation: %v\n", err)
+			return
+		}
+
+		courtClient := client.NewCourtClient(&http.Client{}, "http://localhost:8080/api/v1/crime-report")
+
+		_, err := courtClient.CreateCrimeReport(r.Context(), violation)
+		if err != nil {
+			http.Error(w, "Failed to send crime report", http.StatusInternalServerError)
+			log.Printf("Failed to send crime report: %v\n", err)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(violation)
+		return
+	}
+
+	http.Error(w, "Driver is not under the influence of alcohol", http.StatusOK)
 }
 
 func (ph *PoliceHandler) GetTrafficViolationByID(w http.ResponseWriter, r *http.Request) {
@@ -108,6 +159,9 @@ func (ph *PoliceHandler) UpdateTrafficViolation(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	if update.ViolatorEmail != "" {
+		existingViolation.ViolatorEmail = update.ViolatorEmail
+	}
 	if update.Reason != "" {
 		existingViolation.Reason = update.Reason
 	}
@@ -159,4 +213,69 @@ func (ph *PoliceHandler) DeleteTrafficViolation(w http.ResponseWriter, r *http.R
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Traffic violation deleted successfully"})
+}
+
+// Middlerware
+func (ph *PoliceHandler) MiddlewarePersonDeserialization(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, h *http.Request) {
+		patient := &data.Person{}
+		err := patient.FromJSON(h.Body)
+		if err != nil {
+			http.Error(rw, "Unable to decode json", http.StatusBadRequest)
+			ph.logger.Fatal(err)
+			return
+		}
+
+		ctx := context.WithValue(h.Context(), KeyProduct{}, patient)
+		h = h.WithContext(ctx)
+
+		next.ServeHTTP(rw, h)
+	})
+}
+
+// JWT middleware
+func (ph *PoliceHandler) AuthorizeRoles(allowedRoles ...string) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, rr *http.Request) {
+			tokenString := ph.extractTokenFromHeader(rr)
+			if tokenString == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			claims := jwt.MapClaims{}
+			token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+				return secretKey, nil
+			})
+
+			if err != nil || !token.Valid {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			_, ok1 := claims["sub"].(string)
+			role, ok2 := claims["role"].(string)
+			if !ok1 || !ok2 {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			for _, allowedRole := range allowedRoles {
+				if allowedRole == role {
+					next.ServeHTTP(w, rr)
+					return
+				}
+			}
+
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
+}
+
+func (ph *PoliceHandler) extractTokenFromHeader(rr *http.Request) string {
+	token := rr.Header.Get("Authorization")
+	if token != "" {
+		return token[len("Bearer "):]
+	}
+	return ""
 }
