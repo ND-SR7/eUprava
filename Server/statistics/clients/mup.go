@@ -20,15 +20,17 @@ func NewMupClient(client *http.Client, address string) MupClient {
 	}
 }
 
-func (c *MupClient) GetAllRegisteredVehicles(ctx context.Context) ([]data.Vehicle, error) {
-	url := c.address + "/api/v1/registered-vehicles"
+func (c *MupClient) GetAllRegisteredVehicles(ctx context.Context) (data.Vehicles, error) {
+	url := c.address + "/registered-vehicles"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
+		fmt.Println("Error:", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -37,7 +39,7 @@ func (c *MupClient) GetAllRegisteredVehicles(ctx context.Context) ([]data.Vehicl
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	var vehicles []data.Vehicle
+	var vehicles data.Vehicles
 	if err := json.NewDecoder(resp.Body).Decode(&vehicles); err != nil {
 		return nil, err
 	}

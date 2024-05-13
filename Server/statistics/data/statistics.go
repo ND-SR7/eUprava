@@ -47,7 +47,7 @@ type Vehicle struct {
 	Owner        primitive.ObjectID `bson:"owner" json:"owner"`
 }
 
-type Vehicles []Vehicles
+type Vehicles []Vehicle
 
 type Registration struct {
 	RegistrationNumber string             `bson:"registrationNumber" json:"registrationNumber"`
