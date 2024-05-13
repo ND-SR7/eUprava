@@ -20,8 +20,8 @@ func NewMupClient(client *http.Client, address string) MupClient {
 	}
 }
 
-func (c *MupClient) GetAllVehicles(ctx context.Context) ([]data.Vehicle, error) {
-	url := c.address + "/get-all-vehicles"
+func (c *MupClient) GetAllRegisteredVehicles(ctx context.Context) ([]data.Vehicle, error) {
+	url := c.address + "/api/v1/registered-vehicles"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err

@@ -164,6 +164,7 @@ services:
     environment:
       - PORT=8084
       - MONGO_DB_URI=${MONGO_DB_URI_STATISTICS}
+      - MUP_SERVICE_URI=${MUP_SERVICE_URI}
       # TODO: Other services URIs
     depends_on:
       statistics_db:

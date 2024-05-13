@@ -263,18 +263,15 @@ func (sh *StatisticsHandler) DeleteCrimeStatistic(rw http.ResponseWriter, r *htt
 }
 
 func (sh *StatisticsHandler) GetVehicleStatisticsByYear(rw http.ResponseWriter, r *http.Request) {
-	// Ovde dobavite listu svih vozila
-	vehicles, err := sh.mup.GetAllVehicles(r.Context())
+	vehicles, err := sh.mup.GetAllRegisteredVehicles(r.Context())
 	if err != nil {
 		sh.logger.Println("Failed to retrieve vehicles:", err)
 		http.Error(rw, "Failed to retrieve vehicles", http.StatusInternalServerError)
 		return
 	}
 
-	// Inicijalizujte mapu za brojanje vozila po godinama
 	vehicleStatistics := make(map[int]int)
 
-	// Brojanje vozila po godinama
 	for _, vehicle := range vehicles {
 		year := vehicle.Year
 		if _, ok := vehicleStatistics[year]; ok {
@@ -284,12 +281,29 @@ func (sh *StatisticsHandler) GetVehicleStatisticsByYear(rw http.ResponseWriter, 
 		}
 	}
 
-	// Konvertovanje rezultata u JSON i slanje kao odgovor
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(rw).Encode(vehicleStatistics); err != nil {
 		sh.logger.Println("Failed to encode vehicle statistics:", err)
 		http.Error(rw, "Failed to encode vehicle statistics", http.StatusInternalServerError)
+	}
+}
+
+func (sh *StatisticsHandler) GetRegisteredVehicles(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx)
+	if err != nil {
+		sh.logger.Println("Failed to retrieve registered vehicles:", err)
+		http.Error(rw, "Failed to retrieve registered vehicles", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set(ContentType, ApplicationJson)
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(vehicles); err != nil {
+		sh.logger.Println("Failed to encode registered vehicles:", err)
+		http.Error(rw, "Failed to encode registered vehicles", http.StatusInternalServerError)
 	}
 }
 
