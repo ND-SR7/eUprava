@@ -61,6 +61,10 @@ type Address struct {
 	StreetNumber int    `bson:"streetNumber" json:"streetNumber"`
 }
 
+type UserId struct {
+	ID primitive.ObjectID `json:"id"`
+}
+
 func (a *Persons) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(a)

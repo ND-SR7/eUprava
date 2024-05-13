@@ -21,7 +21,7 @@ const FailedToDecodeRequestBody = "Failed to decode request body"
 
 type KeyProduct struct{}
 
-var secretKey = []byte("eUprava_secret")
+var secretKey = []byte("UpravaT2")
 
 type MupHandler struct {
 	repo   *data.MUPRepo
@@ -267,7 +267,7 @@ func (mh *MupHandler) AuthorizeRoles(allowedRoles ...string) mux.MiddlewareFunc 
 				return
 			}
 
-			_, ok1 := claims["username"].(string)
+			_, ok1 := claims["sub"].(string)
 			role, ok2 := claims["role"].(string)
 			if !ok1 || !ok2 {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
