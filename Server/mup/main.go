@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"mup/clients"
 	"mup/data"
 	"mup/handlers"
 	"net/http"
@@ -37,7 +38,26 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
-	mupHandler := handlers.NewMupHandler(store, storeLogger)
+	courtClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
+
+	ssoClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
+
+	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
+	sso := clients.NewSSOClient(ssoClient, os.Getenv("SSO_SERVICE_URI"))
+
+	mupHandler := handlers.NewMupHandler(store, storeLogger, sso, court)
 
 	router := mux.NewRouter()
 

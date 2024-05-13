@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,34 +21,19 @@ type MUPRepo struct {
 
 // Constructor
 func New(ctx context.Context, logger *log.Logger) (*MUPRepo, error) {
-	//dburi := os.Getenv("mongodb://root:pass@mup_db:27017")
+	dburi := os.Getenv("MONGO_DB_URI")
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://root:pass@mup_db:27017"))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dburi))
 	if err != nil {
 		return nil, err
 	}
 
-	err = client.Ping(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Create collection
-	collection := client.Database("mup_db").Collection("person")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf(collection.Name())
-
-	fmt.Println("Connected to db")
-
-	mr := &MUPRepo{
+	cr := &MUPRepo{
 		cli:    client,
 		logger: logger,
 	}
 
-	return mr, nil
+	return cr, nil
 }
 
 // Disconnect
@@ -368,9 +354,6 @@ func (mr *MUPRepo) ApproveRegistration(ctx context.Context, registration Registr
 //Driving permit methods
 
 func (mr *MUPRepo) SubmitTrafficPermitRequest(ctx context.Context, trafficPermit *TrafficPermit) error {
-	trafficPermit.Approved = false
-	trafficPermit.IssuedDate = time.Now()
-
 	collection := mr.getMupCollection("trafficPermit")
 
 	_, err := collection.InsertOne(ctx, trafficPermit)

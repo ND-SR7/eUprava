@@ -24,9 +24,9 @@ func NewSSOClient(client *http.Client, address string) SSOClient {
 	}
 }
 
-//Client methods (checking username and ID)
+//Client methods
 
-func (ssoc SSOClient) GetUserIdByEmail(ctx context.Context, email, token string) (string, error) {
+func (ssoc SSOClient) GetUserByEmail(ctx context.Context, email, token string) (data.Person, error) {
 	var timeout time.Duration
 	deadline, reqHasDeadline := ctx.Deadline()
 	if reqHasDeadline {
@@ -35,32 +35,31 @@ func (ssoc SSOClient) GetUserIdByEmail(ctx context.Context, email, token string)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ssoc.address+"/users/email/"+email, nil)
 	if err != nil {
-		return "", err
+		return data.Person{}, err
 	}
 
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := ssoc.client.Do(req)
 	if err != nil {
-		return "", handleHttpReqErr(err, ssoc.address+"/users/email/"+email, http.MethodPost, timeout)
+		return data.Person{}, handleHttpReqErr(err, ssoc.address+"/users/email/"+email, http.MethodPost, timeout)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", domain.ErrResp{
+		return data.Person{}, domain.ErrResp{
 			URL:        resp.Request.URL.String(),
 			Method:     resp.Request.Method,
 			StatusCode: resp.StatusCode,
 		}
 	}
 
-	// Parse the JSON response
 	var serviceResponse data.Person
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(&serviceResponse); err != nil {
-		return "", fmt.Errorf("failed to decode JSON response: %v", err)
+		return data.Person{}, fmt.Errorf("failed to decode JSON response: %v", err)
 	}
 
-	return serviceResponse.Account.ID.Hex(), nil
+	return serviceResponse, nil
 }
 
 func (ssoc SSOClient) GetUserById(ctx context.Context, id primitive.ObjectID, token string) (data.Person, error) {
@@ -97,7 +96,6 @@ func (ssoc SSOClient) GetUserById(ctx context.Context, id primitive.ObjectID, to
 		}
 	}
 
-	// Parse the JSON response
 	var serviceResponse data.Person
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(&serviceResponse); err != nil {
