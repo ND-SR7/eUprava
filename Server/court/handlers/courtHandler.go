@@ -207,7 +207,7 @@ func (ch *CourtHandler) RecieveCrimeReport(w http.ResponseWriter, r *http.Reques
 
 	courtHearing := data.NewCourtHearingPerson{
 		Reason:   trafficViolation.Reason,
-		DateTime: time.Now().Add(72 * time.Hour).String(),
+		DateTime: time.Now().Add(72 * time.Hour).Format("2006-01-02T15:04:05"),
 		Court:    primitive.NewObjectID().Hex(), // TODO
 		Person:   person.Account.ID.Hex(),
 	}

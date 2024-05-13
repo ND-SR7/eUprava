@@ -32,7 +32,7 @@ func (sc *SSOClient) GetPersonByID(ctx context.Context, accountID, token string)
 		timeout = time.Until(deadline)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sc.address+"/users/"+accountID, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sc.address+"/user/"+accountID, nil)
 	if err != nil {
 		return data.Person{}, err
 	}
@@ -41,7 +41,7 @@ func (sc *SSOClient) GetPersonByID(ctx context.Context, accountID, token string)
 
 	resp, err := sc.client.Do(req)
 	if err != nil {
-		return data.Person{}, handleHttpReqErr(err, sc.address+"/users/"+accountID, http.MethodGet, timeout)
+		return data.Person{}, handleHttpReqErr(err, sc.address+"/user/"+accountID, http.MethodGet, timeout)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -68,7 +68,7 @@ func (sc *SSOClient) GetPersonByEmail(ctx context.Context, email, token string) 
 		timeout = time.Until(deadline)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sc.address+"/users/email/"+email, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sc.address+"/user/email/"+email, nil)
 	if err != nil {
 		return data.Person{}, err
 	}
@@ -77,7 +77,7 @@ func (sc *SSOClient) GetPersonByEmail(ctx context.Context, email, token string) 
 
 	resp, err := sc.client.Do(req)
 	if err != nil {
-		return data.Person{}, handleHttpReqErr(err, sc.address+"/users/email/"+email, http.MethodGet, timeout)
+		return data.Person{}, handleHttpReqErr(err, sc.address+"/user/email/"+email, http.MethodGet, timeout)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -104,7 +104,7 @@ func (sc *SSOClient) GetLegalEntityByID(ctx context.Context, accountID, token st
 		timeout = time.Until(deadline)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sc.address+"/users/"+accountID, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sc.address+"/user/"+accountID, nil)
 	if err != nil {
 		return data.LegalEntity{}, err
 	}
@@ -113,7 +113,7 @@ func (sc *SSOClient) GetLegalEntityByID(ctx context.Context, accountID, token st
 
 	resp, err := sc.client.Do(req)
 	if err != nil {
-		return data.LegalEntity{}, handleHttpReqErr(err, sc.address+"/users/"+accountID, http.MethodGet, timeout)
+		return data.LegalEntity{}, handleHttpReqErr(err, sc.address+"/user/"+accountID, http.MethodGet, timeout)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -140,7 +140,7 @@ func (sc *SSOClient) GetLegalEntityByEmail(ctx context.Context, email, token str
 		timeout = time.Until(deadline)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sc.address+"/users/email/"+email, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sc.address+"/user/email/"+email, nil)
 	if err != nil {
 		return data.LegalEntity{}, err
 	}
@@ -149,7 +149,7 @@ func (sc *SSOClient) GetLegalEntityByEmail(ctx context.Context, email, token str
 
 	resp, err := sc.client.Do(req)
 	if err != nil {
-		return data.LegalEntity{}, handleHttpReqErr(err, sc.address+"/users/email/"+email, http.MethodGet, timeout)
+		return data.LegalEntity{}, handleHttpReqErr(err, sc.address+"/user/email/"+email, http.MethodGet, timeout)
 	}
 
 	if resp.StatusCode != http.StatusOK {

@@ -61,7 +61,7 @@ func main() {
 	router.HandleFunc("/api/v1/update-hearing-entity", courtHandler.UpdateHearingLegalEntity).Methods("PUT")
 
 	authorizedRouter := router.Methods("POST").Subrouter()
-	authorizedRouter.HandleFunc("/api/v1/user/crime-report", courtHandler.RecieveCrimeReport).Methods("POST")
+	authorizedRouter.HandleFunc("/api/v1/crime-report", courtHandler.RecieveCrimeReport).Methods("POST")
 	authorizedRouter.Use(courtHandler.AuthorizeRoles("ADMIN"))
 
 	cors := gorillaHandlers.CORS(
