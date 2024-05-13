@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"court/clients"
 	"court/data"
 	"court/handlers"
 	"log"
@@ -37,8 +38,19 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
+	// Client init
+	ssoClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
+
+	sso := clients.NewSSOClient(ssoClient, os.Getenv("SSO_SERVICE_URI"))
+
 	// Handler & router init
-	courtHandler := handlers.NewCourtHandler(store)
+	courtHandler := handlers.NewCourtHandler(store, sso)
 	router := mux.NewRouter()
 
 	// Router methods
@@ -47,6 +59,10 @@ func main() {
 	router.HandleFunc("/api/v1/create-hearing-entity", courtHandler.CreateHearingLegalEntity).Methods("POST")
 	router.HandleFunc("/api/v1/update-hearing-person", courtHandler.UpdateHearingPerson).Methods("PUT")
 	router.HandleFunc("/api/v1/update-hearing-entity", courtHandler.UpdateHearingLegalEntity).Methods("PUT")
+
+	authorizedRouter := router.Methods("POST").Subrouter()
+	authorizedRouter.HandleFunc("/api/v1/user/crime-report", courtHandler.RecieveCrimeReport).Methods("POST")
+	authorizedRouter.Use(courtHandler.AuthorizeRoles("ADMIN"))
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

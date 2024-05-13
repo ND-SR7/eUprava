@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"court/clients"
 	"court/data"
 	"encoding/json"
 	"fmt"
@@ -8,19 +10,24 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CourtHandler struct {
 	repo *data.CourtRepo
+	sso  clients.SSOClient
 }
+
+var secretKey = []byte("eUpravaT2")
 
 const InvalidRequestBody = "Invalid request body"
 const InvalidRequestBodyError = "Error while decoding body"
 
 // Constructor
-func NewCourtHandler(r *data.CourtRepo) *CourtHandler {
-	return &CourtHandler{r}
+func NewCourtHandler(r *data.CourtRepo, s clients.SSOClient) *CourtHandler {
+	return &CourtHandler{r, s}
 }
 
 // Handler methods
@@ -177,6 +184,45 @@ func (ch *CourtHandler) UpdateHearingLegalEntity(w http.ResponseWriter, r *http.
 	log.Println("Successfully rescheduled court hearing")
 }
 
+func (ch *CourtHandler) RecieveCrimeReport(w http.ResponseWriter, r *http.Request) {
+	log.Println("Recieved crime report")
+
+	var trafficViolation data.TrafficViolation
+	if err := json.NewDecoder(r.Body).Decode(&trafficViolation); err != nil {
+		http.Error(w, InvalidRequestBody, http.StatusBadRequest)
+		log.Println(InvalidRequestBody)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 4*time.Second)
+	defer cancel()
+
+	token := ch.extractTokenFromHeader(r)
+	person, err := ch.sso.GetPersonByEmail(ctx, trafficViolation.ViolatorEmail, token)
+	if err != nil {
+		http.Error(w, "Error with services communication", http.StatusInternalServerError)
+		log.Printf("Error while communicating with SSO service: %s", err.Error())
+		return
+	}
+
+	courtHearing := data.NewCourtHearingPerson{
+		Reason:   trafficViolation.Reason,
+		DateTime: time.Now().Add(72 * time.Hour).String(),
+		Court:    primitive.NewObjectID().Hex(), // TODO
+		Person:   person.Account.ID.Hex(),
+	}
+
+	err = ch.repo.CreateHearingPerson(courtHearing)
+	if err != nil {
+		http.Error(w, "Error while creating new hearing", http.StatusInternalServerError)
+		log.Printf("Error while creating new person hearing: %s", err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	log.Println("Successfully scheduled court hearing after crime report")
+}
+
 // Helper function for parsing court hearing interface into structs.
 // Retrieves court hearing from repo and converts it
 func (ch *CourtHandler) getHearing(id string) (data.CourtHearing, error) {
@@ -192,4 +238,52 @@ func (ch *CourtHandler) getHearing(id string) (data.CourtHearing, error) {
 	}
 
 	return nil, fmt.Errorf("could not convert retrieved court hearing to any type")
+}
+
+// JWT middleware
+func (ch *CourtHandler) AuthorizeRoles(allowedRoles ...string) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, rr *http.Request) {
+			tokenString := ch.extractTokenFromHeader(rr)
+			if tokenString == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			claims := jwt.MapClaims{}
+			token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+				return secretKey, nil
+			})
+
+			if err != nil || !token.Valid {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			_, ok1 := claims["sub"].(string)
+			role, ok2 := claims["role"].(string)
+			if !ok1 || !ok2 {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			for _, allowedRole := range allowedRoles {
+				if allowedRole == role {
+					next.ServeHTTP(w, rr)
+					return
+				}
+			}
+
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
+}
+
+// Returns token string found in header, otherwise empty string
+func (ch *CourtHandler) extractTokenFromHeader(r *http.Request) string {
+	token := r.Header.Get("Authorization")
+	if token != "" {
+		return token[len("Bearer "):]
+	}
+	return ""
 }
