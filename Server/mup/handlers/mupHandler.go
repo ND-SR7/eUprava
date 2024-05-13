@@ -8,28 +8,34 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
+	"mup/clients"
 	"mup/data"
 	"net/http"
+	"time"
 )
 
 const ApplicationJson = "application/json"
 const ContentType = "Content-Type"
 const FailedToEncodePerson = "Failed to encode person"
+const FailedToReadUsernameFromToken = "Failed to read username from token"
 const FailedToEcnodeDrivingBans = "Failed to encode driving bans"
 const InvalidID = "Invalid ID"
 const FailedToDecodeRequestBody = "Failed to decode request body"
 
 type KeyProduct struct{}
 
-var secretKey = []byte("UpravaT2")
+var secretKey = []byte("eUpravaT2")
 
 type MupHandler struct {
 	repo   *data.MUPRepo
 	logger *log.Logger
+	ssoc   clients.SSOClient
+	cc     clients.CourtClient
 }
 
-func NewMupHandler(r *data.MUPRepo, log *log.Logger) *MupHandler {
-	return &MupHandler{r, log}
+func NewMupHandler(r *data.MUPRepo, log *log.Logger, ssoc clients.SSOClient,
+	cc clients.CourtClient) *MupHandler {
+	return &MupHandler{r, log, ssoc, cc}
 }
 
 //GET
@@ -99,6 +105,15 @@ func (mh *MupHandler) SubmitRegistrationRequest(rw http.ResponseWriter, r *http.
 
 func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http.Request) {
 	var trafficPermit data.TrafficPermit
+	ctx := r.Context()
+	tokenStr := mh.extractTokenFromHeader(r)
+
+	email, err := mh.getEmailFromToken(tokenStr)
+	if err != nil {
+		fmt.Sprintf("Error while reading email from token: %v", err)
+		http.Error(rw, FailedToReadUsernameFromToken, http.StatusBadRequest)
+		return
+	}
 
 	if err := json.NewDecoder(r.Body).Decode(&trafficPermit); err != nil {
 		http.Error(rw, FailedToDecodeRequestBody, http.StatusBadRequest)
@@ -106,7 +121,31 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 		return
 	}
 
-	if err := mh.repo.SubmitTrafficPermitRequest(r.Context(), &trafficPermit); err != nil {
+	user, err := mh.ssoc.GetUserByEmail(ctx, email, tokenStr)
+	if err != nil {
+		http.Error(rw, "Failed to get user by email from sso", http.StatusBadRequest)
+		log.Printf("Failed to get user by email from sso: %v", err)
+		return
+	}
+
+	warrant, err := mh.cc.CheckForPersonsWarrant(ctx, user.Account.ID, tokenStr)
+	if err != nil {
+		http.Error(rw, "Failed to get warrant from court service", http.StatusBadRequest)
+		log.Printf("Failed to get warrant from court serviceo: %v", err)
+		return
+	}
+
+	if warrant != nil {
+		http.Error(rw, "User is on warrant list", http.StatusBadRequest)
+		log.Printf("FUser is on warrant list")
+		return
+	}
+
+	trafficPermit.Person = user.Account.ID
+	trafficPermit.Approved = false
+	trafficPermit.IssuedDate = time.Now()
+
+	if err := mh.repo.SubmitTrafficPermitRequest(ctx, &trafficPermit); err != nil {
 		log.Printf("Failed to submt traffic permit request: %v", err)
 		http.Error(rw, "Failed to submit traffic permit request", http.StatusInternalServerError)
 		return
@@ -229,24 +268,6 @@ func (mh *MupHandler) SaveMup(mup data.Mup) error {
 	return nil
 }
 
-// Middlerware
-func (mh *MupHandler) MiddlewarePersonDeserialization(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, h *http.Request) {
-		patient := &data.Person{}
-		err := patient.FromJSON(h.Body)
-		if err != nil {
-			http.Error(rw, "Unable to decode json", http.StatusBadRequest)
-			mh.logger.Fatal(err)
-			return
-		}
-
-		ctx := context.WithValue(h.Context(), KeyProduct{}, patient)
-		h = h.WithContext(ctx)
-
-		next.ServeHTTP(rw, h)
-	})
-}
-
 // JWT middleware
 func (mh *MupHandler) AuthorizeRoles(allowedRoles ...string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
@@ -292,4 +313,23 @@ func (mh *MupHandler) extractTokenFromHeader(rr *http.Request) string {
 		return token[len("Bearer "):]
 	}
 	return ""
+}
+
+func (mh *MupHandler) getEmailFromToken(tokenString string) (string, error) {
+	claims := jwt.MapClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return secretKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		return "", err
+	}
+
+	email, ok1 := claims["sub"].(string)
+	_, ok2 := claims["role"].(string)
+	if !ok1 || !ok2 {
+		return "", err
+	}
+
+	return email, nil
 }
