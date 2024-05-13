@@ -184,6 +184,56 @@ func (ch *CourtHandler) UpdateHearingLegalEntity(w http.ResponseWriter, r *http.
 	log.Println("Successfully rescheduled court hearing")
 }
 
+func (ch *CourtHandler) CreateWarrant(w http.ResponseWriter, r *http.Request) {
+	log.Println("Creating a new warrant")
+
+	var newWarrant data.NewWarrant
+	if err := json.NewDecoder(r.Body).Decode(&newWarrant); err != nil {
+		http.Error(w, InvalidRequestBody, http.StatusBadRequest)
+		log.Println(InvalidRequestBodyError)
+		return
+	}
+
+	err := ch.repo.CreateWarrant(newWarrant)
+	if err != nil {
+		http.Error(w, "Failed to create new warrant", http.StatusInternalServerError)
+		log.Printf("Failed to create new warrant: %s", err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	log.Println("Successfully created a new warrant")
+}
+
+func (ch *CourtHandler) CheckForWarrants(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	accountID := params["accountID"]
+
+	log.Printf("Recieved check for warrant for account id '%s'", accountID)
+
+	warrants, err := ch.repo.GetWarrantsByAccountID(accountID)
+	if err != nil {
+		http.Error(w, "Failed to get warrants", http.StatusInternalServerError)
+		log.Printf("Failed to get warrants: %s", err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if len(warrants) == 0 {
+		log.Println("Successfully searched and not found warrants")
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(warrants[0]); err != nil {
+		http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+		log.Printf("Error while encoding warrant: %s", err.Error())
+		return
+	}
+
+	log.Println("Successfully searched and found warrants")
+}
+
 func (ch *CourtHandler) RecieveCrimeReport(w http.ResponseWriter, r *http.Request) {
 	log.Println("Recieved crime report")
 

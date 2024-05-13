@@ -103,6 +103,40 @@ func (cr *CourtRepo) GetHearingByID(id string) (CourtHearing, error) {
 	return nil, errors.New("hearing not found")
 }
 
+// Finds warrants based on provided accountID
+func (cr *CourtRepo) GetWarrantsByAccountID(accountID string) (Warrants, error) {
+	collection := cr.getWarrantsCollection()
+
+	objID, err := primitive.ObjectIDFromHex(accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"issuedFor": objID}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var warrants Warrants
+	for cursor.Next(ctx) {
+		var warrant Warrant
+		if err := cursor.Decode(&warrant); err != nil {
+			return nil, err
+		}
+		warrants = append(warrants, warrant)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return warrants, nil
+}
+
 // Inserts new court hearing for a person into collection
 func (cr *CourtRepo) CreateHearingPerson(newHearing NewCourtHearingPerson) error {
 	collection := cr.getHearingsPersonCollection()
@@ -186,6 +220,41 @@ func (cr *CourtRepo) CreateHearingLegalEntity(newHearing NewCourtHearingLegalEnt
 	}
 
 	cr.logger.Println(hearing)
+	return nil
+}
+
+// Inserts a new warrant into collection
+func (cr *CourtRepo) CreateWarrant(newWarrant NewWarrant) error {
+	collection := cr.getWarrantsCollection()
+
+	trafficViolationID, err := primitive.ObjectIDFromHex(newWarrant.TrafficViolation)
+	if err != nil {
+		cr.logger.Println("Error while parsing traffic violation ID")
+		return err
+	}
+
+	personID, err := primitive.ObjectIDFromHex(newWarrant.IssuedFor)
+	if err != nil {
+		cr.logger.Println("Error while parsing person ID")
+		return err
+	}
+
+	warrant := Warrant{
+		ID:               primitive.NewObjectID(),
+		TrafficViolation: trafficViolationID,
+		IssuedOn:         time.Now(),
+		IssuedFor:        personID,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err = collection.InsertOne(ctx, warrant)
+	if err != nil {
+		cr.logger.Fatalln("Failed to insert new warrant")
+		return err
+	}
+
 	return nil
 }
 
@@ -279,4 +348,8 @@ func (cr *CourtRepo) getHearingsPersonCollection() *mongo.Collection {
 
 func (cr *CourtRepo) getHearingsLegalEntityCollection() *mongo.Collection {
 	return cr.cli.Database("courtDB").Collection("hearingsLegalEntity")
+}
+
+func (cr *CourtRepo) getWarrantsCollection() *mongo.Collection {
+	return cr.cli.Database("courtDB").Collection("warrants")
 }
