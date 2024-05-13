@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -17,7 +16,7 @@ import (
 
 type KeyProduct struct{}
 
-var secretKey = []byte("UpravaT2")
+var secretKey = []byte("eUpravaT2")
 
 type PoliceHandler struct {
 	repo   *data.PoliceRepo
@@ -213,24 +212,6 @@ func (ph *PoliceHandler) DeleteTrafficViolation(w http.ResponseWriter, r *http.R
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Traffic violation deleted successfully"})
-}
-
-// Middlerware
-func (ph *PoliceHandler) MiddlewarePersonDeserialization(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, h *http.Request) {
-		patient := &data.Person{}
-		err := patient.FromJSON(h.Body)
-		if err != nil {
-			http.Error(rw, "Unable to decode json", http.StatusBadRequest)
-			ph.logger.Fatal(err)
-			return
-		}
-
-		ctx := context.WithValue(h.Context(), KeyProduct{}, patient)
-		h = h.WithContext(ctx)
-
-		next.ServeHTTP(rw, h)
-	})
 }
 
 // JWT middleware
