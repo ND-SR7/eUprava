@@ -33,7 +33,7 @@ func (ssoc SSOClient) GetUserByEmail(ctx context.Context, email, token string) (
 		timeout = time.Until(deadline)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ssoc.address+"/users/email/"+email, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ssoc.address+"/user/email/"+email, nil)
 	if err != nil {
 		return data.Person{}, err
 	}
@@ -42,7 +42,7 @@ func (ssoc SSOClient) GetUserByEmail(ctx context.Context, email, token string) (
 
 	resp, err := ssoc.client.Do(req)
 	if err != nil {
-		return data.Person{}, handleHttpReqErr(err, ssoc.address+"/users/email/"+email, http.MethodPost, timeout)
+		return data.Person{}, handleHttpReqErr(err, ssoc.address+"/user/email/"+email, http.MethodPost, timeout)
 	}
 
 	if resp.StatusCode != http.StatusOK {

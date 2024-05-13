@@ -135,7 +135,7 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 		return
 	}
 
-	if warrant != nil {
+	if warrant.ID != "" {
 		http.Error(rw, "User is on warrant list", http.StatusBadRequest)
 		log.Printf("FUser is on warrant list")
 		return

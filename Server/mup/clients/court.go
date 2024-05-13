@@ -24,11 +24,11 @@ func NewCourtClient(client *http.Client, address string) CourtClient {
 	}
 }
 
-func (cc CourtClient) CheckForPersonsWarrant(ctx context.Context, userID primitive.ObjectID, token string) (interface{}, error) {
+func (cc CourtClient) CheckForPersonsWarrant(ctx context.Context, userID primitive.ObjectID, token string) (data.Warrant, error) {
 	requestBody, err := json.Marshal(userID.Hex())
 	if err != nil {
 		_ = fmt.Errorf("failed to marshal user id: %v", err)
-		return nil, err
+		return data.Warrant{}, err
 	}
 
 	var timeout time.Duration
@@ -39,18 +39,18 @@ func (cc CourtClient) CheckForPersonsWarrant(ctx context.Context, userID primiti
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cc.address+"/warrants/"+userID.Hex(), bytes.NewBuffer(requestBody))
 	if err != nil {
-		return nil, err
+		return data.Warrant{}, err
 	}
 
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := cc.client.Do(req)
 	if err != nil {
-		return nil, handleHttpReqErr(err, cc.address, http.MethodPost, timeout)
+		return data.Warrant{}, handleHttpReqErr(err, cc.address, http.MethodPost, timeout)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, domain.ErrResp{
+		return data.Warrant{}, domain.ErrResp{
 			URL:        resp.Request.URL.String(),
 			Method:     resp.Request.Method,
 			StatusCode: resp.StatusCode,

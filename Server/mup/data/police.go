@@ -2,15 +2,13 @@ package data
 
 import (
 	"encoding/json"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
-	"time"
 )
 
 type Warrant struct {
-	ID               primitive.ObjectID `bson:"_id" json:"id"`
-	TrafficViolation primitive.ObjectID `bson:"trafficViolation" json:"trafficViolation"`
-	IssuedOn         time.Time          `bson:"issuedOn" json:"issuedOn"`
+	ID               string `bson:"_id" json:"id"`
+	TrafficViolation string `bson:"trafficViolation" json:"trafficViolation"`
+	IssuedOn         string `bson:"issuedOn" json:"issuedOn"`
 }
 
 func (a *Warrant) ToJSON(w io.Writer) error {
