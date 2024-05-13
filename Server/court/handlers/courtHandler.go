@@ -18,6 +18,7 @@ import (
 type CourtHandler struct {
 	repo *data.CourtRepo
 	sso  clients.SSOClient
+	mup  clients.MUPClient
 }
 
 var secretKey = []byte("eUpravaT2")
@@ -26,8 +27,8 @@ const InvalidRequestBody = "Invalid request body"
 const InvalidRequestBodyError = "Error while decoding body"
 
 // Constructor
-func NewCourtHandler(r *data.CourtRepo, s clients.SSOClient) *CourtHandler {
-	return &CourtHandler{r, s}
+func NewCourtHandler(r *data.CourtRepo, s clients.SSOClient, m clients.MUPClient) *CourtHandler {
+	return &CourtHandler{r, s, m}
 }
 
 // Handler methods
@@ -232,6 +233,41 @@ func (ch *CourtHandler) CheckForWarrants(w http.ResponseWriter, r *http.Request)
 	}
 
 	log.Println("Successfully searched and found warrants")
+}
+
+func (ch *CourtHandler) CreateSuspension(w http.ResponseWriter, r *http.Request) {
+	log.Println("Creating a new suspension")
+
+	var newSuspension data.NewSuspension
+	if err := json.NewDecoder(r.Body).Decode(&newSuspension); err != nil {
+		http.Error(w, InvalidRequestBody, http.StatusBadRequest)
+		log.Println(InvalidRequestBodyError)
+		return
+	}
+
+	err := ch.repo.CreateSuspension(newSuspension)
+	if err != nil {
+		http.Error(w, "Failed to create new suspension", http.StatusInternalServerError)
+		log.Printf("Failed to create new suspension: %s", err.Error())
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 4*time.Second)
+	defer cancel()
+
+	token := ch.extractTokenFromHeader(r)
+
+	log.Println("Notifying MUP of suspension")
+
+	err = ch.mup.NotifyOfSuspension(ctx, newSuspension, token)
+	if err != nil {
+		http.Error(w, "Error with services communication", http.StatusInternalServerError)
+		log.Printf("Error while communicating with MUP service: %s", err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	log.Println("Successfully created a new suspension")
 }
 
 func (ch *CourtHandler) RecieveCrimeReport(w http.ResponseWriter, r *http.Request) {

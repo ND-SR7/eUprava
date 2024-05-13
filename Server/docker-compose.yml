@@ -127,6 +127,7 @@ services:
       - PORT=8083
       - MONGO_DB_URI=${MONGO_DB_URI_COURT}
       - SSO_SERVICE_URI=${SSO_SERVICE_URI}
+      - MUP_SERVICE_URI=${MUP_SERVICE_URI}
     depends_on:
       court_db:
         condition: service_healthy

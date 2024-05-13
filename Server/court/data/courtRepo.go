@@ -258,6 +258,47 @@ func (cr *CourtRepo) CreateWarrant(newWarrant NewWarrant) error {
 	return nil
 }
 
+// Inserts a new suspension into collection
+func (cr *CourtRepo) CreateSuspension(newSuspension NewSuspension) error {
+	collection := cr.getSuspensionsCollection()
+
+	fromDateTime, err := time.Parse("2006-01-02T15:04:05", newSuspension.From)
+	if err != nil {
+		cr.logger.Println("Error while parsing date")
+		return err
+	}
+
+	toDateTime, err := time.Parse("2006-01-02T15:04:05", newSuspension.To)
+	if err != nil {
+		cr.logger.Println("Error while parsing date")
+		return err
+	}
+
+	personID, err := primitive.ObjectIDFromHex(newSuspension.Person)
+	if err != nil {
+		cr.logger.Println("Error while parsing person ID")
+		return err
+	}
+
+	suspension := Suspension{
+		ID:     primitive.NewObjectID(),
+		From:   fromDateTime,
+		To:     toDateTime,
+		Person: personID,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err = collection.InsertOne(ctx, suspension)
+	if err != nil {
+		cr.logger.Fatalln("Failed to insert new suspension")
+		return err
+	}
+
+	return nil
+}
+
 // Reschedules court hearing for a later date and time
 func (cr *CourtRepo) RescheduleCourtHearingPerson(rescheduledHearing RescheduleCourtHearing) error {
 	collection := cr.getHearingsPersonCollection()
@@ -352,4 +393,8 @@ func (cr *CourtRepo) getHearingsLegalEntityCollection() *mongo.Collection {
 
 func (cr *CourtRepo) getWarrantsCollection() *mongo.Collection {
 	return cr.cli.Database("courtDB").Collection("warrants")
+}
+
+func (cr *CourtRepo) getSuspensionsCollection() *mongo.Collection {
+	return cr.cli.Database("courtDB").Collection("suspensions")
 }
