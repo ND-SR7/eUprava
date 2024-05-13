@@ -47,6 +47,11 @@ func main() {
 	router.HandleFunc("/api/v1/register-entity", ssoHandler.RegisterLegalEntity).Methods("POST")
 	router.HandleFunc("/api/v1/activate/{activationCode}", ssoHandler.ActivateAccount).Methods("GET")
 
+	authorizedRouter := router.Methods("GET").Subrouter()
+	authorizedRouter.HandleFunc("/api/v1/user/{accountID}", ssoHandler.GetUserByAccountID).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/user/email/{email}", ssoHandler.GetUserByEmail).Methods("GET")
+	authorizedRouter.Use(ssoHandler.AuthorizeRoles("USER", "ADMIN"))
+
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
 		gorillaHandlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"}),

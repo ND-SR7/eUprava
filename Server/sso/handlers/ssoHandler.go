@@ -28,6 +28,86 @@ func NewSSOHandler(r *data.SSORepo) *SSOHandler {
 
 // Handler methods
 
+// Retrieves user based on provided ID
+func (sh *SSOHandler) GetUserByAccountID(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	accountID := params["accountID"]
+
+	log.Printf("Retrieving user with id '%s'", accountID)
+
+	person, err := sh.getPersonByID(accountID)
+	if err != nil && err.Error() != "person not found" {
+		http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+		log.Printf("Failed to retrieve user: %s", err.Error())
+		return
+	} else if err.Error() == "person not found" {
+		legalEntity, err := sh.getLegalEntityByID(accountID)
+		if err != nil {
+			http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+			log.Printf("Failed to retrieve user: %s", err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(legalEntity); err != nil {
+			http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+			log.Printf("Error while encoding legal entity: %s", err.Error())
+		}
+
+		log.Println("Successfully retrieved requested user")
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(person); err != nil {
+			http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+			log.Printf("Error while encoding person: %s", err.Error())
+		}
+
+		log.Println("Successfully retrieved requested user")
+	}
+}
+
+// Retrieves user based on provided ID
+func (sh *SSOHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	email := params["email"]
+
+	log.Printf("Retrieving user with email '%s'", email)
+
+	person, err := sh.getPersonByEmail(email)
+	if err != nil && err.Error() != "person not found" {
+		http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+		log.Printf("Failed to retrieve user: %s", err.Error())
+		return
+	} else if err != nil && err.Error() == "person not found" {
+		legalEntity, err := sh.getLegalEntityByEmail(email)
+		if err != nil {
+			http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+			log.Printf("Failed to retrieve user: %s", err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(legalEntity); err != nil {
+			http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+			log.Printf("Error while encoding legal entity: %s", err.Error())
+		}
+
+		log.Println("Successfully retrieved requested user")
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(person); err != nil {
+			http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+			log.Printf("Error while encoding person: %s", err.Error())
+		}
+
+		log.Println("Successfully retrieved requested user")
+	}
+}
+
 // Logins requested user and provides JWT token
 func (sh *SSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials data.Credentials
@@ -141,6 +221,46 @@ func (sh *SSOHandler) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Successfully activated user account with code '%s'", activationCode)
 }
 
+// Helper function for retrieving person based on AccountID
+func (sh *SSOHandler) getPersonByID(accountID string) (data.Person, error) {
+	person, err := sh.repo.GetPersonByID(accountID)
+	if err != nil {
+		return data.Person{}, err
+	}
+
+	return person, nil
+}
+
+// Helper function for retrieving legal entity based on AccountID
+func (sh *SSOHandler) getLegalEntityByID(accountID string) (data.LegalEntity, error) {
+	legalEntity, err := sh.repo.GetLegalEntityByID(accountID)
+	if err != nil {
+		return data.LegalEntity{}, err
+	}
+
+	return legalEntity, nil
+}
+
+// Helper function for retrieving person based on email
+func (sh *SSOHandler) getPersonByEmail(email string) (data.Person, error) {
+	person, err := sh.repo.GetPersonByEmail(email)
+	if err != nil {
+		return data.Person{}, err
+	}
+
+	return person, nil
+}
+
+// Helper function for retrieving legal entity based on email
+func (sh *SSOHandler) getLegalEntityByEmail(email string) (data.LegalEntity, error) {
+	legalEntity, err := sh.repo.GetLegalEntityByEmail(email)
+	if err != nil {
+		return data.LegalEntity{}, err
+	}
+
+	return legalEntity, nil
+}
+
 // Returns error if credentials are not valid
 func (sh *SSOHandler) validateCredentials(email, password string) error {
 	account, err := sh.repo.FindAccountByEmail(email)
@@ -176,6 +296,45 @@ func (sh *SSOHandler) generateToken(email, role string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+// JWT middleware
+func (sh *SSOHandler) AuthorizeRoles(allowedRoles ...string) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, rr *http.Request) {
+			tokenString := sh.extractTokenFromHeader(rr)
+			if tokenString == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			claims := jwt.MapClaims{}
+			token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+				return secretKey, nil
+			})
+
+			if err != nil || !token.Valid {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			_, ok1 := claims["sub"].(string)
+			role, ok2 := claims["role"].(string)
+			if !ok1 || !ok2 {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			for _, allowedRole := range allowedRoles {
+				if allowedRole == role {
+					next.ServeHTTP(w, rr)
+					return
+				}
+			}
+
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
 }
 
 // Returns token string found in header, otherwise empty string

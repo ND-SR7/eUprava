@@ -67,6 +67,106 @@ func (sr *SSORepo) Ping() {
 	sr.logger.Println(databases)
 }
 
+// Find person based on provided id
+func (sr *SSORepo) GetPersonByID(id string) (Person, error) {
+	persons := sr.getPersonsCollection()
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return Person{}, err
+	}
+
+	filter := bson.M{"account._id": objID}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var person Person
+	err = persons.FindOne(ctx, filter).Decode(&person)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return Person{}, errors.New("person not found")
+	} else if err != nil {
+		return Person{}, err
+	}
+
+	return person, nil
+}
+
+// Find legal entity based on provided id
+func (sr *SSORepo) GetLegalEntityByID(id string) (LegalEntity, error) {
+	legalEntities := sr.getLegalEntitiesCollection()
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return LegalEntity{}, err
+	}
+
+	filter := bson.M{"account._id": objID}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var legalEntity LegalEntity
+	err = legalEntities.FindOne(ctx, filter).Decode(&legalEntity)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return LegalEntity{}, errors.New("person not found")
+	} else if err != nil {
+		return LegalEntity{}, err
+	}
+
+	return legalEntity, nil
+}
+
+// Find person based on provided email
+func (sr *SSORepo) GetPersonByEmail(email string) (Person, error) {
+	persons := sr.getPersonsCollection()
+
+	filter := bson.M{"account.email": email}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var person Person
+	err := persons.FindOne(ctx, filter).Decode(&person)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return Person{}, errors.New("person not found")
+	} else if err != nil {
+		return Person{}, err
+	}
+
+	// Removing sensitive data
+	person.Account.Password = ""
+	person.Account.ActivationCode = ""
+	person.Account.PasswordResetCode = ""
+
+	return person, nil
+}
+
+// Find legal entity based on provided email
+func (sr *SSORepo) GetLegalEntityByEmail(email string) (LegalEntity, error) {
+	legalEntities := sr.getLegalEntitiesCollection()
+
+	filter := bson.M{"account.email": email}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var legalEntity LegalEntity
+	err := legalEntities.FindOne(ctx, filter).Decode(&legalEntity)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return LegalEntity{}, errors.New("legal entity not found")
+	} else if err != nil {
+		return LegalEntity{}, err
+	}
+
+	// Removing sensitive data
+	legalEntity.Account.Password = ""
+	legalEntity.Account.ActivationCode = ""
+	legalEntity.Account.PasswordResetCode = ""
+
+	return legalEntity, nil
+}
+
 // Inserts new person into collection
 func (sr *SSORepo) CreatePerson(newPerson NewPerson) error {
 	emailOK := true
