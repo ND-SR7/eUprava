@@ -137,7 +137,7 @@ func (mr *MUPRepo) SavePlatesIntoVehicle(ctx context.Context, plates Plates) err
 func (mr *MUPRepo) RetrieveRegisteredVehicles(ctx context.Context) (Vehicles, error) {
 	collection := mr.getMupCollection("vehicle")
 
-	filter := bson.M{"registration": ""}
+	filter := bson.M{"registration": bson.M{"$ne": ""}}
 
 	var vehicles Vehicles
 
