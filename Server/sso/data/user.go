@@ -26,6 +26,7 @@ type Account struct {
 	ActivationCode    string             `bson:"activationCode" json:"activationCode"`
 	PasswordResetCode string             `bson:"passwordResetCode" json:"passwordResetCode"`
 	Role              string             `bson:"role" json:"role"`
+	Activated         bool               `bson:"activated" json:"activated"`
 }
 
 type Address struct {
