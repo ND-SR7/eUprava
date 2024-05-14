@@ -7,6 +7,7 @@ import (
 	"statistics/clients"
 	"statistics/data"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -16,6 +17,8 @@ const ContentType = "Content-Type"
 const FailedToEncodeStatistics = "Failed to encode statistics"
 const InvalidID = "Invalid ID"
 const FailedToDecodeRequestBody = "Failed to decode request body"
+
+var secretKey = []byte("eUpravaT2")
 
 type StatisticsHandler struct {
 	logger *log.Logger
@@ -304,6 +307,71 @@ func (sh *StatisticsHandler) GetRegisteredVehicles(rw http.ResponseWriter, r *ht
 	if err := json.NewEncoder(rw).Encode(vehicles); err != nil {
 		sh.logger.Println("Failed to encode registered vehicles:", err)
 		http.Error(rw, "Failed to encode registered vehicles", http.StatusInternalServerError)
+	}
+}
+
+func (sh *StatisticsHandler) GetMostPopularBrands(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx)
+	if err != nil {
+		sh.logger.Println("Failed to retrieve registered vehicles:", err)
+		http.Error(rw, "Failed to retrieve registered vehicles", http.StatusInternalServerError)
+		return
+	}
+
+	// Izračunavanje broja vozila po brendovima
+	brandCount := make(map[string]int)
+
+	for _, vehicle := range vehicles {
+		brandCount[vehicle.Brand]++
+	}
+
+	// Prikaz rezultata
+	rw.Header().Set(ContentType, ApplicationJson)
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(brandCount); err != nil {
+		sh.logger.Println("Failed to encode most popular brands:", err)
+		http.Error(rw, "Failed to encode most popular brands", http.StatusInternalServerError)
+	}
+}
+
+// JWT middleware
+func (sh *StatisticsHandler) AuthorizeRoles(allowedRoles ...string) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, rr *http.Request) {
+			tokenString := sh.extractTokenFromHeader(rr)
+			if tokenString == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			claims := jwt.MapClaims{}
+			token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+				return secretKey, nil
+			})
+
+			if err != nil || !token.Valid {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			_, ok1 := claims["sub"].(string)
+			role, ok2 := claims["role"].(string)
+			if !ok1 || !ok2 {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			for _, allowedRole := range allowedRoles {
+				if allowedRole == role {
+					next.ServeHTTP(w, rr)
+					return
+				}
+			}
+
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
 	}
 }
 

@@ -98,6 +98,9 @@ func main() {
 	getRegisteredVehiclesRouter := router.Methods(http.MethodGet).Path("/api/v1/registered-vehicles").Subrouter()
 	getRegisteredVehiclesRouter.HandleFunc("", statisticsHandler.GetRegisteredVehicles)
 
+	getMostPopularVehicleBrendsRouter := router.Methods(http.MethodGet).Path("/api/v1/most-popular-vehicles").Subrouter()
+	getMostPopularVehicleBrendsRouter.HandleFunc("", statisticsHandler.GetMostPopularBrands)
+
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
 		gorillaHandlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"}),
