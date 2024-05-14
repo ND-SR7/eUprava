@@ -25,11 +25,13 @@ type StatisticsData struct {
 }
 
 type CrimeData struct {
+	ID primitive.ObjectID `bson:"_id, omitempty" json:"id"`
 	StatisticsData
 	CrimeType string `bson:"crimeType" json:"crimeType"`
 }
 
 type TrafficData struct {
+	ID primitive.ObjectID `bson:"_id, omitempty" json:"id"`
 	StatisticsData
 	ViolationType string    `bson:"violationType" json:"violationType"`
 	Vehicles      []Vehicle `bson:"vehicles" json:"vehicles"`
@@ -39,14 +41,30 @@ type Vehicle struct {
 	ID           primitive.ObjectID `bson:"_id, omitempty" json:"id"`
 	Brand        string             `bson:"brand" json:"brand"`
 	Model        string             `bson:"model" json:"model"`
-	Year         string             `bson:"year" json:"year"`
-	Registration Registration       `bson:"registration" json:"registration"`
+	Year         int                `bson:"year" json:"year"`
+	Registration string             `bson:"registration" json:"registration"`
+	Plates       string             `bson:"plates" json:"plates"`
+	Owner        primitive.ObjectID `bson:"owner" json:"owner"`
 }
 
+type Vehicles []Vehicle
+
 type Registration struct {
-	RegistrationNumber string    `bson:"registrationNumber" json:"registrationNumber"`
-	ExpiryDate         time.Time `bson:"expiryDate" json:"expiryDate"`
+	RegistrationNumber string             `bson:"registrationNumber" json:"registrationNumber"`
+	IssuedDate         time.Time          `bson:"issuedDate" json:"issuedDate"`
+	ExpirationDate     time.Time          `bson:"expirationDate" json:"expirationDate"`
+	VehicleID          primitive.ObjectID `bson:"vehicleID" json:"vehicleID"`
+	Approved           bool               `bson:"approved" json:"approved"`
 }
+
+type Plates struct {
+	RegistrationNumber string             `bson:"registrationNumber" json:"registrationNumber"`
+	PlatesNumber       string             `bson:"platesNumber" json:"platesNumber"`
+	PlateType          string             `bson:"plateType" json:"plateType"`
+	VehicleID          primitive.ObjectID `bson:"vehicleID" json:"vehicleID"`
+}
+
+type ListOfPlates []Plates
 
 func (i *InstituteForStatistics) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
@@ -94,8 +112,18 @@ func (v *Vehicle) ToJSON(w io.Writer) error {
 }
 
 func (v *Vehicle) FromJSON(r io.Reader) error {
-	e := json.NewDecoder(r)
-	return e.Decode(v)
+	d := json.NewDecoder(r)
+	return d.Decode(v)
+}
+
+func (v *Vehicles) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(v)
+}
+
+func (v *Vehicles) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(v)
 }
 
 func (re *Registration) ToJSON(w io.Writer) error {
@@ -104,6 +132,26 @@ func (re *Registration) ToJSON(w io.Writer) error {
 }
 
 func (re *Registration) FromJSON(r io.Reader) error {
-	e := json.NewDecoder(r)
-	return e.Decode(re)
+	d := json.NewDecoder(r)
+	return d.Decode(re)
+}
+
+func (p *Plates) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(p)
+}
+
+func (p *Plates) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(p)
+}
+
+func (p *ListOfPlates) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(p)
+}
+
+func (p *ListOfPlates) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(p)
 }

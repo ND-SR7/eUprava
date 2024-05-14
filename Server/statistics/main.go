@@ -4,17 +4,21 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"statistics/clients"
 	"statistics/data"
 
-	// "statistics/handlers"
 	"os"
 	"os/signal"
+	"statistics/handlers"
 	"syscall"
 	"time"
 
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
+
+const TrafficStatisticPath = "/api/v1/traffic-statistic/{id}"
+const CrimeStatisticPath = "/api/v1/crime-statistic/{id}"
 
 func main() {
 	port := os.Getenv("PORT")
@@ -40,22 +44,73 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
+	mupClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
+
+	mup := clients.NewMupClient(mupClient, os.Getenv("MUP_SERVICE_URI"))
+
 	// TODO: Handler init
 
-	// statisticsHandler := handlers.NewStatisticsHandler(logger, store)
+	statisticsHandler := handlers.NewStatisticsHandler(logger, store, mup)
 
 	router := mux.NewRouter()
 
 	// TODO: Router methods
 
-	// router.HandleFunc("/statistics", statisticsHandler.CreateStatistic).Methods("POST")
-	// router.HandleFunc("/statistics", statisticsHandler.GetAllStatistics).Methods("GET")
+	createTrafficStatisticRouter := router.Methods(http.MethodPost).Path("/api/v1/traffic-statistic").Subrouter()
+	createTrafficStatisticRouter.HandleFunc("", statisticsHandler.CreateTrafficStatistic)
+
+	createCrimeStatisticRouter := router.Methods(http.MethodPost).Path("/api/v1/crime-statistic").Subrouter()
+	createCrimeStatisticRouter.HandleFunc("", statisticsHandler.CreateTrafficStatistic)
+
+	getTrafficStatisticRouter := router.Methods(http.MethodGet).Path(TrafficStatisticPath).Subrouter()
+	getTrafficStatisticRouter.HandleFunc("", statisticsHandler.GetTrafficStatistic)
+
+	getCrimeStatisticRouter := router.Methods(http.MethodGet).Path(CrimeStatisticPath).Subrouter()
+	getCrimeStatisticRouter.HandleFunc("", statisticsHandler.GetCrimeStatistic)
+
+	getAllTrafficStatisticRouter := router.Methods(http.MethodGet).Path("/api/v1/traffic-statistic").Subrouter()
+	getAllTrafficStatisticRouter.HandleFunc("", statisticsHandler.GetAllTrafficStatistics)
+
+	getAllCrimeStatisticRouter := router.Methods(http.MethodGet).Path("/api/v1/crime-statistic").Subrouter()
+	getAllCrimeStatisticRouter.HandleFunc("", statisticsHandler.GetAllCrimeStatistics)
+
+	updateTrafficStatisticRouter := router.Methods(http.MethodPut).Path(TrafficStatisticPath).Subrouter()
+	updateTrafficStatisticRouter.HandleFunc("", statisticsHandler.UpdateTrafficStatistic)
+
+	updateCrimeStatisticRouter := router.Methods(http.MethodPut).Path(CrimeStatisticPath).Subrouter()
+	updateCrimeStatisticRouter.HandleFunc("", statisticsHandler.UpdateCrimeStatistic)
+
+	deleteTrafficStatisticRouter := router.Methods(http.MethodDelete).Path(TrafficStatisticPath).Subrouter()
+	deleteTrafficStatisticRouter.HandleFunc("", statisticsHandler.DeleteTrafficStatistic)
+
+	deleteCrimeStatisticRouter := router.Methods(http.MethodDelete).Path(CrimeStatisticPath).Subrouter()
+	deleteCrimeStatisticRouter.HandleFunc("", statisticsHandler.DeleteCrimeStatistic)
+
+	getVehicleStatisticsByYearRouter := router.Methods(http.MethodGet).Path("/api/v1/vehicle-statistics-by-year").Subrouter()
+	getVehicleStatisticsByYearRouter.HandleFunc("", statisticsHandler.GetVehicleStatisticsByYear)
+
+	getRegisteredVehiclesRouter := router.Methods(http.MethodGet).Path("/api/v1/registered-vehicles").Subrouter()
+	getRegisteredVehiclesRouter.HandleFunc("", statisticsHandler.GetRegisteredVehicles)
+
+	getMostPopularVehicleBrendsRouter := router.Methods(http.MethodGet).Path("/api/v1/most-popular-vehicles").Subrouter()
+	getMostPopularVehicleBrendsRouter.HandleFunc("", statisticsHandler.GetMostPopularBrands)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
 		gorillaHandlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"}),
 		gorillaHandlers.AllowedHeaders([]string{"Content-Type"}),
 	)
+
+	pingRouter := router.Methods("GET").Subrouter()
+	pingRouter.HandleFunc("/api/v1", statisticsHandler.Ping).Methods("GET")
+	pingRouter.Use(cors)
+	pingRouter.Use(statisticsHandler.AuthorizeRoles("USER", "ADMIN"))
 
 	// Initialize the server
 	server := http.Server{
