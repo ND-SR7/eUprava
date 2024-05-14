@@ -39,6 +39,14 @@ func NewMupHandler(r *data.MUPRepo, log *log.Logger, ssoc clients.SSOClient,
 	return &MupHandler{r, log, ssoc, cc}
 }
 
+// Ping
+func (mh *MupHandler) Ping(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("Pong"))
+
+	w.WriteHeader(http.StatusOK)
+}
+
 //GET
 
 func (mh *MupHandler) CheckForPersonsDrivingBans(rw http.ResponseWriter, r *http.Request) {
