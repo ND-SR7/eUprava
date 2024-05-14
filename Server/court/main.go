@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"court/clients"
 	"court/data"
+	"court/handlers"
 	"log"
 	"net/http"
 	"os"
@@ -36,16 +38,55 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
-	// TODO: Handler init
+	// Client init
+	ssoClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
 
+	sso := clients.NewSSOClient(ssoClient, os.Getenv("SSO_SERVICE_URI"))
+
+	mupClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
+
+	mup := clients.NewMUPClient(mupClient, os.Getenv("MUP_SERVICE_URI"))
+
+	// Handler & router init
+	courtHandler := handlers.NewCourtHandler(store, sso, mup)
 	router := mux.NewRouter()
-	// TODO: Router methods
+
+	// Router methods
+	router.HandleFunc("/api/v1/get-hearing/{id}", courtHandler.GetCourtHearingByID).Methods("GET")
+	router.HandleFunc("/api/v1/create-hearing-person", courtHandler.CreateHearingPerson).Methods("POST")
+	router.HandleFunc("/api/v1/create-hearing-entity", courtHandler.CreateHearingLegalEntity).Methods("POST")
+	router.HandleFunc("/api/v1/update-hearing-person", courtHandler.UpdateHearingPerson).Methods("PUT")
+	router.HandleFunc("/api/v1/update-hearing-entity", courtHandler.UpdateHearingLegalEntity).Methods("PUT")
+
+	authorizedRouter := router.Methods("GET", "POST").Subrouter()
+	authorizedRouter.HandleFunc("/api/v1/suspension", courtHandler.CreateSuspension).Methods("POST")
+	authorizedRouter.HandleFunc("/api/v1/warrants", courtHandler.CreateWarrant).Methods("POST")
+	authorizedRouter.HandleFunc("/api/v1/warrants/{accountID}", courtHandler.CheckForWarrants).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/crime-report", courtHandler.RecieveCrimeReport).Methods("POST")
+	authorizedRouter.Use(courtHandler.AuthorizeRoles("ADMIN"))
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
 		gorillaHandlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"}),
-		gorillaHandlers.AllowedHeaders([]string{"Content-Type"}),
+		gorillaHandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
+
+	pingRouter := router.Methods("GET").Subrouter()
+	pingRouter.HandleFunc("/api/v1", courtHandler.Ping).Methods("GET")
+	pingRouter.Use(cors)
+	pingRouter.Use(courtHandler.AuthorizeRoles("USER", "ADMIN"))
 
 	// Initialize the server
 	server := http.Server{
