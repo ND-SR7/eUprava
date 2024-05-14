@@ -221,18 +221,18 @@ func (ch *CourtHandler) CheckForWarrants(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if len(warrants) == 0 {
-		log.Println("Successfully searched and not found warrants")
-		return
-	}
 
-	if err := json.NewEncoder(w).Encode(warrants[0]); err != nil {
+	if err := json.NewEncoder(w).Encode(warrants); err != nil {
 		http.Error(w, "Error while encoding body", http.StatusInternalServerError)
 		log.Printf("Error while encoding warrant: %s", err.Error())
 		return
 	}
 
-	log.Println("Successfully searched and found warrants")
+	if len(warrants) == 0 {
+		log.Println("Successfully searched and not found warrants")
+	} else {
+		log.Println("Successfully searched and found warrants")
+	}
 }
 
 func (ch *CourtHandler) CreateSuspension(w http.ResponseWriter, r *http.Request) {
