@@ -31,6 +31,11 @@ func NewCourtHandler(r *data.CourtRepo, s clients.SSOClient, m clients.MUPClient
 	return &CourtHandler{r, s, m}
 }
 
+// Ping
+func (ch *CourtHandler) Ping(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
 // Handler methods
 
 // Retrieves hearing based on provided ID

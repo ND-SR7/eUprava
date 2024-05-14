@@ -71,6 +71,7 @@ func main() {
 	router.HandleFunc("/api/v1/update-hearing-entity", courtHandler.UpdateHearingLegalEntity).Methods("PUT")
 
 	authorizedRouter := router.Methods("GET", "POST").Subrouter()
+	authorizedRouter.HandleFunc("/api/v1", courtHandler.Ping).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/suspension", courtHandler.CreateSuspension).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/warrants", courtHandler.CreateWarrant).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/warrants/{accountID}", courtHandler.CheckForWarrants).Methods("GET")
