@@ -266,7 +266,8 @@ func (sh *StatisticsHandler) DeleteCrimeStatistic(rw http.ResponseWriter, r *htt
 }
 
 func (sh *StatisticsHandler) GetVehicleStatisticsByYear(rw http.ResponseWriter, r *http.Request) {
-	vehicles, err := sh.mup.GetAllRegisteredVehicles(r.Context())
+	token := sh.extractTokenFromHeader(r)
+	vehicles, err := sh.mup.GetAllRegisteredVehicles(r.Context(), token)
 	if err != nil {
 		sh.logger.Println("Failed to retrieve vehicles:", err)
 		http.Error(rw, "Failed to retrieve vehicles", http.StatusInternalServerError)
@@ -295,7 +296,9 @@ func (sh *StatisticsHandler) GetVehicleStatisticsByYear(rw http.ResponseWriter, 
 func (sh *StatisticsHandler) GetRegisteredVehicles(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx)
+	token := sh.extractTokenFromHeader(r)
+
+	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx, token)
 	if err != nil {
 		sh.logger.Println("Failed to retrieve registered vehicles:", err)
 		http.Error(rw, "Failed to retrieve registered vehicles", http.StatusInternalServerError)
@@ -313,21 +316,21 @@ func (sh *StatisticsHandler) GetRegisteredVehicles(rw http.ResponseWriter, r *ht
 func (sh *StatisticsHandler) GetMostPopularBrands(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx)
+	token := sh.extractTokenFromHeader(r)
+
+	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx, token)
 	if err != nil {
 		sh.logger.Println("Failed to retrieve registered vehicles:", err)
 		http.Error(rw, "Failed to retrieve registered vehicles", http.StatusInternalServerError)
 		return
 	}
 
-	// Izračunavanje broja vozila po brendovima
 	brandCount := make(map[string]int)
 
 	for _, vehicle := range vehicles {
 		brandCount[vehicle.Brand]++
 	}
 
-	// Prikaz rezultata
 	rw.Header().Set(ContentType, ApplicationJson)
 	rw.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(rw).Encode(brandCount); err != nil {

@@ -20,13 +20,15 @@ func NewMupClient(client *http.Client, address string) MupClient {
 	}
 }
 
-func (c *MupClient) GetAllRegisteredVehicles(ctx context.Context) (data.Vehicles, error) {
+func (c *MupClient) GetAllRegisteredVehicles(ctx context.Context, token string) (data.Vehicles, error) {
 	url := c.address + "/registered-vehicles"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
