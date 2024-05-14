@@ -43,6 +43,8 @@ type Person struct {
 	DrivingBans    []DrivingBan    `bson:"drivingBans" json:"drivingBans"`
 }
 
+type Persons []*Person
+
 type LegalEntity struct {
 	Name        string  `bson:"name" json:"name"`
 	Citizenship string  `bson:"citizenship" json:"citizenship"`
@@ -57,6 +59,20 @@ type Address struct {
 	Locality     string `bson:"locality" json:"locality"`
 	StreetName   string `bson:"streetName" json:"streetName"`
 	StreetNumber int    `bson:"streetNumber" json:"streetNumber"`
+}
+
+type UserId struct {
+	ID primitive.ObjectID `json:"id"`
+}
+
+func (a *Persons) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(a)
+}
+
+func (a *Persons) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(a)
 }
 
 func (a *Account) ToJSON(w io.Writer) error {

@@ -13,20 +13,31 @@ type Vehicle struct {
 	Brand        string             `bson:"brand" json:"brand"`
 	Model        string             `bson:"model" json:"model"`
 	Year         int                `bson:"year" json:"year"`
-	Registration Registration       `bson:"registration" json:"registration"`
-	Plates       Plates             `bson:"plates" json:"plates"`
-	Owner        Person             `bson:"owner" json:"owner"`
+	Registration string             `bson:"registration" json:"registration"`
+	Plates       string             `bson:"plates" json:"plates"`
+	Owner        primitive.ObjectID `bson:"owner" json:"owner"`
 }
+
+type Vehicles []Vehicle
 
 type Registration struct {
-	RegistrationNumber string    `bson:"registrationNumber" json:"registrationNumber"`
-	ExpirationDate     time.Time `bson:"expirationDate" json:"expirationDate"`
+	RegistrationNumber string             `bson:"registrationNumber" json:"registrationNumber"`
+	IssuedDate         time.Time          `bson:"issuedDate" json:"issuedDate"`
+	ExpirationDate     time.Time          `bson:"expirationDate" json:"expirationDate"`
+	VehicleID          primitive.ObjectID `bson:"vehicleID" json:"vehicleID"`
+	Approved           bool               `bson:"approved" json:"approved"`
 }
 
+type Registrations []Registration
+
 type Plates struct {
-	RegistrationNumber string `bson:"registrationNumber" json:"registrationNumber"`
-	PlateType          string `bson:"plateType" json:"plateType"`
+	RegistrationNumber string             `bson:"registrationNumber" json:"registrationNumber"`
+	PlatesNumber       string             `bson:"platesNumber" json:"platesNumber"`
+	PlateType          string             `bson:"plateType" json:"plateType"`
+	VehicleID          primitive.ObjectID `bson:"vehicleID" json:"vehicleID"`
 }
+
+type ListOfPlates []Plates
 
 func (v *Vehicle) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
@@ -34,6 +45,16 @@ func (v *Vehicle) ToJSON(w io.Writer) error {
 }
 
 func (v *Vehicle) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(v)
+}
+
+func (v *Vehicles) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(v)
+}
+
+func (v *Vehicles) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(v)
 }
@@ -48,12 +69,32 @@ func (re *Registration) FromJSON(r io.Reader) error {
 	return d.Decode(re)
 }
 
+func (re *Registrations) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(re)
+}
+
+func (re *Registrations) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(re)
+}
+
 func (p *Plates) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(p)
 }
 
 func (p *Plates) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(p)
+}
+
+func (p *ListOfPlates) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(p)
+}
+
+func (p *ListOfPlates) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(p)
 }

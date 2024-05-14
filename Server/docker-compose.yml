@@ -55,7 +55,8 @@ services:
     environment:
       - PORT=8081
       - MONGO_DB_URI=${MONGO_DB_URI_MUP}
-      # TODO: Other services URIs
+      - SSO_SERVICE_URI=${SSO_SERVICE_URI}
+      - COURT_SERVICE_URI=${COURT_SERVICE_URI}
     depends_on:
       mup_db:
         condition: service_healthy
