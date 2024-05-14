@@ -96,7 +96,7 @@ services:
     environment:
       - PORT=8082
       - MONGO_DB_URI=${MONGO_DB_URI_POLICE}
-      # TODO: Other services URIs
+      - COURT_SERVICE_URI=${COURT_SERVICE_URI}
     depends_on:
       police_db:
         condition: service_healthy
@@ -177,7 +177,7 @@ services:
     environment:
       - PORT=8084
       - MONGO_DB_URI=${MONGO_DB_URI_STATISTICS}
-      # TODO: Other services URIs
+      - MUP_SERVICE_URI=${MUP_SERVICE_URI}
     depends_on:
       statistics_db:
         condition: service_healthy

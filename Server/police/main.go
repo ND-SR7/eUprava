@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"police/clients"
 	"police/data"
+	"police/handlers"
 	"syscall"
 	"time"
 
@@ -36,16 +38,37 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
-	// TODO: Handler init
+	courtClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
+
+	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
+
+	handler := handlers.NewPoliceHandler(store, court)
 
 	router := mux.NewRouter()
-	// TODO: Router methods
+	// Router methods
+	router.HandleFunc("/api/v1/traffic-violation", handler.CreateTrafficViolation).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/alcohol-test", handler.CheckAlcoholLevel).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
 		gorillaHandlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"}),
 		gorillaHandlers.AllowedHeaders([]string{"Content-Type"}),
 	)
+
+	pingRouter := router.Methods("GET").Subrouter()
+	pingRouter.HandleFunc("/api/v1", handler.Ping).Methods("GET")
+	pingRouter.Use(cors)
+	pingRouter.Use(handler.AuthorizeRoles("USER", "ADMIN"))
 
 	// Initialize the server
 	server := http.Server{

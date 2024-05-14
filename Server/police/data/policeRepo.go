@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -61,4 +62,60 @@ func (pr *PoliceRepo) Ping() {
 		pr.logger.Println(err.Error())
 	}
 	pr.logger.Println(databases)
+}
+
+func (pr *PoliceRepo) CreateTrafficViolation(ctx context.Context, violation *TrafficViolation) error {
+	collection := pr.getPoliceCollection("traffic_violations")
+	_, err := collection.InsertOne(ctx, violation)
+	return err
+}
+
+func (pr *PoliceRepo) GetTrafficViolationByID(ctx context.Context, id primitive.ObjectID) (*TrafficViolation, error) {
+	collection := pr.getPoliceCollection("traffic_violations")
+	violation := &TrafficViolation{}
+	err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(violation)
+	if err != nil {
+		return nil, err
+	}
+	return violation, nil
+}
+
+func (pr *PoliceRepo) GetAllTrafficViolations(ctx context.Context) ([]*TrafficViolation, error) {
+	collection := pr.getPoliceCollection("traffic_violations")
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var violations []*TrafficViolation
+	for cursor.Next(ctx) {
+		var violation TrafficViolation
+		if err := cursor.Decode(&violation); err != nil {
+			return nil, err
+		}
+		violations = append(violations, &violation)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	return violations, nil
+}
+
+func (pr *PoliceRepo) UpdateTrafficViolation(ctx context.Context, id primitive.ObjectID, update *TrafficViolation) error {
+	collection := pr.getPoliceCollection("traffic_violations")
+	_, err := collection.ReplaceOne(ctx, bson.M{"_id": id}, update)
+	return err
+}
+
+func (pr *PoliceRepo) DeleteTrafficViolation(ctx context.Context, id primitive.ObjectID) error {
+	collection := pr.getPoliceCollection("traffic_violations")
+	_, err := collection.DeleteOne(ctx, bson.M{"_id": id})
+	return err
+}
+
+func (pr *PoliceRepo) getPoliceCollection(nameOfCollection string) *mongo.Collection {
+	policeDatabase := pr.cli.Database("police_db")
+	policeCollection := policeDatabase.Collection(nameOfCollection)
+	return policeCollection
 }
