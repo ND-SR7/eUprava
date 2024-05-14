@@ -28,6 +28,14 @@ func NewPoliceHandler(r *data.PoliceRepo, c clients.CourtClient) *PoliceHandler 
 	return &PoliceHandler{r, c}
 }
 
+// Ping
+func (ph *PoliceHandler) Ping(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("Pong"))
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (ph *PoliceHandler) CreateTrafficViolation(w http.ResponseWriter, r *http.Request) {
 	var violation data.TrafficViolation
 	err := json.NewDecoder(r.Body).Decode(&violation)
