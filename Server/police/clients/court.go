@@ -1,4 +1,4 @@
-package client
+package clients
 
 import (
 	"bytes"
@@ -21,34 +21,29 @@ func NewCourtClient(client *http.Client, address string) CourtClient {
 	}
 }
 
-func (cc CourtClient) CreateCrimeReport(ctx context.Context, violation data.TrafficViolation) (interface{}, error) {
+func (cc CourtClient) CreateCrimeReport(ctx context.Context, violation data.TrafficViolation, token string) error {
 	requestBody, err := json.Marshal(violation)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, cc.address, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, cc.address+"/crime-report", bytes.NewBuffer(requestBody))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := cc.client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("unexpected status code: " + resp.Status)
+		return errors.New("unexpected status code: " + resp.Status)
 	}
 
-	var response interface{}
-	decoder := json.NewDecoder(resp.Body)
-	if err := decoder.Decode(&response); err != nil {
-		return nil, err
-	}
-
-	return response, nil
+	return nil
 }

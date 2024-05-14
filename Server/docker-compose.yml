@@ -13,6 +13,9 @@ services:
     environment:
       - PORT=8080
       - MONGO_DB_URI=${MONGO_DB_URI_SSO}
+      - MAIL_ADDRESS=${MAIL_ADDRESS}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - ACCOUNT_ACTIVATION_PATH=${ACCOUNT_ACTIVATION_PATH}
     depends_on:
       sso_db:
         condition: service_healthy
@@ -29,7 +32,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: sso_db
+      MONGO_INITDB_DATABASE: ssoDB
     healthcheck:
       test: echo 'db.runCommand("ping").ok'
       interval: 10s
@@ -37,6 +40,8 @@ services:
       retries: 10
     volumes:
       - sso_db:/data/db
+    networks:
+      - network
   
   mup:
     container_name: "mup"
@@ -50,7 +55,8 @@ services:
     environment:
       - PORT=8081
       - MONGO_DB_URI=${MONGO_DB_URI_MUP}
-      # TODO: Other services URIs
+      - SSO_SERVICE_URI=${SSO_SERVICE_URI}
+      - COURT_SERVICE_URI=${COURT_SERVICE_URI}
     depends_on:
       mup_db:
         condition: service_healthy
@@ -67,7 +73,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: mup_db
+      MONGO_INITDB_DATABASE: mupDB
     healthcheck:
       test: echo 'db.runCommand("ping").ok'
       interval: 10s
@@ -75,6 +81,8 @@ services:
       retries: 10
     volumes:
       - mup_db:/data/db
+    networks:
+      - network
 
   police:
     container_name: "police"
@@ -88,7 +96,7 @@ services:
     environment:
       - PORT=8082
       - MONGO_DB_URI=${MONGO_DB_URI_POLICE}
-      # TODO: Other services URIs
+      - COURT_SERVICE_URI=${COURT_SERVICE_URI}
     depends_on:
       police_db:
         condition: service_healthy
@@ -105,7 +113,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: police_db
+      MONGO_INITDB_DATABASE: policeDB
     healthcheck:
       test: echo 'db.runCommand("ping").ok'
       interval: 10s
@@ -114,7 +122,7 @@ services:
     volumes:
       - police_db:/data/db
     networks:
-      - network  
+      - network
 
   court:
     container_name: "court"
@@ -127,8 +135,9 @@ services:
       - "8083:8083"
     environment:
       - PORT=8083
-      - MONGO_DB_URI=${MONGO_DB_URI_POLICE}
-      # TODO: Other services URIs
+      - MONGO_DB_URI=${MONGO_DB_URI_COURT}
+      - SSO_SERVICE_URI=${SSO_SERVICE_URI}
+      - MUP_SERVICE_URI=${MUP_SERVICE_URI}
     depends_on:
       court_db:
         condition: service_healthy
@@ -145,7 +154,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: court_db
+      MONGO_INITDB_DATABASE: courtDB
     healthcheck:
       test: echo 'db.runCommand("ping").ok'
       interval: 10s
@@ -153,6 +162,8 @@ services:
       retries: 10
     volumes:
       - court_db:/data/db
+    networks:
+      - network
 
   statistics:
     container_name: "statistics"
@@ -166,7 +177,7 @@ services:
     environment:
       - PORT=8084
       - MONGO_DB_URI=${MONGO_DB_URI_STATISTICS}
-      # TODO: Other services URIs
+      - MUP_SERVICE_URI=${MUP_SERVICE_URI}
     depends_on:
       statistics_db:
         condition: service_healthy
@@ -183,7 +194,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: statistics_db
+      MONGO_INITDB_DATABASE: statisticsDB
     healthcheck:
       test: echo 'db.runCommand("ping").ok'
       interval: 10s
@@ -191,6 +202,8 @@ services:
       retries: 10
     volumes:
       - statistics_db:/data/db
+    networks:
+      - network
 
 volumes:
   sso_db:

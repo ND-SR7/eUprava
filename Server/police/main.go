@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"police/clients"
 	"police/data"
 	"police/handlers"
 	"syscall"
@@ -37,16 +38,26 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
-	handler := handlers.NewPoliceHandler(store, logger)
+	courtClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
+
+	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
+
+	handler := handlers.NewPoliceHandler(store, court)
 
 	router := mux.NewRouter()
 	// Router methods
-	router.HandleFunc("/api/v1/trafficViolation", handler.CreateTrafficViolation).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/trafficViolation/alcoholTest", handler.CheckAlcoholLevel).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/trafficViolation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/trafficViolation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/trafficViolation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/trafficViolation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/traffic-violation", handler.CreateTrafficViolation).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/alcohol-test", handler.CheckAlcoholLevel).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

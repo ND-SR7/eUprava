@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"police/client"
+	"police/clients"
 	"police/data"
 	"time"
 
@@ -19,13 +19,13 @@ type KeyProduct struct{}
 var secretKey = []byte("eUpravaT2")
 
 type PoliceHandler struct {
-	repo   *data.PoliceRepo
-	logger *log.Logger
+	repo  *data.PoliceRepo
+	court clients.CourtClient
 }
 
 // Constructor
-func NewPoliceHandler(r *data.PoliceRepo, log *log.Logger) *PoliceHandler {
-	return &PoliceHandler{r, log}
+func NewPoliceHandler(r *data.PoliceRepo, c clients.CourtClient) *PoliceHandler {
+	return &PoliceHandler{r, c}
 }
 
 func (ph *PoliceHandler) CreateTrafficViolation(w http.ResponseWriter, r *http.Request) {
@@ -66,6 +66,7 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 			ViolatorEmail: alcoholTest.UserEmail,
 			Location:      alcoholTest.Location,
 		}
+
 		err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
 		if err != nil {
 			http.Error(w, "Failed to create traffic violation", http.StatusInternalServerError)
@@ -73,9 +74,9 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		courtClient := client.NewCourtClient(&http.Client{}, "http://localhost:8080/api/v1/crime-report")
+		token := ph.extractTokenFromHeader(r)
 
-		_, err := courtClient.CreateCrimeReport(r.Context(), violation)
+		err := ph.court.CreateCrimeReport(r.Context(), violation, token)
 		if err != nil {
 			http.Error(w, "Failed to send crime report", http.StatusInternalServerError)
 			log.Printf("Failed to send crime report: %v\n", err)
@@ -88,7 +89,8 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	http.Error(w, "Driver is not under the influence of alcohol", http.StatusOK)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Driver is not under the influence of alcohol"))
 }
 
 func (ph *PoliceHandler) GetTrafficViolationByID(w http.ResponseWriter, r *http.Request) {
