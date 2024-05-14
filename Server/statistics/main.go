@@ -107,6 +107,11 @@ func main() {
 		gorillaHandlers.AllowedHeaders([]string{"Content-Type"}),
 	)
 
+	pingRouter := router.Methods("GET").Subrouter()
+	pingRouter.HandleFunc("/api/v1", statisticsHandler.Ping).Methods("GET")
+	pingRouter.Use(cors)
+	pingRouter.Use(statisticsHandler.AuthorizeRoles("USER", "ADMIN"))
+
 	// Initialize the server
 	server := http.Server{
 		Addr:         ":" + port,

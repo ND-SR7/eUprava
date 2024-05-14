@@ -30,7 +30,15 @@ func NewStatisticsHandler(l *log.Logger, r *data.StatisticsRepo, mc clients.MupC
 	return &StatisticsHandler{l, r, mc}
 }
 
-// TODO Handler methods
+// Ping
+func (sh *StatisticsHandler) Ping(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("Pong"))
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// Handler methods
 
 func (sh *StatisticsHandler) GetAllTrafficStatistics(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
