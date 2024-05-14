@@ -50,9 +50,8 @@ func (ph *PoliceHandler) CreateTrafficViolation(w http.ResponseWriter, r *http.R
 }
 
 func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Request) {
-	var violation data.TrafficViolation
 	var alcoholTest data.AlcoholTest
-	err := json.NewDecoder(r.Body).Decode(&violation)
+	err := json.NewDecoder(r.Body).Decode(&alcoholTest)
 	if err != nil {
 		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
 		log.Printf("Failed to decode request body: %v\n", err)
@@ -60,11 +59,13 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 	}
 
 	if alcoholTest.AlcoholLevel > 0.2 {
-		violation.Reason = fmt.Sprintf("drunk driving: %.2f", alcoholTest.AlcoholLevel)
-		violation.Description = "Driver was caught operating a vehicle with a blood alcohol level above the legal limit."
-		violation.Time = time.Now()
-		violation.ViolatorEmail = alcoholTest.UserEmail
-		violation.Location = alcoholTest.Location
+		violation := data.TrafficViolation{
+			Reason:        fmt.Sprintf("drunk driving: %.2f", alcoholTest.AlcoholLevel),
+			Description:   "Driver was caught operating a vehicle with a blood alcohol level above the legal limit.",
+			Time:          time.Now(),
+			ViolatorEmail: alcoholTest.UserEmail,
+			Location:      alcoholTest.Location,
+		}
 		err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
 		if err != nil {
 			http.Error(w, "Failed to create traffic violation", http.StatusInternalServerError)

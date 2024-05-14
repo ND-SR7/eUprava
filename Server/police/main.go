@@ -41,12 +41,12 @@ func main() {
 
 	router := mux.NewRouter()
 	// Router methods
-	router.HandleFunc("/trafficViolation", handler.CreateTrafficViolation).Methods(http.MethodPost)
-	router.HandleFunc("/trafficViolation/alcoholTest", handler.CheckAlcoholLevel).Methods(http.MethodPost)
-	router.HandleFunc("/trafficViolation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
-	router.HandleFunc("/trafficViolation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
-	router.HandleFunc("/trafficViolation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
-	router.HandleFunc("/trafficViolation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/trafficViolation", handler.CreateTrafficViolation).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/trafficViolation/alcoholTest", handler.CheckAlcoholLevel).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/trafficViolation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/trafficViolation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/trafficViolation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/trafficViolation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

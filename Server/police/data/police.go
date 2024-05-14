@@ -23,9 +23,9 @@ type TrafficViolation struct {
 }
 
 type AlcoholTest struct {
-	UserEmail    string
-	AlcoholLevel float64
-	Location     string
+	UserEmail    string  `bson:"userEmail" json:"userEmail"`
+	AlcoholLevel float64 `bson:"alcoholLevel" json:"alcoholLevel"`
+	Location     string  `bson:"location" json:"location"`
 }
 
 func (tp *TrafficPolice) ToJSON(w io.Writer) error {
@@ -46,4 +46,14 @@ func (tv *TrafficViolation) ToJSON(w io.Writer) error {
 func (tv *TrafficViolation) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(tv)
+}
+
+func (at *AlcoholTest) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(at)
+}
+
+func (at *AlcoholTest) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(at)
 }
