@@ -5,9 +5,8 @@ const BASE_URL_POLICE = process.env.REACT_APP_API_BASE_URL_POLICE;
 const BASE_URL_COURT = process.env.REACT_APP_API_BASE_URL_COURT;
 const BASE_URL_STATISTICS = process.env.REACT_APP_API_BASE_URL_STATISTICS;
 
-const token = localStorage.getItem("token");
-
 export async function pingMUP() {
+  const token = localStorage.getItem("token");
   try {
     const response = await axios.get(`${BASE_URL_MUP}`, {
       headers: {
@@ -21,6 +20,7 @@ export async function pingMUP() {
 };
 
 export async function pingPolice() {
+  const token = localStorage.getItem("token");
   try {
     const response = await axios.get(`${BASE_URL_POLICE}`, {
       headers: {
@@ -34,6 +34,7 @@ export async function pingPolice() {
 };
 
 export async function pingCourt() {
+  const token = localStorage.getItem("token");
   try {
     const response = await axios.get(`${BASE_URL_COURT}`, {
       headers: {
@@ -47,6 +48,7 @@ export async function pingCourt() {
 };
 
 export async function pingStatistics() {
+  const token = localStorage.getItem("token");
   try {
     const response = await axios.get(`${BASE_URL_STATISTICS}`, {
       headers: {
