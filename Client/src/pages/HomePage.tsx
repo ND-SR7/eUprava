@@ -17,6 +17,11 @@ const HomePage = () => {
     setSub(sub);
     // eslint-disable-next-line
   }, []);
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    navigate("/");
+  }
   
   return (
     <>
@@ -46,6 +51,14 @@ const HomePage = () => {
         label="Institute for Statistics"
         buttonType="button"
         onClick={() => navigate("/home/statistics")} />
+      <br />
+      <br />
+      <Button
+        key="btnLogout"
+        id="btnLogout"
+        label="Logout"
+        buttonType="button"
+        onClick={() => logout()} />
     </>
   );
 };

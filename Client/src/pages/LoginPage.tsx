@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/Shared/Button/Button";
 import UserToken from "../models/User/UserToken";
 import { login } from "../services/SSOService";
+import { useEffect } from "react";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -12,6 +13,10 @@ const LoginPage = () => {
     { label: "Email", attrName: "email", type: "text"},
     { label: "Password", attrName: "password", type: "password"}
   ];
+
+  useEffect(() => {
+    if (localStorage.getItem("token") !== null) navigate("/home");
+  });
 
   function loginUser(formData: any): void {
     login({
