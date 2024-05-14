@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"mup/clients"
 	"mup/data"
 	"net/http"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const ApplicationJson = "application/json"
@@ -110,7 +111,7 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 
 	email, err := mh.getEmailFromToken(tokenStr)
 	if err != nil {
-		fmt.Sprintf("Error while reading email from token: %v", err)
+		fmt.Printf("Error while reading email from token: %v", err)
 		http.Error(rw, FailedToReadUsernameFromToken, http.StatusBadRequest)
 		return
 	}
@@ -128,16 +129,16 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 		return
 	}
 
-	warrants, err := mh.cc.CheckForPersonsWarrant(ctx, user.Account.ID, tokenStr)
+	warrants, err := mh.cc.CheckForPersonsWarrant(ctx, trafficPermit.Person, tokenStr)
 	if err != nil {
 		http.Error(rw, "Failed to get warrant from court service", http.StatusBadRequest)
-		log.Printf("Failed to get warrant from court serviceo: %v", err)
+		log.Printf("Failed to get warrant from court service: %v", err)
 		return
 	}
 
 	if len(warrants) != 0 {
 		http.Error(rw, "User is on warrant list", http.StatusBadRequest)
-		log.Printf("FUser is on warrant list")
+		log.Printf("User is on warrant list")
 		return
 	}
 
