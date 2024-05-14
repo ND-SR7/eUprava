@@ -71,7 +71,6 @@ func main() {
 	router.HandleFunc("/api/v1/update-hearing-entity", courtHandler.UpdateHearingLegalEntity).Methods("PUT")
 
 	authorizedRouter := router.Methods("GET", "POST").Subrouter()
-	authorizedRouter.HandleFunc("/api/v1", courtHandler.Ping).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/suspension", courtHandler.CreateSuspension).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/warrants", courtHandler.CreateWarrant).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/warrants/{accountID}", courtHandler.CheckForWarrants).Methods("GET")
@@ -81,8 +80,13 @@ func main() {
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
 		gorillaHandlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"}),
-		gorillaHandlers.AllowedHeaders([]string{"Content-Type"}),
+		gorillaHandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
+
+	pingRouter := router.Methods("GET").Subrouter()
+	pingRouter.HandleFunc("/api/v1", courtHandler.Ping).Methods("GET")
+	pingRouter.Use(cors)
+	pingRouter.Use(courtHandler.AuthorizeRoles("USER", "ADMIN"))
 
 	// Initialize the server
 	server := http.Server{

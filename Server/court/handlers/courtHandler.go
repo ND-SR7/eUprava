@@ -33,6 +33,9 @@ func NewCourtHandler(r *data.CourtRepo, s clients.SSOClient, m clients.MUPClient
 
 // Ping
 func (ch *CourtHandler) Ping(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("Pong"))
+
 	w.WriteHeader(http.StatusOK)
 }
 
