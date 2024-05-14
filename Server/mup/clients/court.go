@@ -24,11 +24,11 @@ func NewCourtClient(client *http.Client, address string) CourtClient {
 	}
 }
 
-func (cc CourtClient) CheckForPersonsWarrant(ctx context.Context, userID primitive.ObjectID, token string) (data.Warrant, error) {
+func (cc CourtClient) CheckForPersonsWarrant(ctx context.Context, userID primitive.ObjectID, token string) (data.Warrants, error) {
 	requestBody, err := json.Marshal(userID.Hex())
 	if err != nil {
 		_ = fmt.Errorf("failed to marshal user id: %v", err)
-		return data.Warrant{}, err
+		return data.Warrants{}, err
 	}
 
 	var timeout time.Duration
@@ -39,28 +39,28 @@ func (cc CourtClient) CheckForPersonsWarrant(ctx context.Context, userID primiti
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cc.address+"/warrants/"+userID.Hex(), bytes.NewBuffer(requestBody))
 	if err != nil {
-		return data.Warrant{}, err
+		return data.Warrants{}, err
 	}
 
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := cc.client.Do(req)
 	if err != nil {
-		return data.Warrant{}, handleHttpReqErr(err, cc.address, http.MethodPost, timeout)
+		return data.Warrants{}, handleHttpReqErr(err, cc.address, http.MethodPost, timeout)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return data.Warrant{}, domain.ErrResp{
+		return data.Warrants{}, domain.ErrResp{
 			URL:        resp.Request.URL.String(),
 			Method:     resp.Request.Method,
 			StatusCode: resp.StatusCode,
 		}
 	}
 
-	var serviceResponse data.Warrant
+	var serviceResponse data.Warrants
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(&serviceResponse); err != nil {
-		return data.Warrant{}, fmt.Errorf("failed to decode JSON response: %v", err)
+		return data.Warrants{}, fmt.Errorf("failed to decode JSON response: %v", err)
 	}
 
 	return serviceResponse, nil

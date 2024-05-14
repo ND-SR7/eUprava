@@ -128,14 +128,14 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 		return
 	}
 
-	warrant, err := mh.cc.CheckForPersonsWarrant(ctx, user.Account.ID, tokenStr)
+	warrants, err := mh.cc.CheckForPersonsWarrant(ctx, user.Account.ID, tokenStr)
 	if err != nil {
 		http.Error(rw, "Failed to get warrant from court service", http.StatusBadRequest)
 		log.Printf("Failed to get warrant from court serviceo: %v", err)
 		return
 	}
 
-	if warrant.ID != "" {
+	if len(warrants) != 0 {
 		http.Error(rw, "User is on warrant list", http.StatusBadRequest)
 		log.Printf("FUser is on warrant list")
 		return
