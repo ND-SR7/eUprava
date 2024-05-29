@@ -6,6 +6,7 @@ import (
 	"mup/clients"
 	"mup/data"
 	"mup/handlers"
+	"mup/services"
 	"net/http"
 	"os"
 	"os/signal"
@@ -57,7 +58,8 @@ func main() {
 	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
 	sso := clients.NewSSOClient(ssoClient, os.Getenv("SSO_SERVICE_URI"))
 
-	mupHandler := handlers.NewMupHandler(store, storeLogger, sso, court)
+	mupService := services.NewMupService(store, storeLogger, sso, court)
+	mupHandler := handlers.NewMupHandler(mupService, storeLogger)
 
 	router := mux.NewRouter()
 
@@ -85,7 +87,7 @@ func main() {
 	pingRouter.Use(cors)
 	pingRouter.Use(mupHandler.AuthorizeRoles("USER", "ADMIN"))
 
-	mupHandler.SaveMup()
+	mupService.SaveMup()
 
 	// Initialize the server
 	server := http.Server{

@@ -430,6 +430,18 @@ func (mr *MUPRepo) CheckForPersonsDrivingBans(ctx context.Context, userID primit
 func (mr *MUPRepo) SaveMup(ctx context.Context) error {
 	collection := mr.getMupCollection("mup")
 
+	filter := bson.D{{"name", "Mup"}}
+	var existingMup Mup
+	err := collection.FindOne(ctx, filter).Decode(&existingMup)
+	if err == nil {
+		log.Printf("Mup with name 'Mup' already exists: %v", existingMup)
+		return nil
+	}
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Printf("Error while checking if Mup exists: %v", err)
+		return err
+	}
+
 	mupID := primitive.NewObjectID()
 
 	address := Address{
@@ -450,9 +462,9 @@ func (mr *MUPRepo) SaveMup(ctx context.Context) error {
 		Registrations:  make([]string, 0),
 	}
 
-	_, err := collection.InsertOne(ctx, mup)
+	_, err = collection.InsertOne(ctx, mup)
 	if err != nil {
-		log.Printf("Failed to create mup: %v", err)
+		log.Printf("Failed to create Mup: %v", err)
 		return err
 	}
 
@@ -460,8 +472,7 @@ func (mr *MUPRepo) SaveMup(ctx context.Context) error {
 	return nil
 }
 
-//Get collection method
-
+// Get collection method
 func (mr *MUPRepo) getMupCollection(nameOfCollection string) *mongo.Collection {
 	mupDatabase := mr.cli.Database("mup_db")
 	mupCollection := mupDatabase.Collection(nameOfCollection)
