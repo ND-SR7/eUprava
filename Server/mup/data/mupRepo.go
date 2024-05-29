@@ -150,18 +150,6 @@ func (mr *MUPRepo) RetrieveRegisteredVehicles(ctx context.Context) (Vehicles, er
 
 //Mup methods
 
-func (mr *MUPRepo) SaveMup(ctx context.Context, mup Mup) error {
-	collection := mr.getMupCollection("mup")
-
-	_, err := collection.InsertOne(ctx, mup)
-	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to create mup: %v", err))
-		return err
-	}
-
-	return nil
-}
-
 func (mr *MUPRepo) SaveVehicleIntoMup(ctx context.Context, vehicle *Vehicle) error {
 	mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
 	if err != nil {
@@ -261,35 +249,6 @@ func (mr *MUPRepo) SaveDrivingBanIntoMup(ctx context.Context, drivingBan Driving
 	fmt.Println("Driving ban successfully saved into mup!")
 	return nil
 }
-
-//Registration methods
-
-//func (mr *MUPRepo) RegisterVehicle(ctx context.Context, registration Registration) error {
-//	registration.IssuedDate = time.Now()
-//	registration.Approved = false
-//
-//	collection := mr.getMupCollection("registration")
-//
-//	_, err := collection.InsertOne(ctx, registration)
-//	if err != nil {
-//		log.Printf(fmt.Sprintf("Failed to create registration: %v", err))
-//		return err
-//	}
-//
-//	err = mr.SaveRegistrationIntoMup(ctx, registration)
-//	if err != nil {
-//		log.Printf(fmt.Sprintf("Failed to save registration into mup: %v", err))
-//		return err
-//	}
-//
-//	err = mr.SaveRegistrationIntoVehicle(ctx, registration)
-//	if err != nil {
-//		log.Printf(fmt.Sprintf("Failed to save registration into vehicle: %v", err))
-//		return err
-//	}
-//
-//	return nil
-//}
 
 func (mr *MUPRepo) SubmitRegistrationRequest(ctx context.Context, registration *Registration) error {
 	registration.Approved = false
@@ -419,8 +378,6 @@ func (mr *MUPRepo) IssuePlates(ctx context.Context, plates Plates) error {
 
 func (mr *MUPRepo) IssueDrivingBan(ctx context.Context, drivingBan *DrivingBan) error {
 	drivingBan.ID = primitive.NewObjectID()
-	drivingBanPersonID, _ := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e11")
-	drivingBan.Person = drivingBanPersonID
 
 	collection := mr.getMupCollection("drivingBan")
 
@@ -467,6 +424,40 @@ func (mr *MUPRepo) CheckForPersonsDrivingBans(ctx context.Context, userID primit
 	}
 
 	return drivingBans, nil
+}
+
+// MUP methods
+func (mr *MUPRepo) SaveMup(ctx context.Context) error {
+	collection := mr.getMupCollection("mup")
+
+	mupID := primitive.NewObjectID()
+
+	address := Address{
+		Municipality: "",
+		Locality:     "Novi Sad",
+		StreetName:   "Dunavska",
+		StreetNumber: 1,
+	}
+
+	mup := Mup{
+		ID:             mupID,
+		Name:           "Mup",
+		Address:        address,
+		Vehicles:       make([]primitive.ObjectID, 0),
+		TrafficPermits: make([]primitive.ObjectID, 0),
+		Plates:         make([]string, 0),
+		DrivingBans:    make([]primitive.ObjectID, 0),
+		Registrations:  make([]string, 0),
+	}
+
+	_, err := collection.InsertOne(ctx, mup)
+	if err != nil {
+		log.Printf("Failed to create mup: %v", err)
+		return err
+	}
+
+	log.Printf("Inserted Mup: %v", mup)
+	return nil
 }
 
 //Get collection method

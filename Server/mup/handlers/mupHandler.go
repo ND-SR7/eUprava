@@ -47,6 +47,9 @@ func (mh *MupHandler) Ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// TODO: implement check for persons driving licience
+// TODO: implement check for persons registrations
+
 //GET
 
 func (mh *MupHandler) CheckForPersonsDrivingBans(rw http.ResponseWriter, r *http.Request) {
@@ -117,7 +120,7 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 	ctx := r.Context()
 	tokenStr := mh.extractTokenFromHeader(r)
 
-	email, err := mh.getEmailFromToken(tokenStr)
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
 	if err != nil {
 		fmt.Printf("Error while reading email from token: %v", err)
 		http.Error(rw, FailedToReadUsernameFromToken, http.StatusBadRequest)
@@ -130,7 +133,7 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 		return
 	}
 
-	user, err := mh.ssoc.GetUserByEmail(ctx, email, tokenStr)
+	user, err := mh.ssoc.GetUserByJMBG(ctx, jmbg, tokenStr)
 	if err != nil {
 		http.Error(rw, "Failed to get user by email from sso", http.StatusBadRequest)
 		log.Printf("Failed to get user by email from sso: %v", err)
@@ -150,7 +153,7 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 		return
 	}
 
-	trafficPermit.Person = user.Account.ID
+	trafficPermit.Person = user.JMBG
 	trafficPermit.Approved = false
 	trafficPermit.IssuedDate = time.Now()
 
@@ -269,8 +272,8 @@ func (mh *MupHandler) ApproveTrafficPermitRequest(rw http.ResponseWriter, r *htt
 }
 
 // Save mup
-func (mh *MupHandler) SaveMup(mup data.Mup) error {
-	err := mh.repo.SaveMup(context.Background(), mup)
+func (mh *MupHandler) SaveMup() error {
+	err := mh.repo.SaveMup(context.Background())
 	if err != nil {
 		return err
 	}
@@ -324,7 +327,7 @@ func (mh *MupHandler) extractTokenFromHeader(rr *http.Request) string {
 	return ""
 }
 
-func (mh *MupHandler) getEmailFromToken(tokenString string) (string, error) {
+func (mh *MupHandler) getJMBGFromToken(tokenString string) (string, error) {
 	claims := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
@@ -334,11 +337,11 @@ func (mh *MupHandler) getEmailFromToken(tokenString string) (string, error) {
 		return "", err
 	}
 
-	email, ok1 := claims["sub"].(string)
+	jmbg, ok1 := claims["sub"].(string)
 	_, ok2 := claims["role"].(string)
 	if !ok1 || !ok2 {
 		return "", err
 	}
 
-	return email, nil
+	return jmbg, nil
 }

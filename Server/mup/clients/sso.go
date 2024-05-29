@@ -26,7 +26,7 @@ func NewSSOClient(client *http.Client, address string) SSOClient {
 
 //Client methods
 
-func (ssoc SSOClient) GetUserByEmail(ctx context.Context, email, token string) (data.Person, error) {
+func (ssoc SSOClient) GetUserByJMBG(ctx context.Context, email, token string) (data.Person, error) {
 	var timeout time.Duration
 	deadline, reqHasDeadline := ctx.Deadline()
 	if reqHasDeadline {
