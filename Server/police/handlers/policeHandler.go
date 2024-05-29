@@ -58,47 +58,85 @@ func (ph *PoliceHandler) CreateTrafficViolation(w http.ResponseWriter, r *http.R
 }
 
 func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Request) {
-	var alcoholTest data.AlcoholTest
-	err := json.NewDecoder(r.Body).Decode(&alcoholTest)
+	var driverCheck data.DriverCheck
+	err := json.NewDecoder(r.Body).Decode(&driverCheck)
 	if err != nil {
 		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
 		log.Printf("Failed to decode request body: %v\n", err)
 		return
 	}
 
-	if alcoholTest.AlcoholLevel > 0.2 {
-		violation := data.TrafficViolation{
-			Reason:        fmt.Sprintf("drunk driving: %.2f", alcoholTest.AlcoholLevel),
-			Description:   "Driver was caught operating a vehicle with a blood alcohol level above the legal limit.",
-			Time:          time.Now(),
-			ViolatorEmail: alcoholTest.UserEmail,
-			Location:      alcoholTest.Location,
-		}
+	violation := data.TrafficViolation{
+		Time:         time.Now(),
+		ViolatorJMBG: driverCheck.JMBG,
+		Location:     driverCheck.Location,
+	}
 
-		err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
-		if err != nil {
-			http.Error(w, "Failed to create traffic violation", http.StatusInternalServerError)
-			log.Printf("Failed to create traffic violation: %v\n", err)
+	if driverCheck.AlcoholLevel <= 0 {
+		violation.Reason = "Driver is not under the influence of alcohol \n"
+		violation.Description = "Driver was caught operating a vehicle with a blood alcohol level within the legal limit. \n"
+	} else {
+
+		if driverCheck.AlcoholLevel > 0.2 {
+			violation.Reason = fmt.Sprintf("drunk driving: %.2f \n", driverCheck.AlcoholLevel)
+			violation.Description = "Driver was caught operating a vehicle with a blood alcohol level above the legal limit. \n"
+		} else {
+			violation.Reason = fmt.Sprintf("drunk driving: %.2f", driverCheck.AlcoholLevel)
+			violation.Description = "Driver was caught operating a vehicle with a blood alcohol level within the legal limit."
+		}
+	}
+
+	if driverCheck.Tire != "" {
+		switch driverCheck.Tire {
+		case "SUMMER":
+			now := time.Now()
+			month := now.Month()
+			day := now.Day()
+
+			winterTiresRequired := (month >= time.November && month <= time.December) || (month == time.January && day <= 1)
+
+			if winterTiresRequired {
+				violation.Reason += fmt.Sprintf("Winter tires required, provided tire type: %s \n", driverCheck.Tire)
+				violation.Description += "Additionally, the vehicle was equipped with incorrect tires for the current date."
+			}
+
+		case "WINTER":
+			now := time.Now()
+			month := now.Month()
+			day := now.Day()
+
+			winterTiresRequired := (month >= time.November && month <= time.December) || (month == time.January && day <= 1)
+			if !winterTiresRequired {
+				violation.Reason += fmt.Sprintf("Winter tires not required, provided tire type: %s \n", driverCheck.Tire)
+				violation.Description += "The vehicle was equipped with winter tires outside of the required period. \n"
+			}
+
+		default:
+			http.Error(w, "Invalid tire type provided. Must be either SUMMER or WINTER", http.StatusBadRequest)
 			return
 		}
+	}
 
-		token := ph.extractTokenFromHeader(r)
-
-		err := ph.court.CreateCrimeReport(r.Context(), violation, token)
-		if err != nil {
-			http.Error(w, "Failed to send crime report", http.StatusInternalServerError)
-			log.Printf("Failed to send crime report: %v\n", err)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(violation)
+	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
+	if err != nil {
+		http.Error(w, "Failed to create traffic violation", http.StatusInternalServerError)
+		log.Printf("Failed to create traffic violation: %v\n", err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Driver is not under the influence of alcohol"))
+	token := ph.extractTokenFromHeader(r)
+
+	err = ph.court.CreateCrimeReport(r.Context(), violation, token)
+	if err != nil {
+		http.Error(w, "Failed to send crime report", http.StatusInternalServerError)
+		log.Printf("Failed to send crime report: %v\n", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(violation)
+	return
 }
 
 func (ph *PoliceHandler) GetTrafficViolationByID(w http.ResponseWriter, r *http.Request) {
@@ -169,8 +207,8 @@ func (ph *PoliceHandler) UpdateTrafficViolation(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if update.ViolatorEmail != "" {
-		existingViolation.ViolatorEmail = update.ViolatorEmail
+	if update.ViolatorJMBG != "" {
+		existingViolation.ViolatorJMBG = update.ViolatorJMBG
 	}
 	if update.Reason != "" {
 		existingViolation.Reason = update.Reason

@@ -14,17 +14,18 @@ type TrafficPolice struct {
 }
 
 type TrafficViolation struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	ViolatorEmail string             `bson:"violatorEmail" json:"violatorEmail"`
-	Reason        string             `bson:"reason" json:"reason"`
-	Description   string             `bson:"description" json:"description"`
-	Time          time.Time          `bson:"time" json:"time"`
-	Location      string             `bson:"location" json:"location"`
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ViolatorJMBG string             `bson:"violatorJMBG" json:"violatorJMBG"`
+	Reason       string             `bson:"reason" json:"reason"`
+	Description  string             `bson:"description" json:"description"`
+	Time         time.Time          `bson:"time" json:"time"`
+	Location     string             `bson:"location" json:"location"`
 }
 
-type AlcoholTest struct {
-	UserEmail    string  `bson:"userEmail" json:"userEmail"`
+type DriverCheck struct {
+	JMBG         string  `bson:"JMBG" json:"JMBG"`
 	AlcoholLevel float64 `bson:"alcoholLevel" json:"alcoholLevel"`
+	Tire         string  `bson:"tire" json:"tire"`
 	Location     string  `bson:"location" json:"location"`
 }
 
@@ -48,12 +49,12 @@ func (tv *TrafficViolation) FromJSON(r io.Reader) error {
 	return d.Decode(tv)
 }
 
-func (at *AlcoholTest) ToJSON(w io.Writer) error {
+func (at *DriverCheck) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(at)
 }
 
-func (at *AlcoholTest) FromJSON(r io.Reader) error {
+func (at *DriverCheck) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(at)
 }

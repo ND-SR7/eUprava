@@ -53,11 +53,11 @@ func main() {
 	router := mux.NewRouter()
 	// Router methods
 	router.HandleFunc("/api/v1/traffic-violation", handler.CreateTrafficViolation).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traffic-violation/alcohol-test", handler.CheckAlcoholLevel).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traffic-violation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/traffic-violation/alcohol-test", handler.CheckAlcoholLevel).Methods(http.MethodPost)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
