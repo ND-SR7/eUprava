@@ -5,11 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"mup/data"
 	"mup/domain"
 	"net/http"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type SSOClient struct {
@@ -26,14 +27,14 @@ func NewSSOClient(client *http.Client, address string) SSOClient {
 
 //Client methods
 
-func (ssoc SSOClient) GetUserByJMBG(ctx context.Context, email, token string) (data.Person, error) {
+func (ssoc SSOClient) GetUserByJMBG(ctx context.Context, jmbg, token string) (data.Person, error) {
 	var timeout time.Duration
 	deadline, reqHasDeadline := ctx.Deadline()
 	if reqHasDeadline {
 		timeout = time.Until(deadline)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ssoc.address+"/user/email/"+email, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ssoc.address+"/user/jmbg/"+jmbg, nil)
 	if err != nil {
 		return data.Person{}, err
 	}
@@ -42,7 +43,7 @@ func (ssoc SSOClient) GetUserByJMBG(ctx context.Context, email, token string) (d
 
 	resp, err := ssoc.client.Do(req)
 	if err != nil {
-		return data.Person{}, handleHttpReqErr(err, ssoc.address+"/user/email/"+email, http.MethodPost, timeout)
+		return data.Person{}, handleHttpReqErr(err, ssoc.address+"/user/jmbg/"+jmbg, http.MethodPost, timeout)
 	}
 
 	if resp.StatusCode != http.StatusOK {
