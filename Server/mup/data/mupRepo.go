@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
@@ -251,8 +252,6 @@ func (mr *MUPRepo) SaveDrivingBanIntoMup(ctx context.Context, drivingBan Driving
 }
 
 func (mr *MUPRepo) SubmitRegistrationRequest(ctx context.Context, registration *Registration) error {
-	registration.Approved = false
-	registration.IssuedDate = time.Now()
 	collection := mr.getMupCollection("registration")
 
 	_, err := collection.InsertOne(ctx, registration)
@@ -308,6 +307,24 @@ func (mr *MUPRepo) ApproveRegistration(ctx context.Context, registration Registr
 	}
 
 	return nil
+}
+
+func (mr *MUPRepo) GetRegistrationByPlate(ctx context.Context, plate string) (Registration, error) {
+	collection := mr.getMupCollection("registrations")
+
+	filter := bson.D{{"plates", plate}}
+
+	var registration Registration
+
+	err := collection.FindOne(ctx, filter).Decode(&registration)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return Registration{}, nil
+		}
+		return Registration{}, err
+	}
+
+	return registration, nil
 }
 
 //Driving permit methods
@@ -396,9 +413,48 @@ func (mr *MUPRepo) IssueDrivingBan(ctx context.Context, drivingBan *DrivingBan) 
 	return nil
 }
 
+func (mr *MUPRepo) GetDrivingBan(ctx context.Context, jmbg string, now time.Time) (DrivingBan, error) {
+	collection := mr.getMupCollection("drivingBans")
+
+	filter := bson.D{
+		{"person", jmbg},
+		{"duration", bson.D{{"$lt", now}}},
+	}
+
+	var drivingBan DrivingBan
+
+	err := collection.FindOne(ctx, filter).Decode(&drivingBan)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return DrivingBan{}, nil
+		}
+		return DrivingBan{}, err
+	}
+
+	return drivingBan, nil
+}
+
+func (mr *MUPRepo) GetDrivingPermitByJMBG(ctx context.Context, jmbg string) (TrafficPermit, error) {
+	collection := mr.getMupCollection("trafficPermits")
+
+	filter := bson.D{{"person", jmbg}}
+
+	var drivingPermit TrafficPermit
+
+	err := collection.FindOne(ctx, filter).Decode(&drivingPermit)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return TrafficPermit{}, nil
+		}
+		return TrafficPermit{}, err
+	}
+
+	return drivingPermit, nil
+}
+
 //Person methods
 
-func (mr *MUPRepo) CheckForPersonsDrivingBans(ctx context.Context, userID primitive.ObjectID) (DrivingBans, error) {
+func (mr *MUPRepo) CheckForPersonsDrivingBans(ctx context.Context, userID string) (DrivingBans, error) {
 	collection := mr.getMupCollection("drivingBan")
 
 	filter := bson.D{{"person", userID}}
@@ -424,6 +480,122 @@ func (mr *MUPRepo) CheckForPersonsDrivingBans(ctx context.Context, userID primit
 	}
 
 	return drivingBans, nil
+}
+
+func (mr *MUPRepo) GetUserRegistrations(ctx context.Context, jmbg string) (Registrations, error) {
+	collection := mr.getMupCollection("registrations")
+
+	filter := bson.D{{"person", jmbg}}
+
+	var registrations Registrations
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var registration Registration
+		if err := cursor.Decode(&registration); err != nil {
+			return nil, err
+		}
+		registrations = append(registrations, registration)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return registrations, nil
+}
+
+func (mr *MUPRepo) GetUserDrivingPermits(ctx context.Context, jmbg string) (TrafficPermits, error) {
+	collection := mr.getMupCollection("trafficPermits")
+
+	filter := bson.D{{"person", jmbg}}
+
+	var drivingPermits TrafficPermits
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var drivingPermit TrafficPermit
+		if err := cursor.Decode(&drivingPermit); err != nil {
+			return nil, err
+		}
+		drivingPermits = append(drivingPermits, drivingPermit)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return drivingPermits, nil
+}
+
+func (mr *MUPRepo) GetPendingRegistrationRequests(ctx context.Context) (Registrations, error) {
+	collection := mr.getMupCollection("registrations")
+
+	filter := bson.D{
+		{"approved", false},
+	}
+
+	var pendingRequests Registrations
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var registration Registration
+		if err := cursor.Decode(&registration); err != nil {
+			return nil, err
+		}
+		pendingRequests = append(pendingRequests, registration)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return pendingRequests, nil
+}
+
+func (mr *MUPRepo) GetPendingTrafficPermitRequests(ctx context.Context) (TrafficPermits, error) {
+	collection := mr.getMupCollection("trafficPermits")
+
+	filter := bson.D{
+		{"approved", false},
+	}
+
+	var pendingRequests TrafficPermits
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var trafficPermit TrafficPermit
+		if err := cursor.Decode(&trafficPermit); err != nil {
+			return nil, err
+		}
+		pendingRequests = append(pendingRequests, trafficPermit)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return pendingRequests, nil
 }
 
 // MUP methods

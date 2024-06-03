@@ -65,6 +65,10 @@ type UserId struct {
 	ID primitive.ObjectID `json:"id"`
 }
 
+type JMBGRequest struct {
+	JMBG string `json:"jmbg"`
+}
+
 func (a *Persons) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(a)

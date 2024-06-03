@@ -63,7 +63,12 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/v1/driving-bans", mupHandler.CheckForPersonsDrivingBans).Methods("GET")
+	router.HandleFunc("/api/v1/driving-bans", mupHandler.CheckForDrivingBans).Methods("GET")
+	router.HandleFunc("/api/v1/user-registrations", mupHandler.GetUserRegistrations).Methods("GET")
+	router.HandleFunc("/api/v1/user-driving-permits", mupHandler.GetUserDrivingPermits).Methods("GET")
+	router.HandleFunc("/api/v1/pending-registration-requests", mupHandler.GetPendingRegistrationRequests).Methods("GET")
+	router.HandleFunc("/api/v1/pending-traffic-permit-requests", mupHandler.GetPendingTrafficPermitRequests).Methods("GET")
+
 	router.HandleFunc("/api/v1/vehicle", mupHandler.SaveVehicle).Methods("POST")
 	router.HandleFunc("/api/v1/registration-request", mupHandler.SubmitRegistrationRequest).Methods("POST")
 	router.HandleFunc("/api/v1/approve-registration-request", mupHandler.ApproveRegistration).Methods("POST")
@@ -73,6 +78,9 @@ func main() {
 	// For clients
 	router.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
 	router.HandleFunc("/api/v1/driving-ban", mupHandler.IssueDrivingBan).Methods("POST")
+	router.HandleFunc("/api/v1/registration-by-plate", mupHandler.GetRegistrationByPlate).Methods("GET")
+	router.HandleFunc("/api/v1/check-persons-driving-ban", mupHandler.GetDrivingBan).Methods("POST")
+	router.HandleFunc("/api/v1/check-for-persons-driving-permit", mupHandler.GetDrivingPermitByJMBG).Methods("POST")
 
 	router.Use(mupHandler.AuthorizeRoles("ADMIN", "USER"))
 

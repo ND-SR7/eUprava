@@ -1,8 +1,6 @@
 package clients
 
 import (
-	"fmt"
-	"math/rand"
 	"mup/domain"
 	"net/url"
 	"time"
@@ -25,26 +23,4 @@ func handleHttpReqErr(err error, reqUrl string, method string, timeout time.Dura
 	return domain.ErrConnecting{
 		Err: urlErr,
 	}
-}
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
-func RandString(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-	return string(b)
-}
-
-func GeneratePlates() string {
-	return fmt.Sprintf("SRB-%s-%s", RandString(3), RandString(2))
-}
-
-func GenerateRegistration() string {
-	return RandString(8)
 }

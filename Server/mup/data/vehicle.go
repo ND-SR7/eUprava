@@ -39,6 +39,10 @@ type Plates struct {
 
 type ListOfPlates []Plates
 
+type PlateRequest struct {
+	Plate string `json:"plate"`
+}
+
 func (v *Vehicle) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(v)

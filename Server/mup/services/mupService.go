@@ -6,6 +6,7 @@ import (
 	"log"
 	"mup/clients"
 	"mup/data"
+	"mup/utils"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,8 +23,24 @@ func NewMupService(r *data.MUPRepo, log *log.Logger, ssoc clients.SSOClient, cc 
 	return &MupService{repo: r, logger: log, ssoc: ssoc, cc: cc}
 }
 
-func (ms *MupService) CheckForPersonsDrivingBans(ctx context.Context, personID primitive.ObjectID) (data.DrivingBans, error) {
-	return ms.repo.CheckForPersonsDrivingBans(ctx, personID)
+func (ms *MupService) CheckForPersonsDrivingBans(ctx context.Context, jmbg string) (data.DrivingBans, error) {
+	return ms.repo.CheckForPersonsDrivingBans(ctx, jmbg)
+}
+
+func (ms *MupService) GetUserRegistrations(ctx context.Context, jmbg string) (data.Registrations, error) {
+	return ms.repo.GetUserRegistrations(ctx, jmbg)
+}
+
+func (ms *MupService) GetUserDrivingPermits(ctx context.Context, jmbg string) (data.TrafficPermits, error) {
+	return ms.repo.GetUserDrivingPermits(ctx, jmbg)
+}
+
+func (ms *MupService) GetPendingRegistrationRequests(ctx context.Context) (data.Registrations, error) {
+	return ms.repo.GetPendingRegistrationRequests(ctx)
+}
+
+func (ms *MupService) GetPendingTrafficPermitRequests(ctx context.Context) (data.TrafficPermits, error) {
+	return ms.repo.GetPendingTrafficPermitRequests(ctx)
 }
 
 func (ms *MupService) RetrieveRegisteredVehicles(ctx context.Context) (data.Vehicles, error) {
@@ -33,6 +50,8 @@ func (ms *MupService) RetrieveRegisteredVehicles(ctx context.Context) (data.Vehi
 func (ms *MupService) SubmitRegistrationRequest(ctx context.Context, registration *data.Registration) error {
 	registration.Approved = false
 	registration.IssuedDate = time.Now()
+	registration.ExpirationDate = time.Now()
+	registration.RegistrationNumber = utils.GenerateRegistration()
 
 	err := ms.repo.SubmitRegistrationRequest(ctx, registration)
 	if err != nil {
@@ -70,6 +89,9 @@ func (ms *MupService) SubmitTrafficPermitRequest(ctx context.Context, trafficPer
 }
 
 func (ms *MupService) SaveVehicle(ctx context.Context, vehicle *data.Vehicle) error {
+	vehicle.Registration = ""
+	vehicle.Plates = ""
+	vehicle.ID = primitive.NewObjectID()
 	return ms.repo.SaveVehicle(ctx, vehicle)
 }
 
@@ -82,8 +104,8 @@ func (ms *MupService) ApproveRegistration(ctx context.Context, registration data
 	registration.Approved = true
 	registration.ExpirationDate = expirationDate
 
-	registration.RegistrationNumber = clients.GenerateRegistration()
-	platesNumber := clients.GeneratePlates()
+	registration.RegistrationNumber = utils.GenerateRegistration()
+	platesNumber := utils.GeneratePlates()
 
 	err := ms.repo.ApproveRegistration(ctx, registration)
 	if err != nil {
@@ -102,6 +124,17 @@ func (ms *MupService) ApproveRegistration(ctx context.Context, registration data
 
 func (ms *MupService) ApproveTrafficPermitRequest(ctx context.Context, permitID primitive.ObjectID) error {
 	return ms.repo.ApproveTrafficPermitRequest(ctx, permitID)
+}
+
+func (ms *MupService) GetRegistrationByPlate(ctx context.Context, plate string) (data.Registration, error) {
+	return ms.repo.GetRegistrationByPlate(ctx, plate)
+}
+func (ms *MupService) GetDrivingBan(ctx context.Context, jmbg string, now time.Time) (data.DrivingBan, error) {
+	return ms.repo.GetDrivingBan(ctx, jmbg, now)
+}
+
+func (ms *MupService) GetDrivingPermitByJMBG(ctx context.Context, jmbg string) (data.TrafficPermit, error) {
+	return ms.repo.GetDrivingPermitByJMBG(ctx, jmbg)
 }
 
 func (ms *MupService) SaveMup() error {
