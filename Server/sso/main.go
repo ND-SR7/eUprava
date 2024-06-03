@@ -50,6 +50,7 @@ func main() {
 	authorizedRouter := router.Methods("GET").Subrouter()
 	authorizedRouter.HandleFunc("/api/v1/user/{accountID}", ssoHandler.GetUserByAccountID).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/user/email/{email}", ssoHandler.GetUserByEmail).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/user/jmbg/{jmbg}", ssoHandler.GetUserByJMBG).Methods("GET")
 	authorizedRouter.Use(ssoHandler.AuthorizeRoles("USER", "ADMIN"))
 
 	cors := gorillaHandlers.CORS(

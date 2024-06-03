@@ -108,6 +108,35 @@ func (sh *SSOHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Retrieves user based on provided JMBG
+func (sh *SSOHandler) GetUserByJMBG(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	jmbg := params["jmbg"]
+
+	log.Printf("Retrieving user with JMBG: %s", jmbg)
+
+	person, err := sh.getPersonByJMBG(jmbg)
+	if err != nil && err.Error() != "person not found" {
+		http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+		log.Printf("Failed to retrieve user: %s", err.Error())
+		return
+	} else if err != nil && err.Error() == "person not found" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Person not found for requested JMBG"))
+		log.Printf("Person not found for JMBG: %s", jmbg)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(person); err != nil {
+		http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+		log.Printf("Error while encoding legal entity: %s", err.Error())
+	}
+
+	log.Println("Successfully retrieved requested user")
+}
+
 // Logins requested user and provides JWT token
 func (sh *SSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials data.Credentials
@@ -259,6 +288,16 @@ func (sh *SSOHandler) getLegalEntityByEmail(email string) (data.LegalEntity, err
 	}
 
 	return legalEntity, nil
+}
+
+// Helper function for retrieving person based on JMBG
+func (sh *SSOHandler) getPersonByJMBG(jmbg string) (data.Person, error) {
+	person, err := sh.repo.GetPersonByJMBG(jmbg)
+	if err != nil {
+		return data.Person{}, err
+	}
+
+	return person, nil
 }
 
 // Returns error if credentials are not valid

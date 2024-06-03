@@ -167,6 +167,31 @@ func (sr *SSORepo) GetLegalEntityByEmail(email string) (LegalEntity, error) {
 	return legalEntity, nil
 }
 
+// Find person based on provided JMBG
+func (sr *SSORepo) GetPersonByJMBG(jmbg string) (Person, error) {
+	persons := sr.getPersonsCollection()
+
+	filter := bson.M{"jmbg": jmbg}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var person Person
+	err := persons.FindOne(ctx, filter).Decode(&person)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return Person{}, errors.New("person not found")
+	} else if err != nil {
+		return Person{}, err
+	}
+
+	// Removing sensitive data
+	person.Account.Password = ""
+	person.Account.ActivationCode = ""
+	person.Account.PasswordResetCode = ""
+
+	return person, nil
+}
+
 // Inserts new person into collection
 func (sr *SSORepo) CreatePerson(newPerson NewPerson) error {
 	emailOK := true
