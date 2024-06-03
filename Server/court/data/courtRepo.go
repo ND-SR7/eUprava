@@ -103,16 +103,11 @@ func (cr *CourtRepo) GetHearingByID(id string) (CourtHearing, error) {
 	return nil, errors.New("hearing not found")
 }
 
-// Finds warrants based on provided accountID
-func (cr *CourtRepo) GetWarrantsByAccountID(accountID string) (Warrants, error) {
+// Finds warrants based on provided JMBG
+func (cr *CourtRepo) GetWarrantsByJMBG(jmbg string) (Warrants, error) {
 	collection := cr.getWarrantsCollection()
 
-	objID, err := primitive.ObjectIDFromHex(accountID)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.M{"issuedFor": objID}
+	filter := bson.M{"issuedFor": jmbg}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

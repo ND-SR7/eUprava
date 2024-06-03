@@ -216,11 +216,11 @@ func (ch *CourtHandler) CreateWarrant(w http.ResponseWriter, r *http.Request) {
 
 func (ch *CourtHandler) CheckForWarrants(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	accountID := params["accountID"]
+	jmbg := params["jmbg"]
 
-	log.Printf("Recieved check for warrant for account id '%s'", accountID)
+	log.Printf("Recieved check for warrant for JMBG: %s", jmbg)
 
-	warrants, err := ch.repo.GetWarrantsByAccountID(accountID)
+	warrants, err := ch.repo.GetWarrantsByJMBG(jmbg)
 	if err != nil {
 		http.Error(w, "Failed to get warrants", http.StatusInternalServerError)
 		log.Printf("Failed to get warrants: %s", err.Error())

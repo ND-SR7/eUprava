@@ -73,7 +73,7 @@ func main() {
 	authorizedRouter := router.Methods("GET", "POST").Subrouter()
 	authorizedRouter.HandleFunc("/api/v1/suspension", courtHandler.CreateSuspension).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/warrants", courtHandler.CreateWarrant).Methods("POST")
-	authorizedRouter.HandleFunc("/api/v1/warrants/{accountID}", courtHandler.CheckForWarrants).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/warrants/{jmbg}", courtHandler.CheckForWarrants).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/crime-report", courtHandler.RecieveCrimeReport).Methods("POST")
 	authorizedRouter.Use(courtHandler.AuthorizeRoles("ADMIN"))
 
