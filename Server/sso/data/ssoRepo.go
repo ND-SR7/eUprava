@@ -192,6 +192,31 @@ func (sr *SSORepo) GetPersonByJMBG(jmbg string) (Person, error) {
 	return person, nil
 }
 
+// Find legal entity based on provided MB
+func (sr *SSORepo) GetLegalEntityByMB(mb string) (LegalEntity, error) {
+	legalEntities := sr.getLegalEntitiesCollection()
+
+	filter := bson.M{"mb": mb}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var legalEntity LegalEntity
+	err := legalEntities.FindOne(ctx, filter).Decode(&legalEntity)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return LegalEntity{}, errors.New("legal entity not found")
+	} else if err != nil {
+		return LegalEntity{}, err
+	}
+
+	// Removing sensitive data
+	legalEntity.Account.Password = ""
+	legalEntity.Account.ActivationCode = ""
+	legalEntity.Account.PasswordResetCode = ""
+
+	return legalEntity, nil
+}
+
 // Inserts new person into collection
 func (sr *SSORepo) CreatePerson(newPerson NewPerson) error {
 	emailOK := true

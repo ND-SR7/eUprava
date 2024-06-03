@@ -108,8 +108,8 @@ func (sh *SSOHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Retrieves user based on provided JMBG
-func (sh *SSOHandler) GetUserByJMBG(w http.ResponseWriter, r *http.Request) {
+// Retrieves person based on provided JMBG
+func (sh *SSOHandler) GetPersonByJMBG(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	jmbg := params["jmbg"]
 
@@ -137,6 +137,35 @@ func (sh *SSOHandler) GetUserByJMBG(w http.ResponseWriter, r *http.Request) {
 	log.Println("Successfully retrieved requested user")
 }
 
+// Retrieves legal entity based on provided MB
+func (sh *SSOHandler) GetLegalEntityByMB(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	mb := params["mb"]
+
+	log.Printf("Retrieving user with MB: %s", mb)
+
+	legalEntity, err := sh.getLegalEntityByMB(mb)
+	if err != nil && err.Error() != "legal entity not found" {
+		http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+		log.Printf("Failed to retrieve user: %s", err.Error())
+		return
+	} else if err != nil && err.Error() == "legal entity not found" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Legal entity not found for requested MB"))
+		log.Printf("Legal entity not found for JMBG: %s", mb)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(legalEntity); err != nil {
+		http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+		log.Printf("Error while encoding legal entity: %s", err.Error())
+	}
+
+	log.Println("Successfully retrieved requested user")
+}
+
 // Logins requested user and provides JWT token
 func (sh *SSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials data.Credentials
@@ -148,7 +177,7 @@ func (sh *SSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Recieved login request from '%s' for user '%s'", r.RemoteAddr, credentials.Email)
 
-	dbUser, err := sh.repo.FindAccountByEmail(credentials.Email)
+	account, err := sh.repo.FindAccountByEmail(credentials.Email)
 	if err != nil {
 		http.Error(w, "User not found with email "+credentials.Email, http.StatusBadRequest)
 		log.Printf("User '%s' does not exist", credentials.Email)
@@ -166,18 +195,45 @@ func (sh *SSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := sh.generateToken(credentials.Email, dbUser.Role)
-	if err != nil {
-		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
-		log.Printf("Failed to generate token for '%s'", credentials.Email)
+	person, err := sh.getPersonByEmail(credentials.Email)
+	if err != nil && err.Error() != "person not found" {
+		http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+		log.Printf("Failed to retrieve user: %s", err.Error())
 		return
+	} else if err != nil && err.Error() == "person not found" {
+		legalEntity, err := sh.getLegalEntityByEmail(credentials.Email)
+		if err != nil {
+			http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+			log.Printf("Failed to retrieve user: %s", err.Error())
+			return
+		}
+
+		token, err := sh.generateToken(legalEntity.MB, account.Role)
+		if err != nil {
+			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+			log.Printf("Failed to generate token for '%s'", credentials.Email)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"token": token})
+
+		log.Printf("User '%s' successfully logged in from '%s'", credentials.Email, r.RemoteAddr)
+	} else {
+		token, err := sh.generateToken(person.JMBG, account.Role)
+		if err != nil {
+			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+			log.Printf("Failed to generate token for '%s'", credentials.Email)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"token": token})
+
+		log.Printf("User '%s' successfully logged in from '%s'", credentials.Email, r.RemoteAddr)
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
-
-	log.Printf("User '%s' successfully logged in from '%s'", credentials.Email, r.RemoteAddr)
 }
 
 // Registers a new person to the system
@@ -300,6 +356,16 @@ func (sh *SSOHandler) getPersonByJMBG(jmbg string) (data.Person, error) {
 	return person, nil
 }
 
+// Helper function for retrieving legal entity based on MB
+func (sh *SSOHandler) getLegalEntityByMB(mb string) (data.LegalEntity, error) {
+	legalEntity, err := sh.repo.GetLegalEntityByMB(mb)
+	if err != nil {
+		return data.LegalEntity{}, err
+	}
+
+	return legalEntity, nil
+}
+
 // Returns error if credentials are not valid
 func (sh *SSOHandler) validateCredentials(email, password string) error {
 	account, err := sh.repo.FindAccountByEmail(email)
@@ -320,10 +386,10 @@ func (sh *SSOHandler) validateCredentials(email, password string) error {
 }
 
 // Generates token for logged in user
-func (sh *SSOHandler) generateToken(email, role string) (string, error) {
+func (sh *SSOHandler) generateToken(jmbg, role string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := jwt.MapClaims{
-		"sub":  email,
+		"sub":  jmbg,
 		"role": role,
 		"exp":  expirationTime.Unix(),
 	}
