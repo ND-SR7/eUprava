@@ -292,7 +292,7 @@ func (ch *CourtHandler) RecieveCrimeReport(w http.ResponseWriter, r *http.Reques
 	defer cancel()
 
 	token := ch.extractTokenFromHeader(r)
-	person, err := ch.sso.GetPersonByEmail(ctx, trafficViolation.ViolatorEmail, token)
+	person, err := ch.sso.GetPersonByJMBG(ctx, trafficViolation.ViolatorJMBG, token)
 	if err != nil {
 		http.Error(w, "Error with services communication", http.StatusInternalServerError)
 		log.Printf("Error while communicating with SSO service: %s", err.Error())

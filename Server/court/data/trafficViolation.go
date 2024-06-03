@@ -6,11 +6,11 @@ import (
 )
 
 type TrafficViolation struct {
-	Reason        string `bson:"reason" json:"reason"`
-	Description   string `bson:"description" json:"description"`
-	Time          string `bson:"time" json:"time"`
-	Location      string `bson:"location" json:"location"`
-	ViolatorEmail string `bson:"violatorEmail" json:"violatorEmail"`
+	Reason       string `bson:"reason" json:"reason"`
+	Description  string `bson:"description" json:"description"`
+	Time         string `bson:"time" json:"time"`
+	Location     string `bson:"location" json:"location"`
+	ViolatorJMBG string `bson:"violatorJMBG" json:"violatorJMBG"`
 }
 
 func (tv *TrafficViolation) ToJSON(w io.Writer) error {

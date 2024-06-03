@@ -12,7 +12,7 @@ type Suspension struct {
 	ID     primitive.ObjectID `bson:"_id" json:"id"`
 	From   time.Time          `bson:"from" json:"from"`
 	To     time.Time          `bson:"to" json:"to"`
-	Person primitive.ObjectID `bson:"person" json:"person"`
+	Person string             `bson:"person" json:"person"`
 }
 
 type NewSuspension struct {

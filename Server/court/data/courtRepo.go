@@ -153,18 +153,12 @@ func (cr *CourtRepo) CreateHearingPerson(newHearing NewCourtHearingPerson) error
 		return err
 	}
 
-	personID, err := primitive.ObjectIDFromHex(newHearing.Person)
-	if err != nil {
-		cr.logger.Println("Error while parsing person ID")
-		return err
-	}
-
 	hearing := CourtHearingPerson{
 		ID:       primitive.NewObjectID(),
 		Reason:   newHearing.Reason,
 		DateTime: dateTime,
 		Court:    courtID,
-		Person:   personID,
+		Person:   newHearing.Person,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -196,18 +190,12 @@ func (cr *CourtRepo) CreateHearingLegalEntity(newHearing NewCourtHearingLegalEnt
 		return err
 	}
 
-	legalEntityID, err := primitive.ObjectIDFromHex(newHearing.LegalEntity)
-	if err != nil {
-		cr.logger.Println("Error while parsing legal entity ID")
-		return err
-	}
-
 	hearing := CourtHearingLegalEntity{
 		ID:          primitive.NewObjectID(),
 		Reason:      newHearing.Reason,
 		DateTime:    dateTime,
 		Court:       courtID,
-		LegalEntity: legalEntityID,
+		LegalEntity: newHearing.LegalEntity,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -233,17 +221,11 @@ func (cr *CourtRepo) CreateWarrant(newWarrant NewWarrant) error {
 		return err
 	}
 
-	personID, err := primitive.ObjectIDFromHex(newWarrant.IssuedFor)
-	if err != nil {
-		cr.logger.Println("Error while parsing person ID")
-		return err
-	}
-
 	warrant := Warrant{
 		ID:               primitive.NewObjectID(),
 		TrafficViolation: trafficViolationID,
 		IssuedOn:         time.Now(),
-		IssuedFor:        personID,
+		IssuedFor:        newWarrant.IssuedFor,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -274,17 +256,11 @@ func (cr *CourtRepo) CreateSuspension(newSuspension NewSuspension) error {
 		return err
 	}
 
-	personID, err := primitive.ObjectIDFromHex(newSuspension.Person)
-	if err != nil {
-		cr.logger.Println("Error while parsing person ID")
-		return err
-	}
-
 	suspension := Suspension{
 		ID:     primitive.NewObjectID(),
 		From:   fromDateTime,
 		To:     toDateTime,
-		Person: personID,
+		Person: newSuspension.Person,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
