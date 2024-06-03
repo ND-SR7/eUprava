@@ -23,7 +23,7 @@ type TrafficViolation struct {
 }
 
 type DriverCheck struct {
-	JMBG         string  `bson:"JMBG" json:"JMBG"`
+	JMBG         string  `bson:"jmbg" json:"jmbg"`
 	AlcoholLevel float64 `bson:"alcoholLevel" json:"alcoholLevel"`
 	Tire         string  `bson:"tire" json:"tire"`
 	Location     string  `bson:"location" json:"location"`

@@ -45,6 +45,8 @@ func (ph *PoliceHandler) CreateTrafficViolation(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	violation.ID = primitive.NewObjectID()
+
 	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
 	if err != nil {
 		http.Error(w, "Failed to create traffic violation", http.StatusInternalServerError)
@@ -67,6 +69,7 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 	}
 
 	violation := data.TrafficViolation{
+		ID:           primitive.NewObjectID(),
 		Time:         time.Now(),
 		ViolatorJMBG: driverCheck.JMBG,
 		Location:     driverCheck.Location,
@@ -136,7 +139,6 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(violation)
-	return
 }
 
 func (ph *PoliceHandler) GetTrafficViolationByID(w http.ResponseWriter, r *http.Request) {
