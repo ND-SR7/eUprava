@@ -306,6 +306,61 @@ func (sh *SSOHandler) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Successfully activated user account with code '%s'", activationCode)
 }
 
+// Sends recovery email containing password reset code
+func (sh *SSOHandler) RecoverPassword(w http.ResponseWriter, r *http.Request) {
+	var requestBody struct {
+		Email string `json:"email"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	account, err := sh.repo.FindAccountByEmail(requestBody.Email)
+	if err != nil {
+		http.Error(w, "Account not found for email %s", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Sending recovery email to %s", requestBody.Email)
+
+	emailSent := data.SendEmail(requestBody.Email, account.PasswordResetCode, "RECOVERY")
+	if !emailSent {
+		http.Error(w, "Failed to send recovery email", http.StatusInternalServerError)
+		log.Printf("Failed to send recovery email to %s", requestBody.Email)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Recovery email successfully sent"))
+	log.Printf("Successfully sent recovery email to %s", requestBody.Email)
+}
+
+// Resets password for existing account and changes reset code
+func (sh *SSOHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var requestBody struct {
+		PasswordResetCode string `json:"passwordResetCode"`
+		NewPassword       string `json:"newPassword"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Reseting password for code: %s", requestBody.PasswordResetCode)
+	err := sh.repo.ResetPassword(requestBody.PasswordResetCode, requestBody.NewPassword)
+	if err != nil {
+		http.Error(w, "Failed to reset password", http.StatusInternalServerError)
+		log.Printf("Failed to reset password: %s", err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	log.Printf("Successfully reset password for code: %s", requestBody.PasswordResetCode)
+}
+
 // Helper function for retrieving person based on AccountID
 func (sh *SSOHandler) getPersonByID(accountID string) (data.Person, error) {
 	person, err := sh.repo.GetPersonByID(accountID)

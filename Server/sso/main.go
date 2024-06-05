@@ -54,6 +54,8 @@ func main() {
 	router.HandleFunc("/api/v1/register-person", ssoHandler.RegisterPerson).Methods("POST")
 	router.HandleFunc("/api/v1/register-entity", ssoHandler.RegisterLegalEntity).Methods("POST")
 	router.HandleFunc("/api/v1/activate/{activationCode}", ssoHandler.ActivateAccount).Methods("GET")
+	router.HandleFunc("/api/v1/recover-password", ssoHandler.RecoverPassword).Methods("POST")
+	router.HandleFunc("/api/v1/reset-password", ssoHandler.ResetPassword).Methods("POST")
 
 	authorizedRouter := router.Methods("GET").Subrouter()
 	authorizedRouter.HandleFunc("/api/v1/user/{accountID}", ssoHandler.GetUserByAccountID).Methods("GET")

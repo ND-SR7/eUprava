@@ -41,3 +41,12 @@ export async function registerLegalEntity(data: NewLegalEntity) {
     throw new Error(error.response.data.message || 'Failed to register legal entity');
   }
 };
+
+export async function sendRecoveryEmail(email: string) {
+  try {
+    const response = await axios.post(`${BASE_URL}/recover-password`, {email});
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response.data.message || 'Failed to send recovery email');
+  }
+};

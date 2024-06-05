@@ -45,10 +45,11 @@ func HashPassword(password string) (string, error) {
 	return string(hash), nil
 }
 
+// Sends email to provided email.
+// Supported intents are account activation and password reset
 func SendEmail(email, code, intent string) bool {
 	accountActivationPath := os.Getenv("ACCOUNT_ACTIVATION_PATH")
-	accountRecoveryPath := "/todo"
-	// TODO: Recovery path
+	accountRecoveryPath := os.Getenv("PASSWORD_RESET_PATH")
 
 	// Sender data
 	from := os.Getenv("MAIL_ADDRESS")

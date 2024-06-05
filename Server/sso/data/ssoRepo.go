@@ -517,6 +517,40 @@ func (sr *SSORepo) ActivateAccount(activationCode string) error {
 	return nil
 }
 
+// Resets password for specified reset code
+func (sr *SSORepo) ResetPassword(passwordResetCode, newPassword string) error {
+	hashedPassword, err := HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	persons := sr.getPersonsCollection()
+	legalEntities := sr.getLegalEntitiesCollection()
+	filter := bson.M{"account.passwordResetCode": passwordResetCode}
+	update := bson.M{
+		"$set": bson.M{
+			"account.password":          hashedPassword,
+			"account.passwordResetCode": uuid.New().String(),
+		},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := persons.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	} else if result.ModifiedCount == 0 {
+		result, err = legalEntities.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return err
+		} else if result.MatchedCount == 0 {
+			return errors.New("no account with provided reset code")
+		}
+	}
+
+	return nil
+}
+
 // Returns Account for specified email.
 func (sr *SSORepo) FindAccountByEmail(email string) (Account, error) {
 	persons := sr.getPersonsCollection()
