@@ -46,9 +46,18 @@ func main() {
 		},
 	}
 
-	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
+	mupClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
 
-	handler := handlers.NewPoliceHandler(store, court)
+	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
+	mup := clients.NewMupClient(mupClient, os.Getenv("MUP_SERVICE_URI"))
+
+	handler := handlers.NewPoliceHandler(store, court, mup)
 
 	router := mux.NewRouter()
 	// Router methods
@@ -57,7 +66,7 @@ func main() {
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/traffic-violation/alcohol-test", handler.CheckAlcoholLevel).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-all", handler.CheckAll).Methods(http.MethodPost)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

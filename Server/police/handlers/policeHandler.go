@@ -21,11 +21,12 @@ var secretKey = []byte("eUpravaT2")
 type PoliceHandler struct {
 	repo  *data.PoliceRepo
 	court clients.CourtClient
+	mup   clients.MupClient
 }
 
 // Constructor
-func NewPoliceHandler(r *data.PoliceRepo, c clients.CourtClient) *PoliceHandler {
-	return &PoliceHandler{r, c}
+func NewPoliceHandler(r *data.PoliceRepo, c clients.CourtClient, m clients.MupClient) *PoliceHandler {
+	return &PoliceHandler{r, c, m}
 }
 
 // Ping
@@ -59,7 +60,7 @@ func (ph *PoliceHandler) CreateTrafficViolation(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(violation)
 }
 
-func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Request) {
+func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 	var driverCheck data.DriverCheck
 	err := json.NewDecoder(r.Body).Decode(&driverCheck)
 	if err != nil {
@@ -118,6 +119,43 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 			http.Error(w, "Invalid tire type provided. Must be either SUMMER or WINTER", http.StatusBadRequest)
 			return
 		}
+
+	}
+
+	token := ph.extractTokenFromHeader(r)
+
+	if driverCheck.JMBG != "" {
+		jmbgRequest := data.JMBGRequest{JMBG: driverCheck.JMBG}
+		drivingBan, err := ph.mup.CheckDrivigBan(r.Context(), jmbgRequest, token)
+		if err != nil {
+			http.Error(w, "Failed to check driving ban: "+err.Error(), http.StatusBadRequest)
+			log.Printf("Failed to check driving ban: %v\n", err)
+			return
+		}
+
+		if drivingBan {
+			violation.Reason += "Driving ban is effect \n"
+			violation.Description += "Driver was found to be operating a vehicle under active driving ban. \n"
+			log.Print("drivingBan is true")
+		} else {
+			violation.Reason += "No driving ban \n"
+			violation.Description += "Driver was not found to be operating a vehicle under any driving ban. \n"
+			log.Print("drivingBan is false")
+		}
+
+		permit, err := ph.mup.GetDrivingPermitByJMBG(r.Context(), jmbgRequest, token)
+		if err != nil {
+			log.Printf("Failed to check driving permit: %v\n", err)
+			http.Error(w, "Failed to check driving permit", http.StatusBadRequest)
+			return
+		}
+
+		if permit.ExpirationDate.Before(time.Now()) {
+			violation.Reason += "Driving permit expired \n"
+			violation.Description += "Driver was found to have an expired driving permit. \n"
+			log.Print("Driving permit is expired")
+		}
+
 	}
 
 	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
@@ -126,8 +164,6 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 		log.Printf("Failed to create traffic violation: %v\n", err)
 		return
 	}
-
-	token := ph.extractTokenFromHeader(r)
 
 	err = ph.court.CreateCrimeReport(r.Context(), violation, token)
 	if err != nil {
