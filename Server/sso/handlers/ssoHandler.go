@@ -208,7 +208,7 @@ func (sh *SSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		token, err := sh.generateToken(legalEntity.MB, account.Role)
+		token, err := sh.generateToken(legalEntity.MB, legalEntity.Name, account.Role)
 		if err != nil {
 			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 			log.Printf("Failed to generate token for '%s'", credentials.Email)
@@ -221,7 +221,7 @@ func (sh *SSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("User '%s' successfully logged in from '%s'", credentials.Email, r.RemoteAddr)
 	} else {
-		token, err := sh.generateToken(person.JMBG, account.Role)
+		token, err := sh.generateToken(person.JMBG, person.FirstName, account.Role)
 		if err != nil {
 			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 			log.Printf("Failed to generate token for '%s'", credentials.Email)
@@ -386,10 +386,11 @@ func (sh *SSOHandler) validateCredentials(email, password string) error {
 }
 
 // Generates token for logged in user
-func (sh *SSOHandler) generateToken(jmbg, role string) (string, error) {
+func (sh *SSOHandler) generateToken(jmbg, name, role string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := jwt.MapClaims{
 		"sub":  jmbg,
+		"name": name,
 		"role": role,
 		"exp":  expirationTime.Unix(),
 	}

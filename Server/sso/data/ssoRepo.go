@@ -67,6 +67,136 @@ func (sr *SSORepo) Ping() {
 	sr.logger.Println(databases)
 }
 
+// Initialize database
+func (sr *SSORepo) Initialize(ctx context.Context) error {
+	db := sr.cli.Database("ssoDB")
+
+	err := db.Collection("persons").Drop(ctx)
+	if err != nil {
+		return err
+	}
+	err = db.Collection("legalEntities").Drop(ctx)
+	if err != nil {
+		return err
+	}
+
+	persons := []Person{
+		{
+			FirstName:   "Mika",
+			LastName:    "Mikic",
+			DOB:         "2000-05-12",
+			Sex:         "MALE",
+			Citizenship: "serbian",
+			JMBG:        "123456789",
+			Account: Account{
+				ID:                primitive.NewObjectID(),
+				Email:             "mika@mail.com",
+				Password:          "$2a$10$Q9ZCNMO5uGBAkQdMOhLLBe8JzvjK/oWjyq6.Tv8/O4UCpcW8.ymKS",
+				ActivationCode:    uuid.New().String(),
+				PasswordResetCode: uuid.New().String(),
+				Role:              "ADMIN",
+				Activated:         true,
+			},
+			Address: Address{
+				Municipality: "Novi Sad",
+				Locality:     "Novi Sad",
+				StreetName:   "Somborska",
+				StreetNumber: 9,
+			},
+		},
+		{
+			FirstName:   "Ana",
+			LastName:    "Anic",
+			DOB:         "2002-10-03",
+			Sex:         "FEMALE",
+			Citizenship: "serbian",
+			JMBG:        "987654321",
+			Account: Account{
+				ID:                primitive.NewObjectID(),
+				Email:             "ana@mail.com",
+				Password:          "$2a$10$Lkjw/s5D9s1K38tSvsPTlOYI43ZJeu1c4.nMzH9nrod5Z1eKBRn4C",
+				ActivationCode:    uuid.New().String(),
+				PasswordResetCode: uuid.New().String(),
+				Role:              "ADMIN",
+				Activated:         true,
+			},
+			Address: Address{
+				Municipality: "Novi Sad",
+				Locality:     "Novi Sad",
+				StreetName:   "Kamenicka",
+				StreetNumber: 11,
+			},
+		},
+	}
+
+	var bsonPersons []interface{}
+	for _, p := range persons {
+		bsonPersons = append(bsonPersons, p)
+	}
+
+	_, err = db.Collection("persons").InsertMany(ctx, bsonPersons)
+	if err != nil {
+		return err
+	}
+
+	legalEntities := []LegalEntity{
+		{
+			Name:        "Test LE",
+			Citizenship: "serbian",
+			PIB:         "789123456",
+			MB:          "00045698",
+			Account: Account{
+				ID:                primitive.NewObjectID(),
+				Email:             "testle@mail.com",
+				Password:          "$2a$10$Ddb59VQRIzEPyKHz1s1lc./0PyH1f5Z4Rz0psFwz75G80fxaBSsZS",
+				ActivationCode:    "activate123",
+				PasswordResetCode: "reset123",
+				Role:              "ADMIN",
+				Activated:         true,
+			},
+			Address: Address{
+				Municipality: "Novi Sad",
+				Locality:     "Novi Sad",
+				StreetName:   "Jovan Zmaj",
+				StreetNumber: 13,
+			},
+		},
+		{
+			Name:        "Legal Entity Inc.",
+			Citizenship: "croatian",
+			PIB:         "147369258",
+			MB:          "88569536",
+			Account: Account{
+				ID:                primitive.NewObjectID(),
+				Email:             "lei@mail.com",
+				Password:          "$2a$10$Ddb59VQRIzEPyKHz1s1lc./0PyH1f5Z4Rz0psFwz75G80fxaBSsZS",
+				ActivationCode:    "activateLEI",
+				PasswordResetCode: "resetLEI",
+				Role:              "ADMIN",
+				Activated:         true,
+			},
+			Address: Address{
+				Municipality: "Zagreb",
+				Locality:     "Zagreb",
+				StreetName:   "Kralja Petra",
+				StreetNumber: 50,
+			},
+		},
+	}
+
+	var bsonLegalEntities []interface{}
+	for _, le := range legalEntities {
+		bsonLegalEntities = append(bsonLegalEntities, le)
+	}
+
+	_, err = db.Collection("legalEntities").InsertMany(ctx, bsonLegalEntities)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Find person based on provided id
 func (sr *SSORepo) GetPersonByID(id string) (Person, error) {
 	persons := sr.getPersonsCollection()
