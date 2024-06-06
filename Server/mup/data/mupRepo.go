@@ -69,10 +69,8 @@ func (mr *MUPRepo) Ping() {
 //Vehicle methods
 
 func (mr *MUPRepo) SaveVehicle(ctx context.Context, vehicle *Vehicle) error {
-	vehicle.ID = primitive.NewObjectID()
-	vehicle.Registration = ""
-	vehicle.Plates = ""
 	collection := mr.getMupCollection("vehicle")
+	println("owner ", vehicle.Owner)
 
 	_, err := collection.InsertOne(ctx, vehicle)
 	if err != nil {
@@ -152,17 +150,13 @@ func (mr *MUPRepo) RetrieveRegisteredVehicles(ctx context.Context) (Vehicles, er
 //Mup methods
 
 func (mr *MUPRepo) SaveVehicleIntoMup(ctx context.Context, vehicle *Vehicle) error {
-	mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
-	if err != nil {
-		return err
-	}
 	collection := mr.getMupCollection("mup")
 
-	filter := bson.D{{"_id", mupID}}
+	filter := bson.D{{"name", "Mup"}}
 
 	update := bson.D{{"$push", bson.D{{"vehicles", vehicle.ID}}}}
 
-	_, err = collection.UpdateOne(ctx, filter, update)
+	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
@@ -172,17 +166,13 @@ func (mr *MUPRepo) SaveVehicleIntoMup(ctx context.Context, vehicle *Vehicle) err
 }
 
 func (mr *MUPRepo) SavePlatesIntoMup(ctx context.Context, plates Plates) error {
-	mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
-	if err != nil {
-		return err
-	}
 	collection := mr.getMupCollection("mup")
 
-	filter := bson.D{{"_id", mupID}}
+	filter := bson.D{{"name", "Mup"}}
 
 	update := bson.D{{"$push", bson.D{{"plates", plates.PlatesNumber}}}}
 
-	_, err = collection.UpdateOne(ctx, filter, update)
+	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
@@ -192,17 +182,13 @@ func (mr *MUPRepo) SavePlatesIntoMup(ctx context.Context, plates Plates) error {
 }
 
 func (mr *MUPRepo) SaveRegistrationIntoMup(ctx context.Context, registration *Registration) error {
-	mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
-	if err != nil {
-		return err
-	}
 	collection := mr.getMupCollection("mup")
 
-	filter := bson.D{{"_id", mupID}}
+	filter := bson.D{{"name", "Mup"}}
 
 	update := bson.D{{"$push", bson.D{{"registrations", registration.RegistrationNumber}}}}
 
-	_, err = collection.UpdateOne(ctx, filter, update)
+	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
@@ -212,17 +198,13 @@ func (mr *MUPRepo) SaveRegistrationIntoMup(ctx context.Context, registration *Re
 }
 
 func (mr *MUPRepo) SaveTrafficPermitIntoMup(ctx context.Context, trafficPermit *TrafficPermit) error {
-	mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
-	if err != nil {
-		return err
-	}
 	collection := mr.getMupCollection("mup")
 
-	filter := bson.D{{"_id", mupID}}
+	filter := bson.D{{"name", "Mup"}}
 
 	update := bson.D{{"$push", bson.D{{"trafficPermits", trafficPermit.ID}}}}
 
-	_, err = collection.UpdateOne(ctx, filter, update)
+	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
@@ -232,17 +214,13 @@ func (mr *MUPRepo) SaveTrafficPermitIntoMup(ctx context.Context, trafficPermit *
 }
 
 func (mr *MUPRepo) SaveDrivingBanIntoMup(ctx context.Context, drivingBan DrivingBan) error {
-	mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
-	if err != nil {
-		return err
-	}
 	collection := mr.getMupCollection("mup")
 
-	filter := bson.D{{"_id", mupID}}
+	filter := bson.D{{"name", "Mup"}}
 
 	update := bson.D{{"$push", bson.D{{"drivingBans", drivingBan.ID}}}}
 
-	_, err = collection.UpdateOne(ctx, filter, update)
+	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
@@ -276,15 +254,14 @@ func (mr *MUPRepo) SubmitRegistrationRequest(ctx context.Context, registration *
 }
 
 func (mr *MUPRepo) ApproveRegistration(ctx context.Context, registration Registration) error {
-	expirationDate := time.Now().AddDate(1, 0, 0)
-
-	registration.Approved = true
-
 	collection := mr.getMupCollection("registration")
 
-	filter := bson.D{{"_id", registration.RegistrationNumber}}
+	filter := bson.D{{"registrationNumber", registration.RegistrationNumber}}
 
-	update := bson.D{{"$set", bson.D{{"approved", true}, {"expirationDate", expirationDate}}}}
+	update := bson.D{{"$set", bson.D{
+		{"approved", true},
+		{"expirationDate", registration.ExpirationDate},
+		{"plates", registration.Plates}}}}
 
 	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
@@ -294,23 +271,11 @@ func (mr *MUPRepo) ApproveRegistration(ctx context.Context, registration Registr
 
 	fmt.Println("Traffic permit approved successfully!")
 
-	plates := Plates{
-		RegistrationNumber: registration.RegistrationNumber,
-		PlatesNumber:       "222222",
-		PlateType:          "aaa",
-		VehicleID:          registration.VehicleID,
-	}
-
-	err = mr.IssuePlates(ctx, plates)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (mr *MUPRepo) GetRegistrationByPlate(ctx context.Context, plate string) (Registration, error) {
-	collection := mr.getMupCollection("registrations")
+	collection := mr.getMupCollection("registration")
 
 	filter := bson.D{{"plates", plate}}
 
@@ -414,7 +379,7 @@ func (mr *MUPRepo) IssueDrivingBan(ctx context.Context, drivingBan *DrivingBan) 
 }
 
 func (mr *MUPRepo) GetDrivingBan(ctx context.Context, jmbg string, now time.Time) (DrivingBan, error) {
-	collection := mr.getMupCollection("drivingBans")
+	collection := mr.getMupCollection("drivingBan")
 
 	filter := bson.D{
 		{"person", jmbg},
@@ -435,7 +400,7 @@ func (mr *MUPRepo) GetDrivingBan(ctx context.Context, jmbg string, now time.Time
 }
 
 func (mr *MUPRepo) GetDrivingPermitByJMBG(ctx context.Context, jmbg string) (TrafficPermit, error) {
-	collection := mr.getMupCollection("trafficPermits")
+	collection := mr.getMupCollection("trafficPermit")
 
 	filter := bson.D{{"person", jmbg}}
 
@@ -482,10 +447,10 @@ func (mr *MUPRepo) CheckForPersonsDrivingBans(ctx context.Context, userID string
 	return drivingBans, nil
 }
 
-func (mr *MUPRepo) GetUserRegistrations(ctx context.Context, jmbg string) (Registrations, error) {
-	collection := mr.getMupCollection("registrations")
+func (mr *MUPRepo) GetPersonsRegistrations(ctx context.Context, jmbg string) (Registrations, error) {
+	collection := mr.getMupCollection("registration")
 
-	filter := bson.D{{"person", jmbg}}
+	filter := bson.D{{"owner", jmbg}}
 
 	var registrations Registrations
 
@@ -510,8 +475,8 @@ func (mr *MUPRepo) GetUserRegistrations(ctx context.Context, jmbg string) (Regis
 	return registrations, nil
 }
 
-func (mr *MUPRepo) GetUserDrivingPermits(ctx context.Context, jmbg string) (TrafficPermits, error) {
-	collection := mr.getMupCollection("trafficPermits")
+func (mr *MUPRepo) GetUserDrivingPermit(ctx context.Context, jmbg string) (TrafficPermits, error) {
+	collection := mr.getMupCollection("trafficPermit")
 
 	filter := bson.D{{"person", jmbg}}
 
@@ -538,8 +503,28 @@ func (mr *MUPRepo) GetUserDrivingPermits(ctx context.Context, jmbg string) (Traf
 	return drivingPermits, nil
 }
 
+func (mr *MUPRepo) GetPersonsVehicles(ctx context.Context, jmbg string) ([]Vehicle, error) {
+	collection := mr.getMupCollection("vehicle")
+
+	filter := bson.M{"owner": jmbg}
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		log.Printf("Failed to find vehicles for owner %s: %v", jmbg, err)
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var vehicles []Vehicle
+	if err = cursor.All(ctx, &vehicles); err != nil {
+		log.Printf("Failed to decode vehicles: %v", err)
+		return nil, err
+	}
+
+	return vehicles, nil
+}
+
 func (mr *MUPRepo) GetPendingRegistrationRequests(ctx context.Context) (Registrations, error) {
-	collection := mr.getMupCollection("registrations")
+	collection := mr.getMupCollection("registration")
 
 	filter := bson.D{
 		{"approved", false},
@@ -569,7 +554,7 @@ func (mr *MUPRepo) GetPendingRegistrationRequests(ctx context.Context) (Registra
 }
 
 func (mr *MUPRepo) GetPendingTrafficPermitRequests(ctx context.Context) (TrafficPermits, error) {
-	collection := mr.getMupCollection("trafficPermits")
+	collection := mr.getMupCollection("trafficPermit")
 
 	filter := bson.D{
 		{"approved", false},

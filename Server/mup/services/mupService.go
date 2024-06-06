@@ -27,12 +27,12 @@ func (ms *MupService) CheckForPersonsDrivingBans(ctx context.Context, jmbg strin
 	return ms.repo.CheckForPersonsDrivingBans(ctx, jmbg)
 }
 
-func (ms *MupService) GetUserRegistrations(ctx context.Context, jmbg string) (data.Registrations, error) {
-	return ms.repo.GetUserRegistrations(ctx, jmbg)
+func (ms *MupService) GetPersonsRegistrations(ctx context.Context, jmbg string) (data.Registrations, error) {
+	return ms.repo.GetPersonsRegistrations(ctx, jmbg)
 }
 
-func (ms *MupService) GetUserDrivingPermits(ctx context.Context, jmbg string) (data.TrafficPermits, error) {
-	return ms.repo.GetUserDrivingPermits(ctx, jmbg)
+func (ms *MupService) GetUserDrivingPermit(ctx context.Context, jmbg string) (data.TrafficPermits, error) {
+	return ms.repo.GetUserDrivingPermit(ctx, jmbg)
 }
 
 func (ms *MupService) GetPendingRegistrationRequests(ctx context.Context) (data.Registrations, error) {
@@ -50,8 +50,9 @@ func (ms *MupService) RetrieveRegisteredVehicles(ctx context.Context) (data.Vehi
 func (ms *MupService) SubmitRegistrationRequest(ctx context.Context, registration *data.Registration) error {
 	registration.Approved = false
 	registration.IssuedDate = time.Now()
-	registration.ExpirationDate = time.Now()
+	registration.ExpirationDate = registration.IssuedDate
 	registration.RegistrationNumber = utils.GenerateRegistration()
+	registration.Plates = ""
 
 	err := ms.repo.SubmitRegistrationRequest(ctx, registration)
 	if err != nil {
@@ -81,11 +82,17 @@ func (ms *MupService) SubmitTrafficPermitRequest(ctx context.Context, trafficPer
 		return fmt.Errorf("user is on warrant list")
 	}
 
+	trafficPermit.ID = primitive.NewObjectID()
 	trafficPermit.Person = user.JMBG
 	trafficPermit.Approved = false
 	trafficPermit.IssuedDate = time.Now()
+	trafficPermit.Number = utils.GenerateRegistration()
 
 	return ms.repo.SubmitTrafficPermitRequest(ctx, trafficPermit)
+}
+
+func (ms *MupService) GetPersonsVehicles(ctx context.Context, jmbg string) ([]data.Vehicle, error) {
+	return ms.repo.GetPersonsVehicles(ctx, jmbg)
 }
 
 func (ms *MupService) SaveVehicle(ctx context.Context, vehicle *data.Vehicle) error {
@@ -100,23 +107,25 @@ func (ms *MupService) IssueDrivingBan(ctx context.Context, drivingBan *data.Driv
 }
 
 func (ms *MupService) ApproveRegistration(ctx context.Context, registration data.Registration) error {
-	expirationDate := time.Now().AddDate(1, 0, 0)
+	expirationDate := time.Now().AddDate(5, 0, 0)
 	registration.Approved = true
 	registration.ExpirationDate = expirationDate
 
-	registration.RegistrationNumber = utils.GenerateRegistration()
 	platesNumber := utils.GeneratePlates()
-
-	err := ms.repo.ApproveRegistration(ctx, registration)
-	if err != nil {
-		return err
-	}
 
 	plates := data.Plates{
 		RegistrationNumber: registration.RegistrationNumber,
 		PlatesNumber:       platesNumber,
-		PlateType:          "plateType",
+		PlateType:          "vehicle plates",
 		VehicleID:          registration.VehicleID,
+		Owner:              registration.Owner,
+	}
+
+	registration.Plates = platesNumber
+
+	err := ms.repo.ApproveRegistration(ctx, registration)
+	if err != nil {
+		return err
 	}
 
 	return ms.repo.IssuePlates(ctx, plates)

@@ -63,26 +63,30 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/v1/driving-bans", mupHandler.CheckForDrivingBans).Methods("GET")
-	router.HandleFunc("/api/v1/user-registrations", mupHandler.GetUserRegistrations).Methods("GET")
-	router.HandleFunc("/api/v1/user-driving-permits", mupHandler.GetUserDrivingPermits).Methods("GET")
-	router.HandleFunc("/api/v1/pending-registration-requests", mupHandler.GetPendingRegistrationRequests).Methods("GET")
-	router.HandleFunc("/api/v1/pending-traffic-permit-requests", mupHandler.GetPendingTrafficPermitRequests).Methods("GET")
+	//GET
+	router.HandleFunc("/api/v1/persons-vehicles", mupHandler.GetPersonsVehicles).Methods("GET")
+	router.HandleFunc("/api/v1/driving-bans", mupHandler.CheckForPersonsDrivingBans).Methods("GET")
+	router.HandleFunc("/api/v1/persons-registrations", mupHandler.GetPersonsRegistrations).Methods("GET")
+	router.HandleFunc("/api/v1/persons-driving-permit", mupHandler.GetUserDrivingPermit).Methods("GET")
 
+	//POST
 	router.HandleFunc("/api/v1/vehicle", mupHandler.SaveVehicle).Methods("POST")
 	router.HandleFunc("/api/v1/registration-request", mupHandler.SubmitRegistrationRequest).Methods("POST")
-	router.HandleFunc("/api/v1/approve-registration-request", mupHandler.ApproveRegistration).Methods("POST")
 	router.HandleFunc("/api/v1/traffic-permit-request", mupHandler.SubmitTrafficPermitRequest).Methods("POST")
-	router.HandleFunc("/api/v1/approve-traffic-permit-request", mupHandler.ApproveTrafficPermitRequest).Methods("POST")
+
+	authorizedRouter := router.Methods("GET", "POST").Subrouter()
+	authorizedRouter.HandleFunc("/api/v1/pending-registration-requests", mupHandler.GetPendingRegistrationRequests).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/pending-traffic-permit-requests", mupHandler.GetPendingTrafficPermitRequests).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/approve-registration-request", mupHandler.ApproveRegistration).Methods("POST")
+	authorizedRouter.HandleFunc("/api/v1/approve-traffic-permit-request", mupHandler.ApproveTrafficPermitRequest).Methods("POST")
 
 	// For clients
-	router.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
-	router.HandleFunc("/api/v1/driving-ban", mupHandler.IssueDrivingBan).Methods("POST")
-	router.HandleFunc("/api/v1/registration-by-plate", mupHandler.GetRegistrationByPlate).Methods("GET")
-	router.HandleFunc("/api/v1/check-persons-driving-ban", mupHandler.GetDrivingBan).Methods("POST")
-	router.HandleFunc("/api/v1/check-for-persons-driving-permit", mupHandler.GetDrivingPermitByJMBG).Methods("POST")
-
-	router.Use(mupHandler.AuthorizeRoles("ADMIN", "USER"))
+	authorizedRouter.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/driving-ban", mupHandler.IssueDrivingBan).Methods("POST")
+	authorizedRouter.HandleFunc("/api/v1/registration-by-plate", mupHandler.GetRegistrationByPlate).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/check-persons-driving-ban", mupHandler.GetDrivingBan).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/check-persons-driving-permit", mupHandler.GetDrivingPermitByJMBG).Methods("GET")
+	authorizedRouter.Use(mupHandler.AuthorizeRoles("ADMIN"))
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
