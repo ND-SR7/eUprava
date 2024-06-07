@@ -9,11 +9,13 @@ interface InputProps {
   handleChange: ( ...args: any[]) => void;
   data: string | number | boolean | string[];
   accept?: string;
+  min?: string;
+  max?: string;
 }
 
 type InputType = string | number;
 
-const Input = ( {type, label, id, attrName, handleChange, data, accept} : InputProps ) => {
+const Input = ( {type, label, id, attrName, handleChange, data, accept, min, max} : InputProps ) => {
   function setInputValue(): InputType {
     if (type === "number")
       return data as number;
@@ -31,6 +33,8 @@ const Input = ( {type, label, id, attrName, handleChange, data, accept} : InputP
           value={setInputValue()}
           onChange={(e) => handleChange(e, attrName)}
           accept={accept ? accept : ""}
+          min={min ? min : ""}
+          max={max ? max : ""}
         />
     </LabelStyled>
   );

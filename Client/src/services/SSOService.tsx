@@ -3,6 +3,7 @@ import Credentials from "../models/User/Credentials";
 import UserToken from "../models/User/UserToken";
 import NewPerson from "../models/User/NewPerson";
 import NewLegalEntity from "../models/User/NewLegalEntity";
+import ResetPassword from "../models/User/ResetPassword";
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL_SSO;
 
@@ -39,5 +40,23 @@ export async function registerLegalEntity(data: NewLegalEntity) {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response.data.message || 'Failed to register legal entity');
+  }
+};
+
+export async function sendRecoveryEmail(email: string) {
+  try {
+    const response = await axios.post(`${BASE_URL}/recover-password`, {email});
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response.data.message || 'Failed to send recovery email');
+  }
+};
+
+export async function resetPassword(data: ResetPassword) {
+  try {
+    const response = await axios.post(`${BASE_URL}/reset-password`, data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response.data.message || 'Failed to reset password');
   }
 };

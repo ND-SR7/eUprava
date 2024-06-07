@@ -37,6 +37,14 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
+	// Set LOAD_DB_TEST_DATA to 'false' for persistence between shutdowns
+	if os.Getenv("LOAD_DB_TEST_DATA") == "true" {
+		err = store.Initialize(context.Background())
+		if err != nil {
+			logger.Fatalf("Failed to initialize DB: %s", err.Error())
+		}
+	}
+
 	// Handler & router init
 	ssoHandler := handlers.NewSSOHandler(store)
 	router := mux.NewRouter()
@@ -46,10 +54,14 @@ func main() {
 	router.HandleFunc("/api/v1/register-person", ssoHandler.RegisterPerson).Methods("POST")
 	router.HandleFunc("/api/v1/register-entity", ssoHandler.RegisterLegalEntity).Methods("POST")
 	router.HandleFunc("/api/v1/activate/{activationCode}", ssoHandler.ActivateAccount).Methods("GET")
+	router.HandleFunc("/api/v1/recover-password", ssoHandler.RecoverPassword).Methods("POST")
+	router.HandleFunc("/api/v1/reset-password", ssoHandler.ResetPassword).Methods("POST")
 
 	authorizedRouter := router.Methods("GET").Subrouter()
 	authorizedRouter.HandleFunc("/api/v1/user/{accountID}", ssoHandler.GetUserByAccountID).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/user/email/{email}", ssoHandler.GetUserByEmail).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/user/jmbg/{jmbg}", ssoHandler.GetPersonByJMBG).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/user/mb/{mb}", ssoHandler.GetLegalEntityByMB).Methods("GET")
 	authorizedRouter.Use(ssoHandler.AuthorizeRoles("USER", "ADMIN"))
 
 	cors := gorillaHandlers.CORS(

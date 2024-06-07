@@ -2,6 +2,7 @@ import { jwtDecode } from "jwt-decode";
 
 interface JwtPayload {
   sub: string;
+  name: string;
   role: string;
   exp: number;
 }
@@ -11,7 +12,7 @@ function decodeJwtToken(token: string): JwtPayload {
     return jwtDecode(token) as JwtPayload;
   } catch(error) {
     console.error("Error while decoding token:", error);
-    return {sub: "", role: "", exp: 0}
+    return {sub: "", name: "", role: "", exp: 0}
   }
   
 }

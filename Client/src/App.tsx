@@ -12,6 +12,7 @@ import MupPage from './pages/MupPage';
 import PolicePage from './pages/PolicePage';
 import CourtPage from './pages/CourtPage';
 import StatisticsPage from './pages/StatisticsPage';
+import PasswordResetPage from './pages/PasswordResetPage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Routes>
             <Route index element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path='/reset-password' element={<PasswordResetPage />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/home/mup" element={<MupPage />} />
             <Route path="/home/police" element={<PolicePage />} />

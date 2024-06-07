@@ -6,15 +6,14 @@ import { useEffect, useState } from "react";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const [sub, setSub] = useState("");
+  const [name, setName] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
     if (token === "") navigate("/");
 
-    let sub = decodeJwtToken(token).sub;
-    sub = sub.substring(0, sub.indexOf("@"))
-    setSub(sub);
+    let tokenName = decodeJwtToken(token).name;
+    setName(tokenName);
     // eslint-disable-next-line
   }, []);
 
@@ -25,7 +24,7 @@ const HomePage = () => {
   
   return (
     <>
-      <HeadingStyled>Welcome to eUprava, {sub}</HeadingStyled>
+      <HeadingStyled>Welcome to eUprava, {name}</HeadingStyled>
       <h3>Select the service you want to access</h3>
       <Button
         key="navMUP"

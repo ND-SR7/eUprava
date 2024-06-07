@@ -10,6 +10,8 @@ interface FormField {
   attrName: string;
   value?: string | string[];
   options?: string[];
+  min?: string;
+  max?: string;
   onchange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -116,7 +118,9 @@ const Form = ({ heading, formFields, onSubmit }: FormProps) => {
             attrName={field.attrName}
             type={field.type}
             handleChange={handleChange}
-            data={formData[field.attrName]} />
+            data={formData[field.attrName]}
+            min={field.min}
+            max={field.max} />
         </FormBoxStyled>
       );
     }
