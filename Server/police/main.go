@@ -67,6 +67,11 @@ func main() {
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/traffic-violation/check-all", handler.CheckAll).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-alcohol-level", handler.CheckAlcoholLevel).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-driver-ban", handler.CheckDriverBan).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-driver-permit", handler.CheckDriverPermitValidity).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-vehicle-registration", handler.CheckVehicleRegistration).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-vehicle-tire", handler.CheckVehicleTire).Methods(http.MethodPost)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

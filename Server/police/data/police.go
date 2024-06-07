@@ -29,6 +29,17 @@ type DriverCheck struct {
 	Location     string  `bson:"location" json:"location"`
 }
 
+type AlcoholRequest struct {
+	AlcoholLevel float64 `json:"alcoholLevel"`
+	JMBG         string  `json:"jmbg"`
+	Location     string  `json:"location"`
+}
+
+type DriverBanAndPermitRequest struct {
+	JMBG     string `json:"jmbg"`
+	Location string `json:"location"`
+}
+
 func (tp *TrafficPolice) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(tp)
