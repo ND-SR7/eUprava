@@ -402,8 +402,8 @@ func (ph *PoliceHandler) CheckVehicleTire(w http.ResponseWriter, r *http.Request
 }
 
 func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http.Request) {
-	var CheckVehicleRegistration data.CheckVehicleRegistration
-	err := json.NewDecoder(r.Body).Decode(&CheckVehicleRegistration)
+	var checkVehicleRegistration data.CheckVehicleRegistration
+	err := json.NewDecoder(r.Body).Decode(&checkVehicleRegistration)
 	if err != nil {
 		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
 		log.Printf("Failed to decode request body: %v\n", err)
@@ -413,17 +413,13 @@ func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http
 	violation := data.TrafficViolation{
 		ID:           primitive.NewObjectID(),
 		Time:         time.Now(),
-		ViolatorJMBG: CheckVehicleRegistration.JMBG,
-		Location:     CheckVehicleRegistration.Location,
+		ViolatorJMBG: checkVehicleRegistration.JMBG,
+		Location:     checkVehicleRegistration.Location,
 	}
 
 	token := ph.extractTokenFromHeader(r)
 
-	platesNumber := data.PlateRequest{
-		Plate: CheckVehicleRegistration.PlatesNumber,
-	}
-
-	registration, err := ph.mup.GetVehicleRegistration(r.Context(), platesNumber, token)
+	registration, err := ph.mup.GetVehicleRegistration(r.Context(), checkVehicleRegistration, token)
 	if err != nil {
 		log.Printf("Failed to check driving permit: %v\n", err)
 		http.Error(w, "Failed to check driving permit", http.StatusBadRequest)
