@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"mup/data"
 	"mup/domain"
 	"net/http"
@@ -24,8 +23,8 @@ func NewCourtClient(client *http.Client, address string) CourtClient {
 	}
 }
 
-func (cc CourtClient) CheckForPersonsWarrant(ctx context.Context, userID primitive.ObjectID, token string) (data.Warrants, error) {
-	requestBody, err := json.Marshal(userID.Hex())
+func (cc CourtClient) CheckForPersonsWarrant(ctx context.Context, userID string, token string) (data.Warrants, error) {
+	requestBody, err := json.Marshal(userID)
 	if err != nil {
 		_ = fmt.Errorf("failed to marshal user id: %v", err)
 		return data.Warrants{}, err
@@ -37,7 +36,7 @@ func (cc CourtClient) CheckForPersonsWarrant(ctx context.Context, userID primiti
 		timeout = time.Until(deadline)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cc.address+"/warrants/"+userID.Hex(), bytes.NewBuffer(requestBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cc.address+"/warrants/"+userID, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return data.Warrants{}, err
 	}

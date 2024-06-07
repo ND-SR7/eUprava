@@ -34,8 +34,6 @@ func (e ErrRespTmp) Error() string {
 	return fmt.Sprintf("temporary error [status code %d] for request: HTTP %s\t%s", e.StatusCode, e.Method, e.URL)
 }
 
-// we consider all errors of ErrRespTmp type to be equal
-// this helps retrier determine if it should send another request or not
 func (e ErrRespTmp) Is(err error) bool {
 	_, ok := err.(ErrRespTmp)
 	return ok

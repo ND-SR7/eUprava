@@ -6,6 +6,7 @@ import (
 	"mup/clients"
 	"mup/data"
 	"mup/handlers"
+	"mup/services"
 	"net/http"
 	"os"
 	"os/signal"
@@ -38,6 +39,14 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
+	// Set LOAD_DB_TEST_DATA to 'false' for persistence between shutdowns
+	if os.Getenv("LOAD_DB_TEST_DATA") == "true" {
+		err = store.Initialize(context.Background())
+		if err != nil {
+			logger.Fatalf("Failed to initialize DB: %s", err.Error())
+		}
+	}
+
 	courtClient := &http.Client{
 		Transport: &http.Transport{
 			MaxIdleConns:        10,
@@ -57,50 +66,35 @@ func main() {
 	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
 	sso := clients.NewSSOClient(ssoClient, os.Getenv("SSO_SERVICE_URI"))
 
-	mupHandler := handlers.NewMupHandler(store, storeLogger, sso, court)
+	mupService := services.NewMupService(store, storeLogger, sso, court)
+	mupHandler := handlers.NewMupHandler(mupService, storeLogger)
 
 	router := mux.NewRouter()
 
+	//GET
+	router.HandleFunc("/api/v1/persons-vehicles", mupHandler.GetPersonsVehicles).Methods("GET")
 	router.HandleFunc("/api/v1/driving-bans", mupHandler.CheckForPersonsDrivingBans).Methods("GET")
+	router.HandleFunc("/api/v1/persons-registrations", mupHandler.GetPersonsRegistrations).Methods("GET")
+	router.HandleFunc("/api/v1/persons-driving-permit", mupHandler.GetUserDrivingPermit).Methods("GET")
+
+	//POST
 	router.HandleFunc("/api/v1/vehicle", mupHandler.SaveVehicle).Methods("POST")
 	router.HandleFunc("/api/v1/registration-request", mupHandler.SubmitRegistrationRequest).Methods("POST")
-	router.HandleFunc("/api/v1/approve-registration-request", mupHandler.ApproveRegistration).Methods("POST")
 	router.HandleFunc("/api/v1/traffic-permit-request", mupHandler.SubmitTrafficPermitRequest).Methods("POST")
-	router.HandleFunc("/api/v1/approve-traffic-permit-request", mupHandler.ApproveTrafficPermitRequest).Methods("POST")
+
+	authorizedRouter := router.Methods("GET", "POST").Subrouter()
+	authorizedRouter.HandleFunc("/api/v1/pending-registration-requests", mupHandler.GetPendingRegistrationRequests).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/pending-traffic-permit-requests", mupHandler.GetPendingTrafficPermitRequests).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/approve-registration-request", mupHandler.ApproveRegistration).Methods("POST")
+	authorizedRouter.HandleFunc("/api/v1/approve-traffic-permit-request", mupHandler.ApproveTrafficPermitRequest).Methods("POST")
 
 	// For clients
-	router.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
-	router.HandleFunc("/api/v1/driving-ban", mupHandler.IssueDrivingBan).Methods("POST")
-
-	router.Use(mupHandler.AuthorizeRoles("ADMIN", "USER"))
-
-	////Save mup
-	//mupID, err := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e82")
-	//if err == nil {
-	//	address := data.Address{
-	//		Municipality: "ss",
-	//		Locality:     "Novi Sad",
-	//		StreetName:   "Dunavska",
-	//		StreetNumber: 1,
-	//	}
-	//	mup := data.Mup{
-	//		ID:             mupID,
-	//		Name:           "Mup",
-	//		Address:        address,
-	//		Vehicles:       make([]primitive.ObjectID, 0),
-	//		TrafficPermits: make([]primitive.ObjectID, 0),
-	//		Plates:         make([]string, 0),
-	//		DrivingBans:    make([]primitive.ObjectID, 0),
-	//		Registrations:  make([]string, 0),
-	//	}
-	//	err = mupHandler.SaveMup(mup)
-	//	if err != nil {
-	//		log.Printf("Failed to save mup: %v", err)
-	//	}
-	//	if err == nil {
-	//		log.Printf("Saved mup: %v", mup)
-	//	}
-	//}
+	authorizedRouter.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/driving-ban", mupHandler.IssueDrivingBan).Methods("POST")
+	authorizedRouter.HandleFunc("/api/v1/registration-by-plate", mupHandler.GetRegistrationByPlate).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/check-persons-driving-ban", mupHandler.GetDrivingBan).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/check-persons-driving-permit", mupHandler.GetDrivingPermitByJMBG).Methods("GET")
+	authorizedRouter.Use(mupHandler.AuthorizeRoles("ADMIN"))
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
@@ -112,6 +106,8 @@ func main() {
 	pingRouter.HandleFunc("/api/v1", mupHandler.Ping).Methods("GET")
 	pingRouter.Use(cors)
 	pingRouter.Use(mupHandler.AuthorizeRoles("USER", "ADMIN"))
+
+	mupService.SaveMup()
 
 	// Initialize the server
 	server := http.Server{

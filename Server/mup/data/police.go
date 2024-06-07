@@ -2,16 +2,17 @@ package data
 
 import (
 	"encoding/json"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Warrant struct {
 	ID               primitive.ObjectID `bson:"_id" json:"id"`
 	TrafficViolation primitive.ObjectID `bson:"trafficViolation" json:"trafficViolation"`
 	IssuedOn         time.Time          `bson:"issuedOn" json:"issuedOn"`
-	IssuedFor        primitive.ObjectID `bson:"issuedFor" json:"issuedFor"`
+	IssuedFor        string             `bson:"issuedFor" json:"issuedFor"`
 }
 
 type Warrants []Warrant

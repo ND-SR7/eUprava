@@ -1,26 +1,21 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"log"
-	"mup/clients"
-	"mup/data"
-	"net/http"
-	"time"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"log"
+	"mup/data"
+	"mup/services"
+	"net/http"
+	"time"
 )
 
 const ApplicationJson = "application/json"
 const ContentType = "Content-Type"
-const FailedToEncodePerson = "Failed to encode person"
 const FailedToReadUsernameFromToken = "Failed to read username from token"
-const FailedToEcnodeDrivingBans = "Failed to encode driving bans"
-const InvalidID = "Invalid ID"
+const FailedToEncodeDrivingBans = "Failed to encode driving bans"
 const FailedToDecodeRequestBody = "Failed to decode request body"
 
 type KeyProduct struct{}
@@ -28,15 +23,12 @@ type KeyProduct struct{}
 var secretKey = []byte("eUpravaT2")
 
 type MupHandler struct {
-	repo   *data.MUPRepo
-	logger *log.Logger
-	ssoc   clients.SSOClient
-	cc     clients.CourtClient
+	service *services.MupService
+	logger  *log.Logger
 }
 
-func NewMupHandler(r *data.MUPRepo, log *log.Logger, ssoc clients.SSOClient,
-	cc clients.CourtClient) *MupHandler {
-	return &MupHandler{r, log, ssoc, cc}
+func NewMupHandler(service *services.MupService, logger *log.Logger) *MupHandler {
+	return &MupHandler{service: service, logger: logger}
 }
 
 // Ping
@@ -47,14 +39,20 @@ func (mh *MupHandler) Ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-//GET
-
+// GET Handlers
 func (mh *MupHandler) CheckForPersonsDrivingBans(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	personID, _ := primitive.ObjectIDFromHex("607d22b837ede6b71eef3e11")
+	tokenStr := mh.extractTokenFromHeader(r)
 
-	drivingBans, err := mh.repo.CheckForPersonsDrivingBans(ctx, personID)
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
+	if err != nil {
+		fmt.Printf("Error while reading JMBG from token: %v", err)
+		http.Error(rw, FailedToReadUsernameFromToken, http.StatusBadRequest)
+		return
+	}
+
+	drivingBans, err := mh.service.CheckForPersonsDrivingBans(ctx, jmbg)
 	if err != nil {
 		http.Error(rw, "Failed to retrieve persons driving bans", http.StatusInternalServerError)
 		return
@@ -63,7 +61,7 @@ func (mh *MupHandler) CheckForPersonsDrivingBans(rw http.ResponseWriter, r *http
 	rw.Header().Set(ContentType, ApplicationJson)
 	rw.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(rw).Encode(drivingBans); err != nil {
-		http.Error(rw, FailedToEcnodeDrivingBans, http.StatusInternalServerError)
+		http.Error(rw, FailedToEncodeDrivingBans, http.StatusInternalServerError)
 	}
 	fmt.Println("Successfully fetched driving bans")
 }
@@ -71,7 +69,7 @@ func (mh *MupHandler) CheckForPersonsDrivingBans(rw http.ResponseWriter, r *http
 func (mh *MupHandler) CheckForRegisteredVehicles(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	vehicles, err := mh.repo.RetrieveRegisteredVehicles(ctx)
+	vehicles, err := mh.service.RetrieveRegisteredVehicles(ctx)
 	if err != nil {
 		http.Error(rw, "Failed to retrieve registered vehicles", http.StatusInternalServerError)
 		return
@@ -80,15 +78,193 @@ func (mh *MupHandler) CheckForRegisteredVehicles(rw http.ResponseWriter, r *http
 	rw.Header().Set(ContentType, ApplicationJson)
 	rw.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(rw).Encode(vehicles); err != nil {
-		http.Error(rw, FailedToEcnodeDrivingBans, http.StatusInternalServerError)
+		http.Error(rw, FailedToEncodeDrivingBans, http.StatusInternalServerError)
 	}
 	fmt.Println("Successfully fetched registered vehicles")
 }
 
-// POST
+func (mh *MupHandler) GetPersonsRegistrations(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
+	tokenStr := mh.extractTokenFromHeader(r)
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
+	if err != nil {
+		http.Error(rw, "Failed to read JMBG from token", http.StatusBadRequest)
+		return
+	}
+
+	registrations, err := mh.service.GetPersonsRegistrations(ctx, jmbg)
+	if err != nil {
+		http.Error(rw, "Failed to retrieve user registrations", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(registrations); err != nil {
+		http.Error(rw, "Failed to encode registrations", http.StatusInternalServerError)
+	}
+}
+
+func (mh *MupHandler) GetUserDrivingPermit(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	tokenStr := mh.extractTokenFromHeader(r)
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
+	if err != nil {
+		http.Error(rw, "Failed to read JMBG from token", http.StatusBadRequest)
+		return
+	}
+
+	drivingPermits, err := mh.service.GetUserDrivingPermit(ctx, jmbg)
+	if err != nil {
+		http.Error(rw, "Failed to retrieve user driving permits", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(drivingPermits); err != nil {
+		http.Error(rw, "Failed to encode driving permits", http.StatusInternalServerError)
+	}
+}
+
+func (mh *MupHandler) GetPendingRegistrationRequests(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	pendingRequests, err := mh.service.GetPendingRegistrationRequests(ctx)
+	if err != nil {
+		http.Error(rw, "Failed to retrieve pending registration requests", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(pendingRequests); err != nil {
+		http.Error(rw, "Failed to encode pending requests", http.StatusInternalServerError)
+	}
+}
+
+func (mh *MupHandler) GetDrivingBan(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var request data.JMBGRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(rw, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	drivingBan, err := mh.service.GetDrivingBan(ctx, request.JMBG, time.Now())
+	if err != nil {
+		http.Error(rw, "Failed to retrieve driving ban", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(drivingBan); err != nil {
+		http.Error(rw, "Failed to encode driving ban", http.StatusInternalServerError)
+	}
+}
+
+func (mh *MupHandler) GetPendingTrafficPermitRequests(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	pendingRequests, err := mh.service.GetPendingTrafficPermitRequests(ctx)
+	if err != nil {
+		http.Error(rw, "Failed to retrieve pending traffic permit requests", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(pendingRequests); err != nil {
+		http.Error(rw, "Failed to encode pending requests", http.StatusInternalServerError)
+	}
+}
+
+func (mh *MupHandler) GetRegistrationByPlate(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var request data.PlateRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(rw, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	registration, err := mh.service.GetRegistrationByPlate(ctx, request.Plate)
+	if err != nil {
+		http.Error(rw, "Failed to retrieve registration", http.StatusInternalServerError)
+		return
+	}
+
+	if registration.RegistrationNumber == "" {
+		registration = data.Registration{}
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(registration); err != nil {
+		http.Error(rw, "Failed to encode registration", http.StatusInternalServerError)
+	}
+}
+
+func (mh *MupHandler) GetDrivingPermitByJMBG(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var request data.JMBGRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(rw, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	drivingPermit, err := mh.service.GetDrivingPermitByJMBG(ctx, request.JMBG)
+	if err != nil {
+		http.Error(rw, "Failed to retrieve driving permit", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(drivingPermit); err != nil {
+		http.Error(rw, "Failed to encode driving permit", http.StatusInternalServerError)
+	}
+}
+
+func (mh *MupHandler) GetPersonsVehicles(rw http.ResponseWriter, r *http.Request) {
+	tokenStr := mh.extractTokenFromHeader(r)
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
+	if err != nil {
+		fmt.Printf("Error while reading JMBG from token: %v", err)
+		http.Error(rw, FailedToReadUsernameFromToken, http.StatusBadRequest)
+		return
+	}
+
+	vehicles, err := mh.service.GetPersonsVehicles(r.Context(), jmbg)
+	if err != nil {
+		log.Printf("Failed to retrieve vehicles for person with JMBG %s: %v", jmbg, err)
+		http.Error(rw, "Failed to retrieve vehicles", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set(ContentType, ApplicationJson)
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(vehicles); err != nil {
+		log.Printf("Failed to encode vehicles: %v", err)
+		http.Error(rw, "Failed to encode vehicles", http.StatusInternalServerError)
+	}
+}
+
+// POST Handlers
 func (mh *MupHandler) SubmitRegistrationRequest(rw http.ResponseWriter, r *http.Request) {
 	var registration data.Registration
+
+	tokenStr := mh.extractTokenFromHeader(r)
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
+	if err != nil {
+		http.Error(rw, "Failed to read JMBG from token", http.StatusBadRequest)
+		return
+	}
 
 	if err := json.NewDecoder(r.Body).Decode(&registration); err != nil {
 		http.Error(rw, FailedToDecodeRequestBody, http.StatusBadRequest)
@@ -96,8 +272,10 @@ func (mh *MupHandler) SubmitRegistrationRequest(rw http.ResponseWriter, r *http.
 		return
 	}
 
-	if err := mh.repo.SubmitRegistrationRequest(r.Context(), &registration); err != nil {
-		log.Printf("Failed to submt registration request: %v", err)
+	registration.Owner = jmbg
+
+	if err := mh.service.SubmitRegistrationRequest(r.Context(), &registration); err != nil {
+		log.Printf("Failed to submit registration request: %v", err)
 		http.Error(rw, "Failed to submit registration request", http.StatusInternalServerError)
 		return
 	}
@@ -114,12 +292,13 @@ func (mh *MupHandler) SubmitRegistrationRequest(rw http.ResponseWriter, r *http.
 
 func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http.Request) {
 	var trafficPermit data.TrafficPermit
+
 	ctx := r.Context()
 	tokenStr := mh.extractTokenFromHeader(r)
 
-	email, err := mh.getEmailFromToken(tokenStr)
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
 	if err != nil {
-		fmt.Printf("Error while reading email from token: %v", err)
+		fmt.Printf("Error while reading JMBG from token: %v", err)
 		http.Error(rw, FailedToReadUsernameFromToken, http.StatusBadRequest)
 		return
 	}
@@ -130,32 +309,10 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 		return
 	}
 
-	user, err := mh.ssoc.GetUserByEmail(ctx, email, tokenStr)
-	if err != nil {
-		http.Error(rw, "Failed to get user by email from sso", http.StatusBadRequest)
-		log.Printf("Failed to get user by email from sso: %v", err)
-		return
-	}
+	trafficPermit.Person = jmbg
 
-	warrants, err := mh.cc.CheckForPersonsWarrant(ctx, trafficPermit.Person, tokenStr)
-	if err != nil {
-		http.Error(rw, "Failed to get warrant from court service", http.StatusBadRequest)
-		log.Printf("Failed to get warrant from court service: %v", err)
-		return
-	}
-
-	if len(warrants) != 0 {
-		http.Error(rw, "User is on warrant list", http.StatusBadRequest)
-		log.Printf("User is on warrant list")
-		return
-	}
-
-	trafficPermit.Person = user.Account.ID
-	trafficPermit.Approved = false
-	trafficPermit.IssuedDate = time.Now()
-
-	if err := mh.repo.SubmitTrafficPermitRequest(ctx, &trafficPermit); err != nil {
-		log.Printf("Failed to submt traffic permit request: %v", err)
+	if err := mh.service.SubmitTrafficPermitRequest(ctx, &trafficPermit, jmbg, tokenStr); err != nil {
+		log.Printf("Failed to submit traffic permit request: %v", err)
 		http.Error(rw, "Failed to submit traffic permit request", http.StatusInternalServerError)
 		return
 	}
@@ -163,7 +320,7 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 	rw.Header().Set(ContentType, ApplicationJson)
 	rw.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(rw).Encode(trafficPermit); err != nil {
-		log.Printf("Failed to encode registration request: %v", err)
+		log.Printf("Failed to encode traffic permit request: %v", err)
 		http.Error(rw, "Failed to encode traffic permit request", http.StatusInternalServerError)
 	}
 
@@ -172,6 +329,14 @@ func (mh *MupHandler) SubmitTrafficPermitRequest(rw http.ResponseWriter, r *http
 
 func (mh *MupHandler) SaveVehicle(rw http.ResponseWriter, r *http.Request) {
 	var vehicle data.Vehicle
+	tokenStr := mh.extractTokenFromHeader(r)
+
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
+	if err != nil {
+		fmt.Printf("Error while reading JMBG from token: %v", err)
+		http.Error(rw, FailedToReadUsernameFromToken, http.StatusBadRequest)
+		return
+	}
 
 	if err := json.NewDecoder(r.Body).Decode(&vehicle); err != nil {
 		http.Error(rw, FailedToDecodeRequestBody, http.StatusBadRequest)
@@ -179,7 +344,9 @@ func (mh *MupHandler) SaveVehicle(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := mh.repo.SaveVehicle(r.Context(), &vehicle); err != nil {
+	vehicle.Owner = jmbg
+
+	if err := mh.service.SaveVehicle(r.Context(), &vehicle); err != nil {
 		log.Printf("Failed to save vehicle: %v", err)
 		http.Error(rw, "Failed to save vehicle", http.StatusInternalServerError)
 		return
@@ -204,9 +371,9 @@ func (mh *MupHandler) IssueDrivingBan(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := mh.repo.IssueDrivingBan(r.Context(), &drivingBan); err != nil {
-		log.Printf("Failed to save driving ban: %v", err)
-		http.Error(rw, "Failed to driving ban", http.StatusInternalServerError)
+	if err := mh.service.IssueDrivingBan(r.Context(), &drivingBan); err != nil {
+		log.Printf("Failed to issue driving ban: %v", err)
+		http.Error(rw, "Failed to issue driving ban", http.StatusInternalServerError)
 		return
 	}
 
@@ -229,7 +396,7 @@ func (mh *MupHandler) ApproveRegistration(rw http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := mh.repo.ApproveRegistration(r.Context(), registration); err != nil {
+	if err := mh.service.ApproveRegistration(r.Context(), registration); err != nil {
 		log.Printf("Failed to approve registration: %v", err)
 		http.Error(rw, "Failed to approve registration", http.StatusInternalServerError)
 		return
@@ -253,7 +420,9 @@ func (mh *MupHandler) ApproveTrafficPermitRequest(rw http.ResponseWriter, r *htt
 		return
 	}
 
-	if err := mh.repo.ApproveTrafficPermitRequest(r.Context(), trafficPermit.ID); err != nil {
+	trafficPermit.Approved = true
+
+	if err := mh.service.ApproveTrafficPermitRequest(r.Context(), trafficPermit.ID); err != nil {
 		log.Printf("Failed to approve traffic permit: %v", err)
 		http.Error(rw, "Failed to approve traffic permit", http.StatusInternalServerError)
 		return
@@ -266,15 +435,6 @@ func (mh *MupHandler) ApproveTrafficPermitRequest(rw http.ResponseWriter, r *htt
 		http.Error(rw, "Failed to encode approved traffic permit", http.StatusInternalServerError)
 	}
 	log.Printf("Successfully updated traffic permit '%s'", trafficPermit.ID.Hex())
-}
-
-// Save mup
-func (mh *MupHandler) SaveMup(mup data.Mup) error {
-	err := mh.repo.SaveMup(context.Background(), mup)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // JWT middleware
@@ -324,7 +484,7 @@ func (mh *MupHandler) extractTokenFromHeader(rr *http.Request) string {
 	return ""
 }
 
-func (mh *MupHandler) getEmailFromToken(tokenString string) (string, error) {
+func (mh *MupHandler) getJMBGFromToken(tokenString string) (string, error) {
 	claims := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
@@ -334,11 +494,11 @@ func (mh *MupHandler) getEmailFromToken(tokenString string) (string, error) {
 		return "", err
 	}
 
-	email, ok1 := claims["sub"].(string)
+	jmbg, ok1 := claims["sub"].(string)
 	_, ok2 := claims["role"].(string)
 	if !ok1 || !ok2 {
 		return "", err
 	}
 
-	return email, nil
+	return jmbg, nil
 }

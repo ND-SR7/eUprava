@@ -23,7 +23,7 @@ type DrivingBan struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Reason   string             `bson:"reason" json:"reason"`
 	Duration time.Time          `bson:"duration" json:"duration"`
-	Person   primitive.ObjectID `bson:"person" json:"person"`
+	Person   string             `bson:"person" json:"person"`
 }
 
 type DrivingBans []DrivingBan
@@ -34,7 +34,7 @@ type TrafficPermit struct {
 	IssuedDate     time.Time          `bson:"issuedDate" json:"issuedDate"`
 	ExpirationDate time.Time          `bson:"expirationDate" json:"expirationDate"`
 	Approved       bool               `bson:"approved" json:"approved"`
-	Person         primitive.ObjectID `bson:"person" json:"person"`
+	Person         string             `bson:"person" json:"person"`
 }
 
 type TrafficPermits []TrafficPermit
