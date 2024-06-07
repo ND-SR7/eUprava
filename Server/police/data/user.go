@@ -66,6 +66,10 @@ type Address struct {
 	StreetNumber int    `bson:"streetNumber" json:"streetNumber"`
 }
 
+type JMBGRequest struct {
+	JMBG string `json:"jmbg"`
+}
+
 func (a *Account) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(a)
@@ -114,4 +118,14 @@ func (tp *TrafficPermit) ToJSON(w io.Writer) error {
 func (tp *TrafficPermit) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(tp)
+}
+
+func (jr *JMBGRequest) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(jr)
+}
+
+func (jr *JMBGRequest) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(jr)
 }

@@ -38,6 +38,14 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
+	// Set LOAD_DB_TEST_DATA to 'false' for persistence between shutdowns
+	if os.Getenv("LOAD_DB_TEST_DATA") == "true" {
+		err = store.Initialize(context.Background())
+		if err != nil {
+			logger.Fatalf("Failed to initialize DB: %s", err.Error())
+		}
+	}
+
 	courtClient := &http.Client{
 		Transport: &http.Transport{
 			MaxIdleConns:        10,
@@ -46,18 +54,32 @@ func main() {
 		},
 	}
 
-	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
+	mupClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
 
-	handler := handlers.NewPoliceHandler(store, court)
+	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
+	mup := clients.NewMupClient(mupClient, os.Getenv("MUP_SERVICE_URI"))
+
+	handler := handlers.NewPoliceHandler(store, court, mup)
 
 	router := mux.NewRouter()
 	// Router methods
 	router.HandleFunc("/api/v1/traffic-violation", handler.CreateTrafficViolation).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traffic-violation/alcohol-test", handler.CheckAlcoholLevel).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traffic-violation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/traffic-violation/check-all", handler.CheckAll).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-alcohol-level", handler.CheckAlcoholLevel).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-driver-ban", handler.CheckDriverBan).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-driver-permit", handler.CheckDriverPermitValidity).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-vehicle-registration", handler.CheckVehicleRegistration).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/check-vehicle-tire", handler.CheckVehicleTire).Methods(http.MethodPost)
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
