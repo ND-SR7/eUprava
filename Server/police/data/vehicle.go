@@ -28,16 +28,25 @@ type Vehicle struct {
 type Vehicles []Vehicles
 
 type Registration struct {
-	RegistrationNumber string    `bson:"registrationNumber" json:"registrationNumber"`
-	IssuedDate         time.Time `bson:"issuedDate" json:"issuedDate"`
-	ExpirationDate     time.Time `bson:"expirationDate" json:"expirationDate"`
+	RegistrationNumber string             `bson:"registrationNumber" json:"registrationNumber"`
+	IssuedDate         time.Time          `bson:"issuedDate" json:"issuedDate"`
+	ExpirationDate     time.Time          `bson:"expirationDate" json:"expirationDate"`
+	VehicleID          primitive.ObjectID `bson:"vehicleID" json:"vehicleID"`
+	Owner              string             `bson:"owner" json:"owner"`
+	Plates             string             `bson:"plates" json:"plates"`
+	Approved           bool               `bson:"approved" json:"approved"`
 }
 
 type Plates struct {
 	RegistrationNumber string             `bson:"registrationNumber" json:"registrationNumber"`
 	PlatesNumber       string             `bson:"platesNumber" json:"platesNumber"`
 	PlateType          string             `bson:"plateType" json:"plateType"`
+	Owner              string             `bson:"owner" json:"owner"`
 	VehicleID          primitive.ObjectID `bson:"vehicleID" json:"vehicleID"`
+}
+
+type PlateRequest struct {
+	Plate string `json:"plate"`
 }
 
 type ListOfPlates []Plates

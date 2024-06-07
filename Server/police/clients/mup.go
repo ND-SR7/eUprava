@@ -56,7 +56,7 @@ func (mc MupClient) CheckDrivigBan(ctx context.Context, jmbg data.JMBGRequest, t
 		return false, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, mc.address+"/check-persons-driving-ban", bytes.NewBuffer(requestBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, mc.address+"/check-persons-driving-ban", bytes.NewBuffer(requestBody))
 	if err != nil {
 		return false, err
 	}
@@ -96,7 +96,7 @@ func (mc MupClient) GetDrivingPermitByJMBG(ctx context.Context, jmbg data.JMBGRe
 		return permit, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, mc.address+"/check-for-persons-driving-permit", bytes.NewBuffer(requestBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, mc.address+"/check-for-persons-driving-permit", bytes.NewBuffer(requestBody))
 	if err != nil {
 		return permit, err
 	}
@@ -119,4 +119,41 @@ func (mc MupClient) GetDrivingPermitByJMBG(ctx context.Context, jmbg data.JMBGRe
 	}
 
 	return permit, nil
+}
+
+func (mc MupClient) GetVehicleRegistration(ctx context.Context, CheckVehicleRegistration data.CheckVehicleRegistration, token string) (data.Registration, error) {
+	var registration data.Registration
+
+	platesNumber := data.PlateRequest{
+		Plate: CheckVehicleRegistration.PlatesNumber,
+	}
+
+	requestBody, err := json.Marshal(platesNumber)
+	if err != nil {
+		return registration, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, mc.address+"/registration-by-plate", bytes.NewBuffer(requestBody))
+	if err != nil {
+		return registration, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := mc.client.Do(req)
+	if err != nil {
+		return registration, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return registration, errors.New("unexpected status code: " + resp.Status)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&registration); err != nil {
+		return registration, err
+	}
+
+	return registration, nil
 }

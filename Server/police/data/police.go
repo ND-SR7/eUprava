@@ -40,6 +40,18 @@ type DriverBanAndPermitRequest struct {
 	Location string `json:"location"`
 }
 
+type VehicleTireCheck struct {
+	TireType string `json:"tireType"`
+	JMBG     string `json:"jmbg"`
+	Location string `json:"location"`
+}
+
+type CheckVehicleRegistration struct {
+	PlatesNumber string `json:"platesNumber"`
+	JMBG         string `json:"jmbg"`
+	Location     string `json:"location"`
+}
+
 func (tp *TrafficPolice) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(tp)

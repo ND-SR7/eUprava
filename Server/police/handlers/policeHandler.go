@@ -284,7 +284,6 @@ func (ph *PoliceHandler) CheckDriverBan(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(violation)
 }
 
-// TODO: Work on this now
 func (ph *PoliceHandler) CheckDriverPermitValidity(w http.ResponseWriter, r *http.Request) {
 	var driverBan data.DriverBanAndPermitRequest
 	err := json.NewDecoder(r.Body).Decode(&driverBan)
@@ -343,8 +342,123 @@ func (ph *PoliceHandler) CheckDriverPermitValidity(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(violation)
 }
-func (ph *PoliceHandler) CheckVehicleTire(w http.ResponseWriter, r *http.Request)         {}
-func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http.Request) {}
+
+func (ph *PoliceHandler) CheckVehicleTire(w http.ResponseWriter, r *http.Request) {
+	var tireType data.VehicleTireCheck
+	err := json.NewDecoder(r.Body).Decode(&tireType)
+	if err != nil {
+		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
+		log.Printf("Failed to decode request body: %v\n", err)
+		return
+	}
+
+	violation := data.TrafficViolation{
+		ID:           primitive.NewObjectID(),
+		Time:         time.Now(),
+		ViolatorJMBG: tireType.JMBG,
+		Location:     tireType.Location,
+	}
+
+	token := ph.extractTokenFromHeader(r)
+
+	// currentDate := time.Now()
+	startWinterPeriod := time.Date((time.Now()).Year(), time.November, 1, 0, 0, 0, 0, time.Local)
+	endWinterPeriod := time.Date((time.Now()).Year(), time.April, 1, 0, 0, 0, 0, time.Local)
+
+	if tireType.TireType == "WINTER" {
+		// No violation for winter tires
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "No violation for winter tires")
+		return
+	} else if tireType.TireType == "SUMMER" && (time.Now().After(startWinterPeriod) || time.Now().Before(endWinterPeriod)) {
+		violation.Reason = "Improper tire usage: SUMMER tires during winter period"
+		violation.Description = "Driver was caught operating a vehicle with SUMMER tires during the winter period (November 1 to April 1), which is against regulations."
+
+		err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
+		if err != nil {
+			http.Error(w, "Failed to create traffic violation", http.StatusBadRequest)
+			log.Printf("Failed to create traffic violation: %v\n", err)
+			return
+		}
+
+		err = ph.court.CreateCrimeReport(r.Context(), violation, token)
+		if err != nil {
+			http.Error(w, "Failed to send crime report", http.StatusBadRequest)
+			log.Printf("Failed to send crime report: %v\n", err)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(violation)
+	} else {
+		// No violation for summer tires outside the winter period
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "No violation for summer tires outside the winter period")
+		return
+	}
+}
+
+func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http.Request) {
+	var CheckVehicleRegistration data.CheckVehicleRegistration
+	err := json.NewDecoder(r.Body).Decode(&CheckVehicleRegistration)
+	if err != nil {
+		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
+		log.Printf("Failed to decode request body: %v\n", err)
+		return
+	}
+
+	violation := data.TrafficViolation{
+		ID:           primitive.NewObjectID(),
+		Time:         time.Now(),
+		ViolatorJMBG: CheckVehicleRegistration.JMBG,
+		Location:     CheckVehicleRegistration.Location,
+	}
+
+	token := ph.extractTokenFromHeader(r)
+
+	platesNumber := data.PlateRequest{
+		Plate: CheckVehicleRegistration.PlatesNumber,
+	}
+
+	registration, err := ph.mup.GetVehicleRegistration(r.Context(), platesNumber, token)
+	if err != nil {
+		log.Printf("Failed to check driving permit: %v\n", err)
+		http.Error(w, "Failed to check driving permit", http.StatusBadRequest)
+		return
+	}
+
+	if registration.ExpirationDate.Before(time.Now()) {
+		violation.Reason = "Vehicle registration expired"
+		violation.Description = "Driver was found to be operating a vehicle with an expired registration."
+		log.Print("Vehicle registration is expired")
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "The vehicle registration has not expired.")
+		return
+	}
+
+	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
+	if err != nil {
+		http.Error(w, "Failed to create traffic violation", http.StatusBadRequest)
+		log.Printf("Failed to create traffic violation: %v\n", err)
+		return
+	}
+
+	err = ph.court.CreateCrimeReport(r.Context(), violation, token)
+	if err != nil {
+		http.Error(w, "Failed to send crime report", http.StatusBadRequest)
+		log.Printf("Failed to send crime report: %v\n", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(violation)
+}
 
 func (ph *PoliceHandler) GetTrafficViolationByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
