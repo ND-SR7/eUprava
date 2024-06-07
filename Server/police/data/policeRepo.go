@@ -64,6 +64,46 @@ func (pr *PoliceRepo) Ping() {
 	pr.logger.Println(databases)
 }
 
+func (pr *PoliceRepo) Initialize(ctx context.Context) error {
+	db := pr.cli.Database("policeDB")
+
+	err := db.Collection("traffic_violations").Drop(ctx)
+	if err != nil {
+		return err
+	}
+
+	trafficViolations := []TrafficViolation{
+		{
+			ID:           primitive.NewObjectID(),
+			ViolatorJMBG: "147258369",
+			Reason:       "Speeding",
+			Description:  "Person was caught operating a vehicle above speed limit",
+			Time:         time.Now(),
+			Location:     "Novi Sad",
+		},
+		{
+			ID:           primitive.NewObjectID(),
+			ViolatorJMBG: "369258147",
+			Reason:       "Drunk driving",
+			Description:  "Person was caught operating a vehicle under influence",
+			Time:         time.Now(),
+			Location:     "Novi Sad",
+		},
+	}
+
+	var bsonTrafficViolations []interface{}
+	for _, tv := range trafficViolations {
+		bsonTrafficViolations = append(bsonTrafficViolations, tv)
+	}
+
+	_, err = db.Collection("traffic_violations").InsertMany(ctx, bsonTrafficViolations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (pr *PoliceRepo) CreateTrafficViolation(ctx context.Context, violation *TrafficViolation) error {
 	collection := pr.getPoliceCollection("traffic_violations")
 	_, err := collection.InsertOne(ctx, violation)
@@ -115,7 +155,7 @@ func (pr *PoliceRepo) DeleteTrafficViolation(ctx context.Context, id primitive.O
 }
 
 func (pr *PoliceRepo) getPoliceCollection(nameOfCollection string) *mongo.Collection {
-	policeDatabase := pr.cli.Database("police_db")
+	policeDatabase := pr.cli.Database("policeDB")
 	policeCollection := policeDatabase.Collection(nameOfCollection)
 	return policeCollection
 }
