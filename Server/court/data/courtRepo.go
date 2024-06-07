@@ -65,6 +65,79 @@ func (cr *CourtRepo) Ping() {
 	cr.logger.Println(databases)
 }
 
+// Initialize database
+func (cr *CourtRepo) Initialize(ctx context.Context) error {
+	db := cr.cli.Database("courtDB")
+
+	err := db.Collection("courtHearingsPerson").Drop(ctx)
+	if err != nil {
+		return err
+	}
+	err = db.Collection("courtHearingsLegalEntity").Drop(ctx)
+	if err != nil {
+		return err
+	}
+	err = db.Collection("warrants").Drop(ctx)
+	if err != nil {
+		return err
+	}
+	err = db.Collection("suspensions").Drop(ctx)
+	if err != nil {
+		return err
+	}
+
+	hearingDateTime, _ := time.Parse("2006-01-02T15:04:05", "2024-07-05T16:00:00")
+
+	courtHearingsPerson := []CourtHearingPerson{
+		{
+			ID:       primitive.NewObjectID(),
+			Reason:   "Speeding violation hearing",
+			DateTime: hearingDateTime,
+			Court:    primitive.NewObjectID(), // TODO
+			Person:   "147258369",
+		},
+		{
+			ID:       primitive.NewObjectID(),
+			Reason:   "Drunk driving violation hearing",
+			DateTime: hearingDateTime.Add(time.Hour),
+			Court:    primitive.NewObjectID(),
+			Person:   "369258147",
+		},
+	}
+
+	var bsonCHP []interface{}
+	for _, chp := range courtHearingsPerson {
+		bsonCHP = append(bsonCHP, chp)
+	}
+
+	_, err = db.Collection("courtHearingsPerson").InsertMany(ctx, bsonCHP)
+	if err != nil {
+		return err
+	}
+
+	courtHearingsLegalEntity := []CourtHearingLegalEntity{
+		{
+			ID:          primitive.NewObjectID(),
+			Reason:      "Speeding violation hearing",
+			DateTime:    hearingDateTime.Add(time.Hour * 2),
+			Court:       primitive.NewObjectID(), // TODO
+			LegalEntity: "147369258",
+		},
+	}
+
+	var bsonCHLE []interface{}
+	for _, chle := range courtHearingsLegalEntity {
+		bsonCHLE = append(bsonCHLE, chle)
+	}
+
+	_, err = db.Collection("courtHearingsLegalEntity").InsertMany(ctx, bsonCHLE)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Finds court hearing based on provided id
 func (cr *CourtRepo) GetHearingByID(id string) (CourtHearing, error) {
 	hearingsPerson := cr.getHearingsPersonCollection()
