@@ -44,6 +44,14 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
+	// Set LOAD_DB_TEST_DATA to 'false' for persistence between shutdowns
+	if os.Getenv("LOAD_DB_TEST_DATA") == "true" {
+		err = store.Initialize(context.Background())
+		if err != nil {
+			logger.Fatalf("Failed to initialize DB: %s", err.Error())
+		}
+	}
+
 	mupClient := &http.Client{
 		Transport: &http.Transport{
 			MaxIdleConns:        10,
@@ -71,26 +79,14 @@ func main() {
 	getTrafficStatisticRouter := router.Methods(http.MethodGet).Path(TrafficStatisticPath).Subrouter()
 	getTrafficStatisticRouter.HandleFunc("", statisticsHandler.GetTrafficStatistic)
 
-	getCrimeStatisticRouter := router.Methods(http.MethodGet).Path(CrimeStatisticPath).Subrouter()
-	getCrimeStatisticRouter.HandleFunc("", statisticsHandler.GetCrimeStatistic)
-
 	getAllTrafficStatisticRouter := router.Methods(http.MethodGet).Path("/api/v1/traffic-statistic").Subrouter()
 	getAllTrafficStatisticRouter.HandleFunc("", statisticsHandler.GetAllTrafficStatistics)
-
-	getAllCrimeStatisticRouter := router.Methods(http.MethodGet).Path("/api/v1/crime-statistic").Subrouter()
-	getAllCrimeStatisticRouter.HandleFunc("", statisticsHandler.GetAllCrimeStatistics)
 
 	updateTrafficStatisticRouter := router.Methods(http.MethodPut).Path(TrafficStatisticPath).Subrouter()
 	updateTrafficStatisticRouter.HandleFunc("", statisticsHandler.UpdateTrafficStatistic)
 
-	updateCrimeStatisticRouter := router.Methods(http.MethodPut).Path(CrimeStatisticPath).Subrouter()
-	updateCrimeStatisticRouter.HandleFunc("", statisticsHandler.UpdateCrimeStatistic)
-
 	deleteTrafficStatisticRouter := router.Methods(http.MethodDelete).Path(TrafficStatisticPath).Subrouter()
 	deleteTrafficStatisticRouter.HandleFunc("", statisticsHandler.DeleteTrafficStatistic)
-
-	deleteCrimeStatisticRouter := router.Methods(http.MethodDelete).Path(CrimeStatisticPath).Subrouter()
-	deleteCrimeStatisticRouter.HandleFunc("", statisticsHandler.DeleteCrimeStatistic)
 
 	getVehicleStatisticsByYearRouter := router.Methods(http.MethodGet).Path("/api/v1/vehicle-statistics-by-year").Subrouter()
 	getVehicleStatisticsByYearRouter.HandleFunc("", statisticsHandler.GetVehicleStatisticsByYear)
