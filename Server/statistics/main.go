@@ -44,6 +44,14 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
+	// Set LOAD_DB_TEST_DATA to 'false' for persistence between shutdowns
+	if os.Getenv("LOAD_DB_TEST_DATA") == "true" {
+		err = store.Initialize(context.Background())
+		if err != nil {
+			logger.Fatalf("Failed to initialize DB: %s", err.Error())
+		}
+	}
+
 	mupClient := &http.Client{
 		Transport: &http.Transport{
 			MaxIdleConns:        10,

@@ -64,6 +64,53 @@ func (sr *StatisticsRepo) Ping() {
 	sr.logger.Println(databases)
 }
 
+// Initialize database
+func (sr *StatisticsRepo) Initialize(ctx context.Context) error {
+	db := sr.cli.Database("statisticsDB")
+
+	err := db.Collection("trafficCollection").Drop(ctx)
+	if err != nil {
+		return err
+	}
+
+	trafficData := []TrafficData{
+		{
+			ID: primitive.NewObjectID(),
+			StatisticsData: StatisticsData{
+				ID:     primitive.NewObjectID(),
+				Date:   time.Now(),
+				Region: "Vojvodina",
+				Year:   2024,
+				Month:  7,
+			},
+			ViolationType: "Speeding",
+			Vehicles: []Vehicle{
+				{
+					ID:           primitive.NewObjectID(),
+					Brand:        "Opel",
+					Model:        "Corsa C",
+					Year:         2002,
+					Registration: "7258",
+					Plates:       "EU7258CR",
+					Owner:        "147258369",
+				},
+			},
+		},
+	}
+
+	var bsonTrafficData []interface{}
+	for _, td := range trafficData {
+		bsonTrafficData = append(bsonTrafficData, td)
+	}
+
+	_, err = db.Collection("trafficCollection").InsertMany(ctx, bsonTrafficData)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // TODO: Repo methods
 
 func (sr *StatisticsRepo) CreateTrafficStatisticData(ctx context.Context, trafficStatistic *TrafficData) error {
@@ -139,7 +186,7 @@ func (sr *StatisticsRepo) DeleteTrafficStatistic(ctx context.Context, id primiti
 }
 
 func (sr *StatisticsRepo) getTrafficStatisticsCollection() *mongo.Collection {
-	statisticsDatabase := sr.cli.Database("statistics_sb")
+	statisticsDatabase := sr.cli.Database("statisticsDB")
 	trafficStatisticsCollection := statisticsDatabase.Collection("trafficCollection")
 	return trafficStatisticsCollection
 }

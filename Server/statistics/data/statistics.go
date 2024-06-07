@@ -37,7 +37,7 @@ type Vehicle struct {
 	Year         int                `bson:"year" json:"year"`
 	Registration string             `bson:"registration" json:"registration"`
 	Plates       string             `bson:"plates" json:"plates"`
-	Owner        primitive.ObjectID `bson:"owner" json:"owner"`
+	Owner        string             `bson:"owner" json:"owner"`
 }
 
 type Vehicles []Vehicle
