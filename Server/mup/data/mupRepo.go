@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"os"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -66,6 +67,12 @@ func (mr *MUPRepo) Ping() {
 	mr.logger.Println(databases)
 }
 
+// Initialize database
+func (mr *MUPRepo) Initialize(ctx context.Context) error {
+	// TODO
+	return nil
+}
+
 //Vehicle methods
 
 func (mr *MUPRepo) SaveVehicle(ctx context.Context, vehicle *Vehicle) error {
@@ -74,13 +81,13 @@ func (mr *MUPRepo) SaveVehicle(ctx context.Context, vehicle *Vehicle) error {
 
 	_, err := collection.InsertOne(ctx, vehicle)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to create vehicle: %v", err))
+		log.Printf("Failed to create vehicle: %v", err)
 		return err
 	}
 
 	err = mr.SaveVehicleIntoMup(ctx, vehicle)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to save vehicle into mup: %v", err))
+		log.Printf("Failed to save vehicle into mup: %v", err)
 		return err
 	}
 
@@ -234,19 +241,19 @@ func (mr *MUPRepo) SubmitRegistrationRequest(ctx context.Context, registration *
 
 	_, err := collection.InsertOne(ctx, registration)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to create vehicle: %v", err))
+		log.Printf("Failed to create vehicle: %v", err)
 		return err
 	}
 
 	err = mr.SaveRegistrationIntoMup(ctx, registration)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to save registration into mup: %v", err))
+		log.Printf("Failed to save registration into mup: %v", err)
 		return err
 	}
 
 	err = mr.SaveRegistrationIntoVehicle(ctx, registration)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to save registration into vehicle: %v", err))
+		log.Printf("Failed to save registration into vehicle: %v", err)
 		return err
 	}
 
@@ -299,13 +306,13 @@ func (mr *MUPRepo) SubmitTrafficPermitRequest(ctx context.Context, trafficPermit
 
 	_, err := collection.InsertOne(ctx, trafficPermit)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to create traffic permit: %v", err))
+		log.Printf("Failed to create traffic permit: %v", err)
 		return err
 	}
 
 	err = mr.SaveTrafficPermitIntoMup(ctx, trafficPermit)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to save traffic permit into mup: %v", err))
+		log.Printf("Failed to save traffic permit into mup: %v", err)
 		return err
 	}
 
@@ -337,19 +344,19 @@ func (mr *MUPRepo) IssuePlates(ctx context.Context, plates Plates) error {
 
 	_, err := collection.InsertOne(ctx, plates)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to create plates: %v", err))
+		log.Printf("Failed to create plates: %v", err)
 		return err
 	}
 
 	err = mr.SavePlatesIntoMup(ctx, plates)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to save plates into mup: %v", err))
+		log.Printf("Failed to save plates into mup: %v", err)
 		return err
 	}
 
 	err = mr.SavePlatesIntoVehicle(ctx, plates)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to save plates into vehicle: %v", err))
+		log.Printf("Failed to save plates into vehicle: %v", err)
 		return err
 	}
 
@@ -365,13 +372,13 @@ func (mr *MUPRepo) IssueDrivingBan(ctx context.Context, drivingBan *DrivingBan) 
 
 	_, err := collection.InsertOne(ctx, drivingBan)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to create driving ban: %v", err))
+		log.Printf("Failed to create driving ban: %v", err)
 		return err
 	}
 
 	err = mr.SaveDrivingBanIntoMup(ctx, *drivingBan)
 	if err != nil {
-		log.Printf(fmt.Sprintf("Failed to save driving ban into mup: %v", err))
+		log.Printf("Failed to save driving ban into mup: %v", err)
 		return err
 	}
 
@@ -631,7 +638,7 @@ func (mr *MUPRepo) SaveMup(ctx context.Context) error {
 
 // Get collection method
 func (mr *MUPRepo) getMupCollection(nameOfCollection string) *mongo.Collection {
-	mupDatabase := mr.cli.Database("mup_db")
+	mupDatabase := mr.cli.Database("mupDB")
 	mupCollection := mupDatabase.Collection(nameOfCollection)
 	return mupCollection
 }

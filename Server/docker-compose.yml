@@ -68,7 +68,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: mup_db
+      MONGO_INITDB_DATABASE: mupDB
     healthcheck:
       test: echo 'db.runCommand("ping").ok'
       interval: 10s
