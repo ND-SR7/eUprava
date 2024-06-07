@@ -12,7 +12,6 @@ type InstituteForStatistics struct {
 	ID          primitive.ObjectID `bson:"_id, omitempty" json:"id"`
 	Name        string             `bson:"name" json:"name"`
 	Address     Address            `bson:"address" json:"address"`
-	CrimeData   []CrimeData        `bson:"crimeData" json:"crimeData"`
 	TrafficData []TrafficData      `bson:"trafficData" json:"trafficData"`
 }
 
@@ -22,12 +21,6 @@ type StatisticsData struct {
 	Region string             `bson:"region" json:"region"`
 	Year   int                `bson:"year" json:"year"`
 	Month  int                `bson:"month" json:"month"`
-}
-
-type CrimeData struct {
-	ID primitive.ObjectID `bson:"_id, omitempty" json:"id"`
-	StatisticsData
-	CrimeType string `bson:"crimeType" json:"crimeType"`
 }
 
 type TrafficData struct {
@@ -84,16 +77,6 @@ func (sd *StatisticsData) ToJSON(w io.Writer) error {
 func (sd *StatisticsData) FromJSON(r io.Reader) error {
 	e := json.NewDecoder(r)
 	return e.Decode(sd)
-}
-
-func (cd *CrimeData) ToJSON(w io.Writer) error {
-	e := json.NewEncoder(w)
-	return e.Encode(cd)
-}
-
-func (cd *CrimeData) FromJSON(r io.Reader) error {
-	e := json.NewDecoder(r)
-	return e.Decode(cd)
 }
 
 func (td *TrafficData) ToJSON(w io.Writer) error {

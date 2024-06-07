@@ -78,18 +78,6 @@ func (sr *StatisticsRepo) CreateTrafficStatisticData(ctx context.Context, traffi
 	return nil
 }
 
-func (sr *StatisticsRepo) CreateCrimeStatisticData(ctx context.Context, statistic *CrimeData) error {
-	collection := sr.getCrimeStatisticsCollection()
-
-	_, err := collection.InsertOne(ctx, statistic)
-	if err != nil {
-		sr.logger.Println("Failed to create crime statistic")
-		return err
-	}
-
-	return nil
-}
-
 func (sr *StatisticsRepo) GetAllTrafficStatisticsData(ctx context.Context) ([]*TrafficData, error) {
 	collection := sr.getTrafficStatisticsCollection()
 
@@ -109,25 +97,6 @@ func (sr *StatisticsRepo) GetAllTrafficStatisticsData(ctx context.Context) ([]*T
 	return statistics, nil
 }
 
-func (sr *StatisticsRepo) GetAllCrimeStatisticsData(ctx context.Context) ([]*CrimeData, error) {
-	collection := sr.getCrimeStatisticsCollection()
-
-	cursor, err := collection.Find(ctx, bson.M{})
-	if err != nil {
-		sr.logger.Println("Failed to get all crime statistics")
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var statistics []*CrimeData
-	if err := cursor.All(ctx, &statistics); err != nil {
-		sr.logger.Println("Failed to iterate over all crime statistics")
-		return nil, err
-	}
-
-	return statistics, nil
-}
-
 func (sr *StatisticsRepo) GetTrafficStatistic(ctx context.Context, id primitive.ObjectID) (*TrafficData, error) {
 	collection := sr.getTrafficStatisticsCollection()
 
@@ -135,19 +104,6 @@ func (sr *StatisticsRepo) GetTrafficStatistic(ctx context.Context, id primitive.
 	err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&statistic)
 	if err != nil {
 		sr.logger.Println("Failed to get traffic statistic")
-		return nil, err
-	}
-
-	return &statistic, nil
-}
-
-func (sr *StatisticsRepo) GetCrimeStatistic(ctx context.Context, id primitive.ObjectID) (*CrimeData, error) {
-	collection := sr.getCrimeStatisticsCollection()
-
-	var statistic CrimeData
-	err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&statistic)
-	if err != nil {
-		sr.logger.Println("Failed to get crime statistic")
 		return nil, err
 	}
 
@@ -169,21 +125,6 @@ func (sr *StatisticsRepo) UpdateTrafficStatistic(ctx context.Context, statistic 
 	return nil
 }
 
-func (sr *StatisticsRepo) UpdateCrimeStatistic(ctx context.Context, statistic *CrimeData) error {
-	collection := sr.getCrimeStatisticsCollection()
-
-	filter := bson.M{"_id": statistic.ID}
-	update := bson.M{"$set": statistic}
-
-	_, err := collection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		sr.logger.Println("Failed to update crime statistic")
-		return err
-	}
-
-	return nil
-}
-
 func (sr *StatisticsRepo) DeleteTrafficStatistic(ctx context.Context, id primitive.ObjectID) error {
 	collection := sr.getTrafficStatisticsCollection()
 
@@ -197,27 +138,8 @@ func (sr *StatisticsRepo) DeleteTrafficStatistic(ctx context.Context, id primiti
 	return nil
 }
 
-func (sr *StatisticsRepo) DeleteCrimeStatistic(ctx context.Context, id primitive.ObjectID) error {
-	collection := sr.getCrimeStatisticsCollection()
-
-	filter := bson.M{"_id": id}
-	_, err := collection.DeleteOne(ctx, filter)
-	if err != nil {
-		sr.logger.Println("Failed to delete crime statistic")
-		return err
-	}
-
-	return nil
-}
-
 func (sr *StatisticsRepo) getTrafficStatisticsCollection() *mongo.Collection {
 	statisticsDatabase := sr.cli.Database("statistics_sb")
 	trafficStatisticsCollection := statisticsDatabase.Collection("trafficCollection")
 	return trafficStatisticsCollection
-}
-
-func (sr *StatisticsRepo) getCrimeStatisticsCollection() *mongo.Collection {
-	statisticsDatabase := sr.cli.Database("statistics_db")
-	crimeStatisticsCollection := statisticsDatabase.Collection("crimeCollection")
-	return crimeStatisticsCollection
 }
