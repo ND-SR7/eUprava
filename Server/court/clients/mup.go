@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type MUPClient struct {
@@ -33,15 +31,10 @@ func (mc *MUPClient) NotifyOfSuspension(ctx context.Context, newSuspension data.
 		return err
 	}
 
-	personID, err := primitive.ObjectIDFromHex(newSuspension.Person)
-	if err != nil {
-		return err
-	}
-
 	drivingBan := data.DrivingBan{
 		Reason:   "License suspension",
 		Duration: toDateTime,
-		Person:   personID,
+		Person:   newSuspension.Person,
 	}
 
 	requestBody, err := json.Marshal(drivingBan)

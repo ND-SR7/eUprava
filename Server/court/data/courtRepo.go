@@ -65,6 +65,79 @@ func (cr *CourtRepo) Ping() {
 	cr.logger.Println(databases)
 }
 
+// Initialize database
+func (cr *CourtRepo) Initialize(ctx context.Context) error {
+	db := cr.cli.Database("courtDB")
+
+	err := db.Collection("courtHearingsPerson").Drop(ctx)
+	if err != nil {
+		return err
+	}
+	err = db.Collection("courtHearingsLegalEntity").Drop(ctx)
+	if err != nil {
+		return err
+	}
+	err = db.Collection("warrants").Drop(ctx)
+	if err != nil {
+		return err
+	}
+	err = db.Collection("suspensions").Drop(ctx)
+	if err != nil {
+		return err
+	}
+
+	hearingDateTime, _ := time.Parse("2006-01-02T15:04:05", "2024-07-05T16:00:00")
+
+	courtHearingsPerson := []CourtHearingPerson{
+		{
+			ID:       primitive.NewObjectID(),
+			Reason:   "Speeding violation hearing",
+			DateTime: hearingDateTime,
+			Court:    primitive.NewObjectID(), // TODO
+			Person:   "147258369",
+		},
+		{
+			ID:       primitive.NewObjectID(),
+			Reason:   "Drunk driving violation hearing",
+			DateTime: hearingDateTime.Add(time.Hour),
+			Court:    primitive.NewObjectID(),
+			Person:   "369258147",
+		},
+	}
+
+	var bsonCHP []interface{}
+	for _, chp := range courtHearingsPerson {
+		bsonCHP = append(bsonCHP, chp)
+	}
+
+	_, err = db.Collection("courtHearingsPerson").InsertMany(ctx, bsonCHP)
+	if err != nil {
+		return err
+	}
+
+	courtHearingsLegalEntity := []CourtHearingLegalEntity{
+		{
+			ID:          primitive.NewObjectID(),
+			Reason:      "Speeding violation hearing",
+			DateTime:    hearingDateTime.Add(time.Hour * 2),
+			Court:       primitive.NewObjectID(), // TODO
+			LegalEntity: "147369258",
+		},
+	}
+
+	var bsonCHLE []interface{}
+	for _, chle := range courtHearingsLegalEntity {
+		bsonCHLE = append(bsonCHLE, chle)
+	}
+
+	_, err = db.Collection("courtHearingsLegalEntity").InsertMany(ctx, bsonCHLE)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Finds court hearing based on provided id
 func (cr *CourtRepo) GetHearingByID(id string) (CourtHearing, error) {
 	hearingsPerson := cr.getHearingsPersonCollection()
@@ -103,16 +176,11 @@ func (cr *CourtRepo) GetHearingByID(id string) (CourtHearing, error) {
 	return nil, errors.New("hearing not found")
 }
 
-// Finds warrants based on provided accountID
-func (cr *CourtRepo) GetWarrantsByAccountID(accountID string) (Warrants, error) {
+// Finds warrants based on provided JMBG
+func (cr *CourtRepo) GetWarrantsByJMBG(jmbg string) (Warrants, error) {
 	collection := cr.getWarrantsCollection()
 
-	objID, err := primitive.ObjectIDFromHex(accountID)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.M{"issuedFor": objID}
+	filter := bson.M{"issuedFor": jmbg}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -153,18 +221,12 @@ func (cr *CourtRepo) CreateHearingPerson(newHearing NewCourtHearingPerson) error
 		return err
 	}
 
-	personID, err := primitive.ObjectIDFromHex(newHearing.Person)
-	if err != nil {
-		cr.logger.Println("Error while parsing person ID")
-		return err
-	}
-
 	hearing := CourtHearingPerson{
 		ID:       primitive.NewObjectID(),
 		Reason:   newHearing.Reason,
 		DateTime: dateTime,
 		Court:    courtID,
-		Person:   personID,
+		Person:   newHearing.Person,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -196,18 +258,12 @@ func (cr *CourtRepo) CreateHearingLegalEntity(newHearing NewCourtHearingLegalEnt
 		return err
 	}
 
-	legalEntityID, err := primitive.ObjectIDFromHex(newHearing.LegalEntity)
-	if err != nil {
-		cr.logger.Println("Error while parsing legal entity ID")
-		return err
-	}
-
 	hearing := CourtHearingLegalEntity{
 		ID:          primitive.NewObjectID(),
 		Reason:      newHearing.Reason,
 		DateTime:    dateTime,
 		Court:       courtID,
-		LegalEntity: legalEntityID,
+		LegalEntity: newHearing.LegalEntity,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -233,17 +289,11 @@ func (cr *CourtRepo) CreateWarrant(newWarrant NewWarrant) error {
 		return err
 	}
 
-	personID, err := primitive.ObjectIDFromHex(newWarrant.IssuedFor)
-	if err != nil {
-		cr.logger.Println("Error while parsing person ID")
-		return err
-	}
-
 	warrant := Warrant{
 		ID:               primitive.NewObjectID(),
 		TrafficViolation: trafficViolationID,
 		IssuedOn:         time.Now(),
-		IssuedFor:        personID,
+		IssuedFor:        newWarrant.IssuedFor,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -274,17 +324,11 @@ func (cr *CourtRepo) CreateSuspension(newSuspension NewSuspension) error {
 		return err
 	}
 
-	personID, err := primitive.ObjectIDFromHex(newSuspension.Person)
-	if err != nil {
-		cr.logger.Println("Error while parsing person ID")
-		return err
-	}
-
 	suspension := Suspension{
 		ID:     primitive.NewObjectID(),
 		From:   fromDateTime,
 		To:     toDateTime,
-		Person: personID,
+		Person: newSuspension.Person,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

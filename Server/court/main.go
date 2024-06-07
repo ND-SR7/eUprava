@@ -38,6 +38,14 @@ func main() {
 	defer store.Disconnect(timeoutContext)
 	store.Ping()
 
+	// Set LOAD_DB_TEST_DATA to 'false' for persistence between shutdowns
+	if os.Getenv("LOAD_DB_TEST_DATA") == "true" {
+		err = store.Initialize(context.Background())
+		if err != nil {
+			logger.Fatalf("Failed to initialize DB: %s", err.Error())
+		}
+	}
+
 	// Client init
 	ssoClient := &http.Client{
 		Transport: &http.Transport{
@@ -73,7 +81,7 @@ func main() {
 	authorizedRouter := router.Methods("GET", "POST").Subrouter()
 	authorizedRouter.HandleFunc("/api/v1/suspension", courtHandler.CreateSuspension).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/warrants", courtHandler.CreateWarrant).Methods("POST")
-	authorizedRouter.HandleFunc("/api/v1/warrants/{accountID}", courtHandler.CheckForWarrants).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/warrants/{jmbg}", courtHandler.CheckForWarrants).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/crime-report", courtHandler.RecieveCrimeReport).Methods("POST")
 	authorizedRouter.Use(courtHandler.AuthorizeRoles("ADMIN"))
 

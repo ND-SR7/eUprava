@@ -21,7 +21,7 @@ type CourtHearing interface {
 	GetReason() string
 	GetDateTime() time.Time
 	GetCourt() primitive.ObjectID
-	GetSubjet() primitive.ObjectID
+	GetSubjet() string
 }
 
 type CourtHearingPerson struct {
@@ -29,7 +29,7 @@ type CourtHearingPerson struct {
 	Reason   string             `bson:"reason" json:"reason"`
 	DateTime time.Time          `bson:"dateTime" json:"dateTime"`
 	Court    primitive.ObjectID `bson:"court" json:"court"`
-	Person   primitive.ObjectID `bson:"person" json:"person"`
+	Person   string             `bson:"person" json:"person"`
 }
 
 type CourtHearingLegalEntity struct {
@@ -37,7 +37,7 @@ type CourtHearingLegalEntity struct {
 	Reason      string             `bson:"reason" json:"reason"`
 	DateTime    time.Time          `bson:"dateTime" json:"dateTime"`
 	Court       primitive.ObjectID `bson:"court" json:"court"`
-	LegalEntity primitive.ObjectID `bson:"legalEntity" json:"legalEntity"`
+	LegalEntity string             `bson:"legalEntity" json:"legalEntity"`
 }
 
 func (c *Court) ToJSON(w io.Writer) error {
@@ -66,7 +66,7 @@ func (chp *CourtHearingPerson) GetCourt() primitive.ObjectID {
 	return chp.Court
 }
 
-func (chp *CourtHearingPerson) GetSubjet() primitive.ObjectID {
+func (chp *CourtHearingPerson) GetSubjet() string {
 	return chp.Person
 }
 
@@ -96,7 +96,7 @@ func (chle *CourtHearingLegalEntity) GetCourt() primitive.ObjectID {
 	return chle.Court
 }
 
-func (chle *CourtHearingLegalEntity) GetSubjet() primitive.ObjectID {
+func (chle *CourtHearingLegalEntity) GetSubjet() string {
 	return chle.LegalEntity
 }
 
