@@ -76,18 +76,14 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 		Location:     driverCheck.Location,
 	}
 
-	if driverCheck.AlcoholLevel <= 0 {
-		violation.Reason = "Driver is not under the influence of alcohol \n"
-		violation.Description = "Driver was caught operating a vehicle with a blood alcohol level within the legal limit. \n"
+	if driverCheck.AlcoholLevel < 0 {
+		http.Error(w, "Alcohol level must be bigger than 0.", http.StatusBadRequest)
+		return
+	} else if driverCheck.AlcoholLevel > 0.2 {
+		violation.Reason = fmt.Sprintf("drunk driving: %.2f \n", driverCheck.AlcoholLevel)
+		violation.Description = "Driver was caught operating a vehicle with a blood alcohol level above the legal limit. \n"
 	} else {
-
-		if driverCheck.AlcoholLevel > 0.2 {
-			violation.Reason = fmt.Sprintf("drunk driving: %.2f \n", driverCheck.AlcoholLevel)
-			violation.Description = "Driver was caught operating a vehicle with a blood alcohol level above the legal limit. \n"
-		} else {
-			violation.Reason = fmt.Sprintf("drunk driving: %.2f", driverCheck.AlcoholLevel)
-			violation.Description = "Driver was caught operating a vehicle with a blood alcohol level within the legal limit."
-		}
+		log.Printf("Driver was caught operating a vehicle with a blood alcohol level within the legal limit.")
 	}
 
 	if driverCheck.Tire != "" {
@@ -119,43 +115,43 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid tire type provided. Must be either SUMMER or WINTER", http.StatusBadRequest)
 			return
 		}
-
 	}
 
 	token := ph.extractTokenFromHeader(r)
 
-	if driverCheck.JMBG != "" {
-		jmbgRequest := data.JMBGRequest{JMBG: driverCheck.JMBG}
-		drivingBan, err := ph.mup.CheckDrivigBan(r.Context(), jmbgRequest, token)
-		if err != nil {
-			http.Error(w, "Failed to check driving ban: "+err.Error(), http.StatusBadRequest)
-			log.Printf("Failed to check driving ban: %v\n", err)
-			return
-		}
+	jmbgRequest := data.JMBGRequest{JMBG: driverCheck.JMBG}
+	drivingBan, err := ph.mup.CheckDrivigBan(r.Context(), jmbgRequest, token)
+	if err != nil {
+		http.Error(w, "Failed to check driving ban: "+err.Error(), http.StatusBadRequest)
+		log.Printf("Failed to check driving ban: %v\n", err)
+		return
+	}
 
-		if drivingBan {
-			violation.Reason += "Driving ban is effect \n"
-			violation.Description += "Driver was found to be operating a vehicle under active driving ban. \n"
-			log.Print("drivingBan is true")
-		} else {
-			violation.Reason += "No driving ban \n"
-			violation.Description += "Driver was not found to be operating a vehicle under any driving ban. \n"
-			log.Print("drivingBan is false")
-		}
+	if drivingBan {
+		violation.Reason += "Driving ban is effect \n"
+		violation.Description += "Driver was found to be operating a vehicle under active driving ban. \n"
+		log.Print("drivingBan is true")
+	} else {
+		log.Print("The driver is not under a driving ban.")
+	}
 
-		permit, err := ph.mup.GetDrivingPermitByJMBG(r.Context(), jmbgRequest, token)
-		if err != nil {
-			log.Printf("Failed to check driving permit: %v\n", err)
-			http.Error(w, "Failed to check driving permit", http.StatusBadRequest)
-			return
-		}
+	permit, err := ph.mup.GetDrivingPermitByJMBG(r.Context(), jmbgRequest, token)
+	if err != nil {
+		log.Printf("Failed to check driving permit: %v\n", err)
+		http.Error(w, "Failed to check driving permit", http.StatusBadRequest)
+		return
+	}
 
-		if permit.ExpirationDate.Before(time.Now()) {
-			violation.Reason += "Driving permit expired \n"
-			violation.Description += "Driver was found to have an expired driving permit. \n"
-			log.Print("Driving permit is expired")
-		}
+	if permit.Number == "" {
+		fmt.Printf("Not found driving permit.")
+		http.Error(w, "Not found driving permit.", http.StatusBadRequest)
+		return
+	}
 
+	if permit.ExpirationDate.Before(time.Now()) {
+		violation.Reason += "Driving permit expired \n"
+		violation.Description += "Driver was found to have an expired driving permit. \n"
+		log.Print("Driving permit is expired")
 	}
 
 	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)

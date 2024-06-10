@@ -98,6 +98,10 @@ services:
       - MONGO_DB_URI=${MONGO_DB_URI_POLICE}
       - COURT_SERVICE_URI=${COURT_SERVICE_URI}
       - MUP_SERVICE_URI=${MUP_SERVICE_URI}
+<<<<<<< Updated upstream
+=======
+      - LOAD_DB_TEST_DATA=${LOAD_DB_TEST_DATA}
+>>>>>>> Stashed changes
     depends_on:
       police_db:
         condition: service_healthy
@@ -179,6 +183,10 @@ services:
       - PORT=8084
       - MONGO_DB_URI=${MONGO_DB_URI_STATISTICS}
       - MUP_SERVICE_URI=${MUP_SERVICE_URI}
+<<<<<<< Updated upstream
+=======
+      - LOAD_DB_TEST_DATA=${LOAD_DB_TEST_DATA}
+>>>>>>> Stashed changes
     depends_on:
       statistics_db:
         condition: service_healthy
