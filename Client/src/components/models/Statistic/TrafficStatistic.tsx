@@ -1,14 +1,6 @@
-type Vehicle = {
-    id: string;
-    brand: string;
-    model: string;
-    year: number;
-    registration: string;
-    plates: string;
-    owner: string;
-};
-  
-type TrafficStatistics = {
+import Vehicle from "../Shared/Vehicle";
+
+type TrafficStatistic = {
     id: string;
     date: string;
     region: string;
@@ -18,5 +10,5 @@ type TrafficStatistics = {
     vehicles: Vehicle[];
 };
   
-export type { TrafficStatistics };
+export default TrafficStatistic;
   
