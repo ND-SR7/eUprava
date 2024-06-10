@@ -97,6 +97,7 @@ services:
       - PORT=8082
       - MONGO_DB_URI=${MONGO_DB_URI_POLICE}
       - COURT_SERVICE_URI=${COURT_SERVICE_URI}
+      - MUP_SERVICE_URI=${MUP_SERVICE_URI}
     depends_on:
       police_db:
         condition: service_healthy

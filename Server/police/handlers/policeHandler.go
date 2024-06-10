@@ -313,6 +313,12 @@ func (ph *PoliceHandler) CheckDriverPermitValidity(w http.ResponseWriter, r *htt
 		return
 	}
 
+	if permit.Number == "" {
+		fmt.Printf("Not found driving permit.")
+		http.Error(w, "Not found driving permit.", http.StatusBadRequest)
+		return
+	}
+
 	if permit.ExpirationDate.Before(time.Now()) {
 		violation.Reason += "Driving permit expired \n"
 		violation.Description += "Driver was found to have an expired driving permit. \n"
@@ -419,10 +425,21 @@ func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http
 
 	token := ph.extractTokenFromHeader(r)
 
-	registration, err := ph.mup.GetVehicleRegistration(r.Context(), checkVehicleRegistration, token)
+	plates := data.PlateRequest{
+		Plate: checkVehicleRegistration.PlatesNumber,
+	}
+
+	registration, err := ph.mup.GetRegistrationByPlate(r.Context(), plates, token)
 	if err != nil {
-		log.Printf("Failed to check driving permit: %v\n", err)
-		http.Error(w, "Failed to check driving permit", http.StatusBadRequest)
+		log.Printf("Failed to check registration by plate: %v\n", err)
+		http.Error(w, "Failed to check registration by plate", http.StatusBadRequest)
+		return
+	}
+
+	if registration.RegistrationNumber == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Wrong plates number in body request")
 		return
 	}
 
