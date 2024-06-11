@@ -72,18 +72,22 @@ func main() {
 	router := mux.NewRouter()
 
 	// Router methods
-	router.HandleFunc("/api/v1/get-hearing/{id}", courtHandler.GetCourtHearingByID).Methods("GET")
-	router.HandleFunc("/api/v1/create-hearing-person", courtHandler.CreateHearingPerson).Methods("POST")
-	router.HandleFunc("/api/v1/create-hearing-entity", courtHandler.CreateHearingLegalEntity).Methods("POST")
-	router.HandleFunc("/api/v1/update-hearing-person", courtHandler.UpdateHearingPerson).Methods("PUT")
-	router.HandleFunc("/api/v1/update-hearing-entity", courtHandler.UpdateHearingLegalEntity).Methods("PUT")
+	adminRouter := router.Methods("GET", "POST").Subrouter()
+	adminRouter.HandleFunc("/api/v1/get-hearing/{id}", courtHandler.GetCourtHearingByID).Methods("GET")
+	adminRouter.HandleFunc("/api/v1/create-hearing-person", courtHandler.CreateHearingPerson).Methods("POST")
+	adminRouter.HandleFunc("/api/v1/create-hearing-entity", courtHandler.CreateHearingLegalEntity).Methods("POST")
+	adminRouter.HandleFunc("/api/v1/suspensions", courtHandler.CreateSuspension).Methods("POST")
+	adminRouter.HandleFunc("/api/v1/warrants", courtHandler.CreateWarrant).Methods("POST")
+	adminRouter.HandleFunc("/api/v1/crime-report", courtHandler.RecieveCrimeReport).Methods("POST")
+	adminRouter.Use(courtHandler.AuthorizeRoles("ADMIN"))
 
-	authorizedRouter := router.Methods("GET", "POST").Subrouter()
-	authorizedRouter.HandleFunc("/api/v1/suspension", courtHandler.CreateSuspension).Methods("POST")
-	authorizedRouter.HandleFunc("/api/v1/warrants", courtHandler.CreateWarrant).Methods("POST")
+	authorizedRouter := router.Methods("GET", "PUT").Subrouter()
+	authorizedRouter.HandleFunc("/api/v1/update-hearing-person", courtHandler.UpdateHearingPerson).Methods("PUT")
+	authorizedRouter.HandleFunc("/api/v1/update-hearing-entity", courtHandler.UpdateHearingLegalEntity).Methods("PUT")
+	authorizedRouter.HandleFunc("/api/v1/hearings/{jmbg}", courtHandler.GetCourtHearingsByJMBG).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/suspensions/{jmbg}", courtHandler.CheckForSuspension).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/warrants/{jmbg}", courtHandler.CheckForWarrants).Methods("GET")
-	authorizedRouter.HandleFunc("/api/v1/crime-report", courtHandler.RecieveCrimeReport).Methods("POST")
-	authorizedRouter.Use(courtHandler.AuthorizeRoles("ADMIN"))
+	authorizedRouter.Use(courtHandler.AuthorizeRoles("USER", "ADMIN"))
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

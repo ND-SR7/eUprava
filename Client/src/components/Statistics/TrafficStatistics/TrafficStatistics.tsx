@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getTrafficStatistics } from "../../../services/StatisticsService";
 import { TrafficStatisticsTable, NoTrafficStatisticsMessage, StyledButton } from "./TrafficStatistics.styled";
-import TrafficStatistic from "../../models/Statistic/TrafficStatistic";
+import TrafficStatistic from "../../../models/Statistics/TrafficStatistic";
 import React from "react";
 
 type TrafficStatisticsProps = {
