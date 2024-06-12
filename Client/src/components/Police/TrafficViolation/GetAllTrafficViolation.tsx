@@ -3,12 +3,8 @@ import { getAllTrafficViolations } from "../../../services/PoliceService";
 import { TrafficViolationsTable } from "./GetAllTrafficViolation.styled";
 import TrafficViolation from "../../../models/Police/TrafficViolation";
 
-type TrafficViolationProps = {
-    setModalContent: (content: React.ReactNode) => void;
-    setIsModalVisible: (visible: boolean) => void;
-  };
 
-const GetAllTrafficViolations: React.FC<TrafficViolationProps> = () => {
+const GetAllTrafficViolations: React.FC = () => {
 
     const [violations, setViolations] = useState<TrafficViolation[]>([]);
     const [loading, setLoading] = useState(true);
