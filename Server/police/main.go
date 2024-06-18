@@ -62,10 +62,19 @@ func main() {
 		},
 	}
 
+	ssoClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
+
 	court := clients.NewCourtClient(courtClient, os.Getenv("COURT_SERVICE_URI"))
 	mup := clients.NewMupClient(mupClient, os.Getenv("MUP_SERVICE_URI"))
+	sso := clients.NewSSOClient(ssoClient, os.Getenv("SSO_SERVICE_URI"))
 
-	handler := handlers.NewPoliceHandler(store, court, mup)
+	handler := handlers.NewPoliceHandler(store, court, mup, sso)
 
 	router := mux.NewRouter()
 	// Router methods

@@ -16,3 +16,13 @@ export async function getAllTrafficViolations(){
         throw new Error(error.response.data.message || 'Failed to retrieve traffic violations.');
     }
 }
+
+export async function checkAlcoholLevel (data: any) {
+  const token = localStorage.getItem("token");
+  const response = await axios.post(`${BASE_URL_POLICE}/traffic-violation/check-alcohol-level`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response;
+};

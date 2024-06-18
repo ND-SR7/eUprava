@@ -22,11 +22,12 @@ type PoliceHandler struct {
 	repo  *data.PoliceRepo
 	court clients.CourtClient
 	mup   clients.MupClient
+	sso   clients.SSOClient
 }
 
 // Constructor
-func NewPoliceHandler(r *data.PoliceRepo, c clients.CourtClient, m clients.MupClient) *PoliceHandler {
-	return &PoliceHandler{r, c, m}
+func NewPoliceHandler(r *data.PoliceRepo, c clients.CourtClient, m clients.MupClient, s clients.SSOClient) *PoliceHandler {
+	return &PoliceHandler{r, c, m, s}
 }
 
 // Ping
@@ -201,6 +202,12 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 	}
 
 	token := ph.extractTokenFromHeader(r)
+	_, err = ph.sso.GetPersonByJMBG(r.Context(), alcoholLevel.JMBG, token)
+	if err != nil {
+		http.Error(w, "Error with services communication", http.StatusBadRequest)
+		log.Printf("Error while communicating with SSO service: %s", err.Error())
+		return
+	}
 
 	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
 	if err != nil {

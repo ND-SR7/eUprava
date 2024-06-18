@@ -1,13 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/Shared/Button/Button";
 import HeadingStyled from "../../components/Shared/Heading/Heading.styled";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { pingPolice } from "../../services/PingService";
 import toast from "react-hot-toast";
+import Modal from "../../components/Shared/Modal/Modal";
+import GetAllTrafficViolations from "../../components/Police/TrafficViolation/GetAllTrafficViolation";
+import CheckAlcoholLevelForm from "../../components/Police/TrafficViolation/CheckAlcoholLevelForm";
 
 const PolicePage = () => {
   const navigate = useNavigate();
-  
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState<any>(null);
+
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
     if (token === "") navigate("/");
@@ -21,17 +26,39 @@ const PolicePage = () => {
       console.error(error);
     });
   };
-  
+
+  const openTrafficViolationsModal = () => {
+    setModalContent(<GetAllTrafficViolations />);
+    setIsModalVisible(true);
+  };
+
+  const openCheckAlcoholLevelModal = () => {
+    setModalContent(<CheckAlcoholLevelForm />);
+    setIsModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setIsModalVisible(false);
+  };
+
   return (
     <>
       <HeadingStyled>Traffic Police</HeadingStyled>
       <br />
       <Button buttonType="button" label="Ping Service" onClick={() => ping()} />
       <br />
-      <Button buttonType="button" label="Get All Traffic Violations" onClick={() => navigate("/home/police/traffic-violations")} />
+      <Button buttonType="button" label="Get All Traffic Violations" onClick={openTrafficViolationsModal} />
       <br />
-      <Button buttonType="button" label="Go Back" onClick={() => window.history.back()}/>
+      <Button buttonType="button" label="Check Alcohol Level" onClick={openCheckAlcoholLevelModal} />
       <br />
+      <Button buttonType="button" label="Go Back" onClick={() => window.history.back()} />
+      <br />
+      <Modal
+        heading="Traffic Violations"
+        content={modalContent}
+        isVisible={isModalVisible}
+        onClose={closeModal}
+      />
     </>
   );
 };
