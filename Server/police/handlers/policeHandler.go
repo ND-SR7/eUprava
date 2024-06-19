@@ -191,13 +191,16 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 		Location:     alcoholLevel.Location,
 	}
 
+	response := data.Response{}
+
 	if alcoholLevel.AlcoholLevel > 0.2 {
 		violation.Reason = fmt.Sprintf("drunk driving: %.2f \n", alcoholLevel.AlcoholLevel)
 		violation.Description = "Driver was caught operating a vehicle with a blood alcohol level above the legal limit. \n"
 	} else {
+		response.Message = "Driver was caught operating a vehicle with a blood alcohol level within the legal limit."
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Driver was caught operating a vehicle with a blood alcohol level within the legal limit.")
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
@@ -223,9 +226,12 @@ func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	response.Message = "Driver has more alcohol in his blood than is allowed."
+	response.Data = violation
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(violation)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (ph *PoliceHandler) CheckDriverBan(w http.ResponseWriter, r *http.Request) {

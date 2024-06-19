@@ -4,6 +4,7 @@ import styled from "styled-components";
 import HeadingStyled from "../../Shared/Heading/Heading.styled";
 import { checkAlcoholLevel } from "../../../services/PoliceService";
 import Button from "../../Shared/Button/Button";
+import { useNavigate } from "react-router-dom";
 
 const FormContainer = styled.div`
   display: flex;
@@ -19,10 +20,15 @@ const Input = styled.input`
   max-width: 300px;
 `;
 
-const CheckAlcoholLevelForm = () => {
+interface CheckAlcoholLevelFormProps {
+  closeModal: () => void;
+}
+
+const CheckAlcoholLevelForm: React.FC<CheckAlcoholLevelFormProps> = ({ closeModal }) => {
   const [alcoholLevel, setAlcoholLevel] = useState("");
   const [jmbg, setJmbg] = useState("");
   const [location, setLocation] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -35,10 +41,13 @@ const CheckAlcoholLevelForm = () => {
 
     try {
       const response = await checkAlcoholLevel(data);
-      toast.success(response.data);
+      console.log(response);
+      toast.success(response.data.message || "Alcohol level checked successfully");
+      navigate("/home/police");
+      closeModal();
     } catch (error: any) {
-      toast.error("Failed to check alcohol level: " + error.error);
       console.error(error);
+      toast.error("Failed to check alcohol level, check driver JMBG");
     }
   };
 

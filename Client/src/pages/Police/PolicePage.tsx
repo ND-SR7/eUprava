@@ -33,7 +33,7 @@ const PolicePage = () => {
   };
 
   const openCheckAlcoholLevelModal = () => {
-    setModalContent(<CheckAlcoholLevelForm />);
+    setModalContent(<CheckAlcoholLevelForm closeModal={closeModal} />); // Pass closeModal function
     setIsModalVisible(true);
   };
 

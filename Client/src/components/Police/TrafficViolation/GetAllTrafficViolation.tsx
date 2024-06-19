@@ -45,7 +45,7 @@ const GetAllTrafficViolations: React.FC = () => {
               <td>{violation.violatorJMBG}</td>
               <td>{violation.reason}</td>
               <td>{violation.description}</td>
-              <td>{new Date(violation.time).toLocaleDateString()}</td>
+              <td>{new Date(violation.time).toLocaleString()}</td>
               <td>{violation.location}</td>
             </tr>
           ))}

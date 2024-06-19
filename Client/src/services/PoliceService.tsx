@@ -24,5 +24,6 @@ export async function checkAlcoholLevel (data: any) {
       Authorization: `Bearer ${token}`,
     },
   });
+  console.log(response); 
   return response;
 };

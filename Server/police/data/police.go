@@ -52,6 +52,11 @@ type CheckVehicleRegistration struct {
 	Location     string `json:"location"`
 }
 
+type Response struct {
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
 func (tp *TrafficPolice) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(tp)
@@ -80,4 +85,14 @@ func (at *DriverCheck) ToJSON(w io.Writer) error {
 func (at *DriverCheck) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(at)
+}
+
+func (r *Response) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(r)
+}
+
+func (r *Response) FromJSON(re io.Reader) error {
+	d := json.NewDecoder(re)
+	return d.Decode(r)
 }
