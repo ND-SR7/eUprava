@@ -367,53 +367,84 @@ func (ph *PoliceHandler) CheckVehicleTire(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	response := data.Response{}
+	token := ph.extractTokenFromHeader(r)
+
+	now := time.Now()
+	year := now.Year()
+
+	startWinterPeriod := time.Date(year, time.November, 1, 0, 0, 0, 0, time.Local)
+	endWinterPeriod := time.Date(year+1, time.April, 1, 0, 0, 0, 0, time.Local)
+	startSummerPeriod := time.Date(year, time.April, 1, 0, 0, 0, 0, time.Local)
+	endSummerPeriod := time.Date(year, time.November, 1, 0, 0, 0, 0, time.Local)
+
+	if now.Month() >= time.November || now.Month() < time.April {
+		endSummerPeriod = time.Date(year+1, time.November, 1, 0, 0, 0, 0, time.Local)
+	}
+
 	violation := data.TrafficViolation{
 		ID:           primitive.NewObjectID(),
-		Time:         time.Now(),
+		Time:         now,
 		ViolatorJMBG: tireType.JMBG,
 		Location:     tireType.Location,
 	}
 
-	token := ph.extractTokenFromHeader(r)
+	switch tireType.TireType {
+	case "WINTER":
+		if now.After(startWinterPeriod) && now.Before(endWinterPeriod) {
+			response.Message = "No violation for winter tires"
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+		violation.Reason = "Improper tire usage: WINTER tires outside summer period"
+		violation.Description = "Driver was caught operating a vehicle with WINTER tires outside the summer period (April 1 to November 1), which is against regulations."
 
-	// currentDate := time.Now()
-	startWinterPeriod := time.Date((time.Now()).Year(), time.November, 1, 0, 0, 0, 0, time.Local)
-	endWinterPeriod := time.Date((time.Now()).Year(), time.April, 1, 0, 0, 0, 0, time.Local)
-
-	if tireType.TireType == "WINTER" {
-		// No violation for winter tires
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "No violation for winter tires")
-		return
-	} else if tireType.TireType == "SUMMER" && (time.Now().After(startWinterPeriod) || time.Now().Before(endWinterPeriod)) {
+	case "SUMMER":
+		if now.After(startSummerPeriod) && now.Before(endSummerPeriod) {
+			response.Message = "No violation for summer tires in the summer period"
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(response)
+			return
+		}
 		violation.Reason = "Improper tire usage: SUMMER tires during winter period"
 		violation.Description = "Driver was caught operating a vehicle with SUMMER tires during the winter period (November 1 to April 1), which is against regulations."
 
-		err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
-		if err != nil {
-			http.Error(w, "Failed to create traffic violation", http.StatusBadRequest)
-			log.Printf("Failed to create traffic violation: %v\n", err)
-			return
-		}
-
-		err = ph.court.CreateCrimeReport(r.Context(), violation, token)
-		if err != nil {
-			http.Error(w, "Failed to send crime report", http.StatusBadRequest)
-			log.Printf("Failed to send crime report: %v\n", err)
-			return
-		}
-
+	default:
+		response.Message = "Invalid tire type specified"
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(violation)
-	} else {
-		// No violation for summer tires outside the winter period
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "No violation for summer tires outside the winter period")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
 		return
 	}
+
+	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
+	if err != nil {
+		response.Message = "Failed to create traffic violation"
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
+		log.Printf("Failed to create traffic violation: %v\n", err)
+		return
+	}
+
+	err = ph.court.CreateCrimeReport(r.Context(), violation, token)
+	if err != nil {
+		response.Message = "Failed to send crime report"
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
+		log.Printf("Failed to send crime report: %v\n", err)
+		return
+	}
+
+	response.Message = "Traffic violation created successfully."
+	response.Data = violation
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http.Request) {

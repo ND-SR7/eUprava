@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import Modal from "../../components/Shared/Modal/Modal";
 import GetAllTrafficViolations from "../../components/Police/TrafficViolation/GetAllTrafficViolation";
 import CheckAlcoholLevelForm from "../../components/Police/TrafficViolation/CheckAlcoholLevelForm";
+import CheckVehicleTireForm from "../../components/Police/TrafficViolation/CheckVehicleTireForm";
 
 const PolicePage = () => {
   const navigate = useNavigate();
@@ -33,7 +34,12 @@ const PolicePage = () => {
   };
 
   const openCheckAlcoholLevelModal = () => {
-    setModalContent(<CheckAlcoholLevelForm closeModal={closeModal} />); // Pass closeModal function
+    setModalContent(<CheckAlcoholLevelForm closeModal={closeModal} />);
+    setIsModalVisible(true);
+  };
+
+  const openCheckVehicleTireModal = () => {
+    setModalContent(<CheckVehicleTireForm closeModal={closeModal} />);
     setIsModalVisible(true);
   };
 
@@ -50,6 +56,8 @@ const PolicePage = () => {
       <Button buttonType="button" label="Get All Traffic Violations" onClick={openTrafficViolationsModal} />
       <br />
       <Button buttonType="button" label="Check Alcohol Level" onClick={openCheckAlcoholLevelModal} />
+      <br />
+      <Button buttonType="button" label="Check Vehicle Tire" onClick={openCheckVehicleTireModal} />
       <br />
       <Button buttonType="button" label="Go Back" onClick={() => window.history.back()} />
       <br />

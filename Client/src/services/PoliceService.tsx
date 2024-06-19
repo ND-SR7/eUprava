@@ -27,3 +27,14 @@ export async function checkAlcoholLevel (data: any) {
   console.log(response); 
   return response;
 };
+
+export async function checkVehicleTire (data: any) {
+  const token = localStorage.getItem("token");
+  const response = await axios.post(`${BASE_URL_POLICE}/traffic-violation/check-vehicle-tire`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  console.log(response); 
+  return response;
+};
