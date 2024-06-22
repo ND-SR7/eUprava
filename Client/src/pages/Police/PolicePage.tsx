@@ -8,6 +8,7 @@ import Modal from "../../components/Shared/Modal/Modal";
 import GetAllTrafficViolations from "../../components/Police/TrafficViolation/GetAllTrafficViolation";
 import CheckAlcoholLevelForm from "../../components/Police/TrafficViolation/CheckAlcoholLevelForm";
 import CheckVehicleTireForm from "../../components/Police/TrafficViolation/CheckVehicleTireForm";
+import CheckDriverBanForm from "../../components/Police/TrafficViolation/CheckDriverBanForm";
 
 const PolicePage = () => {
   const navigate = useNavigate();
@@ -43,6 +44,11 @@ const PolicePage = () => {
     setIsModalVisible(true);
   };
 
+  const openCheckDriverBanModal = () => {
+    setModalContent(<CheckDriverBanForm closeModal={closeModal} />);
+    setIsModalVisible(true);
+  };
+
   const closeModal = () => {
     setIsModalVisible(false);
   };
@@ -58,6 +64,8 @@ const PolicePage = () => {
       <Button buttonType="button" label="Check Alcohol Level" onClick={openCheckAlcoholLevelModal} />
       <br />
       <Button buttonType="button" label="Check Vehicle Tire" onClick={openCheckVehicleTireModal} />
+      <br />
+      <Button buttonType="button" label="Check Driver Ban" onClick={openCheckDriverBanModal} />
       <br />
       <Button buttonType="button" label="Go Back" onClick={() => window.history.back()} />
       <br />

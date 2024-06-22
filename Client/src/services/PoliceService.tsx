@@ -38,3 +38,14 @@ export async function checkVehicleTire (data: any) {
   console.log(response); 
   return response;
 };
+
+export async function checkDriverBan(data: any){
+  const token = localStorage.getItem("token");
+  const response = await axios.post(`${BASE_URL_POLICE}/traffic-violation/check-driver-ban`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  console.log(response);
+  return response;
+}

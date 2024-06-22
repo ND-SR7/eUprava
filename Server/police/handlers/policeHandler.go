@@ -420,6 +420,13 @@ func (ph *PoliceHandler) CheckVehicleTire(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	_, err = ph.sso.GetPersonByJMBG(r.Context(), tireType.JMBG, token)
+	if err != nil {
+		http.Error(w, "Error with services communication", http.StatusBadRequest)
+		log.Printf("Error while communicating with SSO service: %s", err.Error())
+		return
+	}
+
 	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
 	if err != nil {
 		response.Message = "Failed to create traffic violation"
