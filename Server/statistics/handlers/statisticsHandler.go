@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"statistics/clients"
 	"statistics/data"
+	"strconv"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
@@ -206,6 +207,41 @@ func (sh *StatisticsHandler) GetRegisteredVehicles(rw http.ResponseWriter, r *ht
 	if err := json.NewEncoder(rw).Encode(vehicles); err != nil {
 		sh.logger.Println("Failed to encode registered vehicles:", err)
 		http.Error(rw, "Failed to encode registered vehicles", http.StatusInternalServerError)
+	}
+}
+
+func (sh *StatisticsHandler) GetRegisteredVehiclesByYear(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	yearStr := vars["year"]
+
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		http.Error(rw, "Invalid year", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	token := sh.extractTokenFromHeader(r)
+
+	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx, token)
+	if err != nil {
+		sh.logger.Println("Failed to retrieve registered vehicles:", err)
+		http.Error(rw, "Failed to retrieve registered vehicles", http.StatusInternalServerError)
+		return
+	}
+
+	count := 0
+	for _, vehicle := range vehicles {
+		if vehicle.Year == year {
+			count++
+		}
+	}
+
+	rw.Header().Set(ContentType, ApplicationJson)
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(map[string]int{"count": count}); err != nil {
+		sh.logger.Println("Failed to encode registered vehicles count:", err)
+		http.Error(rw, "Failed to encode registered vehicles count", http.StatusInternalServerError)
 	}
 }
 

@@ -6,6 +6,8 @@ const ModalContentBoxStyled = styled.div`
   padding: ${(props) => props.theme.paddings.large};
   border: 1px solid #888;
   width: 80%;
+  max-height: 80vh; /* Maksimalna visina */
+  overflow-y: auto; /* Omogućava vertikalno skrolovanje */
   position: relative;
 `;
 

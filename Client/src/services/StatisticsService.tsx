@@ -17,3 +17,16 @@ export const getTrafficStatistics = async () => {
   });
   return response.data;
 };
+
+export const getRegisteredVehiclesByYear = async (year: string) => {
+  const token = localStorage.getItem("token");
+  try {
+    const response = await axios.get(`${BASE_URL_STATISTICS}/registered-vehicles/${year}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching registered vehicles:', error);
+    throw error;
+  }
+};
