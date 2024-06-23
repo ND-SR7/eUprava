@@ -185,6 +185,7 @@ services:
       - PORT=8084
       - MONGO_DB_URI=${MONGO_DB_URI_STATISTICS}
       - MUP_SERVICE_URI=${MUP_SERVICE_URI}
+      - POLICE_SERVICE_URI=${POLICE_SERVICE_URI}
       - LOAD_DB_TEST_DATA=${LOAD_DB_TEST_DATA}
     depends_on:
       statistics_db:

@@ -62,9 +62,19 @@ func main() {
 
 	mup := clients.NewMupClient(mupClient, os.Getenv("MUP_SERVICE_URI"))
 
+	policeClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
+
+	police := clients.NewPoliceClient(policeClient, os.Getenv("POLICE_SERVICE_URI"))
+
 	// TODO: Handler init
 
-	statisticsHandler := handlers.NewStatisticsHandler(logger, store, mup)
+	statisticsHandler := handlers.NewStatisticsHandler(logger, store, mup, police)
 
 	router := mux.NewRouter()
 
@@ -98,6 +108,7 @@ func main() {
 	getMostPopularVehicleBrendsRouter.HandleFunc("", statisticsHandler.GetMostPopularBrands)
 
 	router.HandleFunc("/api/v1/registered-vehicles/{year}", statisticsHandler.GetRegisteredVehiclesByYear).Methods("GET")
+	router.HandleFunc("/api/v1/traffic-violations-report/{year}", statisticsHandler.GetTrafficViolationsReport).Methods("GET")
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),

@@ -17,7 +17,10 @@ const RegisteredVehicles: React.FC = () => {
       setVehicleCount(null);
       return;
     }
+
     setLoading(true);
+    setError(null);
+    
     try {
       const data = await getRegisteredVehiclesByYear(year);
       setVehicleCount(data.count);

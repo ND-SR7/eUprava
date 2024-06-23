@@ -25,10 +25,11 @@ type StatisticsHandler struct {
 	logger *log.Logger
 	repo   *data.StatisticsRepo
 	mup    clients.MupClient
+	police clients.PoliceClient
 }
 
-func NewStatisticsHandler(l *log.Logger, r *data.StatisticsRepo, mc clients.MupClient) *StatisticsHandler {
-	return &StatisticsHandler{l, r, mc}
+func NewStatisticsHandler(l *log.Logger, r *data.StatisticsRepo, mc clients.MupClient, pc clients.PoliceClient) *StatisticsHandler {
+	return &StatisticsHandler{l, r, mc, pc}
 }
 
 // Ping
@@ -268,6 +269,45 @@ func (sh *StatisticsHandler) GetMostPopularBrands(rw http.ResponseWriter, r *htt
 	if err := json.NewEncoder(rw).Encode(brandCount); err != nil {
 		sh.logger.Println("Failed to encode most popular brands:", err)
 		http.Error(rw, "Failed to encode most popular brands", http.StatusInternalServerError)
+	}
+}
+
+// Police client method
+
+func (sh *StatisticsHandler) GetTrafficViolationsReport(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	yearStr := vars["year"]
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		http.Error(rw, "Invalid year", http.StatusBadRequest)
+		return
+	}
+
+	token := sh.extractTokenFromHeader(r)
+	violations, err := sh.police.GetTrafficViolations(r.Context(), token)
+	if err != nil {
+		sh.logger.Println("Failed to retrieve traffic violations:", err)
+		http.Error(rw, "Failed to retrieve traffic violations", http.StatusInternalServerError)
+		return
+	}
+
+	report := make(map[string]int)
+	totalViolations := 0
+
+	for _, violation := range violations {
+		if violation.Time.Year() == year {
+			report[violation.Reason]++
+			totalViolations++
+		}
+	}
+
+	report["Total Violations"] = totalViolations
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(report); err != nil {
+		sh.logger.Println("Failed to encode traffic violations report:", err)
+		http.Error(rw, "Failed to encode traffic violations report", http.StatusInternalServerError)
 	}
 }
 

@@ -8,6 +8,7 @@ import Modal from "../components/Shared/Modal/Modal";
 import TrafficStatistics from "../components/Statistics/TrafficStatistics/TrafficStatistics";
 import VehicleStatistics from "../components/Statistics/VehicleStatistics/VehicleStatistics";
 import RegisteredVehicles from "../components/Statistics/RegisteredVehiclesByYear/RegisteredVehicles";
+import TrafficViolations from "../components/Statistics/TrafficViolationsByYear/TrafficViolations";
 
 const StatisticsPage = () => {
   const navigate = useNavigate();
@@ -50,6 +51,11 @@ const StatisticsPage = () => {
       <br />
       <Button buttonType="button" label="Search Registered Vehicles by Year" onClick={() => {
         setModalContent(<RegisteredVehicles />);
+        setIsModalVisible(true);
+      }} />
+      <br />
+      <Button buttonType="button" label="Search Traffic Violations by Year" onClick={() => {
+        setModalContent(<TrafficViolations />);
         setIsModalVisible(true);
       }} />
       <br />
