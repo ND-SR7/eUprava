@@ -58,3 +58,11 @@ export const Loader = styled.div`
   font-size: 18px;
   margin-top: 20px;
 `;
+
+export const DownloadButton = styled(Button)`
+  background-color: #007bff;
+
+  &:hover {
+    background-color: #000fff;
+  }
+`;

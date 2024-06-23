@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getVehicleStatisticsByYear } from '../../../services/StatisticsService';
-import { VehicleStatisticsTable, NoVehicleStatisticsMessage, ModalContent, ModalHeader } from './VehicleStatistics.styled';
+import { VehicleStatisticsTable, NoVehicleStatisticsMessage, ModalContent, ModalHeader, StyledButton, DownloadButton } from './VehicleStatistics.styled';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const VehicleStatistics: React.FC = () => {
   const [vehicleStatistics, setVehicleStatistics] = useState<{ [year: number]: number }>({});
@@ -16,8 +18,37 @@ const VehicleStatistics: React.FC = () => {
       });
   }, []);
 
+  const generatePDF = () => {
+    const input = document.getElementById('vehicle-statistics-content');
+    if (input) {
+      html2canvas(input).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF();
+        const imgWidth = 190;
+        const pageHeight = 295;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+
+        let position = 10;
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        pdf.save('Vehicle_Statistics_Report.pdf');
+      });
+    }
+  };
+
   return (
     <ModalContent>
+      <div id="vehicle-statistics-content">
       <ModalHeader>
         <h2>Vehicle Statistics by Year</h2>
       </ModalHeader>
@@ -58,6 +89,8 @@ const VehicleStatistics: React.FC = () => {
       ) : (
         <NoVehicleStatisticsMessage>No statistics available</NoVehicleStatisticsMessage>
       )}
+      </div>
+      <DownloadButton onClick={generatePDF}>Download PDF</DownloadButton>
     </ModalContent>
   );
 };

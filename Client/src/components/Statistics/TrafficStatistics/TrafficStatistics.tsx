@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { getTrafficStatistics } from "../../../services/StatisticsService";
-import { TrafficStatisticsTable, NoTrafficStatisticsMessage } from "./TrafficStatistics.styled";
+import { TrafficStatisticsTable, NoTrafficStatisticsMessage, DownloadButton } from "./TrafficStatistics.styled";
 import TrafficStatistic from "../../../models/Statistics/TrafficStatistic";
 import React from "react";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const TrafficStatistics: React.FC = () => {
   const [trafficStatistics, setTrafficStatistics] = useState<TrafficStatistic[]>([]);
@@ -17,8 +19,37 @@ const TrafficStatistics: React.FC = () => {
       });
   }, []);
 
+  const generatePDF = () => {
+    const input = document.getElementById("traffic-statistics-table");
+    if (input) {
+      html2canvas(input).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF();
+        const imgWidth = 190;
+        const pageHeight = 295;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+
+        let position = 10;
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+        
+        pdf.save("Traffic_Statistics_Report.pdf");
+      });
+    }
+  };
+
   return (
     <>
+    <div id="traffic-statistics-table">
       <h2>Traffic Statistics</h2>
       {trafficStatistics.length > 0 ? (
         <TrafficStatisticsTable>
@@ -58,6 +89,8 @@ const TrafficStatistics: React.FC = () => {
       ) : (
         <NoTrafficStatisticsMessage>No traffic statistics available</NoTrafficStatisticsMessage>
       )}
+      </div>
+      <DownloadButton onClick={generatePDF}>Download PDF</DownloadButton>
     </>
   );
 };
