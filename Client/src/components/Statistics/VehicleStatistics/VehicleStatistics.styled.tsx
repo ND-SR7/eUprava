@@ -62,3 +62,14 @@ export const NoVehicleStatisticsMessage = styled.div`
   margin: 20px 0;
   color: #777;
 `;
+
+export const ModalContent = styled.div`
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 20px;
+`;
+
+export const ModalHeader = styled.div`
+  margin-bottom: 20px;
+  text-align: center;
+`;
