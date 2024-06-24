@@ -1,15 +1,15 @@
 import { useNavigate } from "react-router-dom";
-import Button from "../../components/Shared/Button/Button";
-import HeadingStyled from "../../components/Shared/Heading/Heading.styled";
 import { useEffect, useState } from "react";
-import { pingPolice } from "../../services/PingService";
 import toast from "react-hot-toast";
-import Modal from "../../components/Shared/Modal/Modal";
-import GetAllTrafficViolations from "../../components/Police/TrafficViolation/GetAllTrafficViolation";
-import CheckAlcoholLevelForm from "../../components/Police/TrafficViolation/CheckAlcoholLevelForm";
-import CheckVehicleTireForm from "../../components/Police/TrafficViolation/CheckVehicleTireForm";
-import CheckDriverBanForm from "../../components/Police/TrafficViolation/CheckDriverBanForm";
-import CheckDriverPermitValidityForm from "../../components/Police/TrafficViolation/CheckDriverPermitValidityForm";
+import { pingPolice } from "../services/PingService";
+import CheckAlcoholLevelForm from "../components/Police/TrafficViolation/AlcoholLevel/CheckAlcoholLevelForm";
+import CheckDriverBanForm from "../components/Police/TrafficViolation/DriverBan/CheckDriverBanForm";
+import CheckDriverPermitValidityForm from "../components/Police/TrafficViolation/DriverPermit/CheckDriverPermitValidityForm";
+import CheckVehicleTireForm from "../components/Police/TrafficViolation/VehicleTire/CheckVehicleTireForm";
+import Button from "../components/Shared/Button/Button";
+import HeadingStyled from "../components/Shared/Heading/Heading.styled";
+import Modal from "../components/Shared/Modal/Modal";
+import GetAllTrafficViolations from "../components/Police/TrafficViolation/GetAllTrafficViolation/GetAllTrafficViolation";
 
 const PolicePage = () => {
   const navigate = useNavigate();

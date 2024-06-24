@@ -1,25 +1,11 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import styled from "styled-components";
-import HeadingStyled from "../../Shared/Heading/Heading.styled";
-import Button from "../../Shared/Button/Button";
+import HeadingStyled from "../../../Shared/Heading/Heading.styled";
+import Button from "../../../Shared/Button/Button";
 import { useNavigate } from "react-router-dom";
-import { checkVehicleTire } from "../../../services/PoliceService";
-import Select from "../../Shared/Select/Select";
-
-const FormContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-`;
-
-const Input = styled.input`
-  margin: 10px 0;
-  padding: 10px;
-  width: 100%;
-  max-width: 300px;
-`;
+import { checkVehicleTire } from "../../../../services/PoliceService";
+import Select from "../../../Shared/Select/Select";
+import { FormContainer, Input } from "./CheckVehicleTireForm.stled";
 
 interface CheckVehicleTireFormProps {
     closeModal: () => void;

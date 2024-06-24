@@ -1,36 +1,20 @@
-import React, { useState } from "react";
-import toast from "react-hot-toast";
-import styled from "styled-components";
-import HeadingStyled from "../../Shared/Heading/Heading.styled";
-import { checkAlcoholLevel } from "../../../services/PoliceService";
-import Button from "../../Shared/Button/Button";
-import { useNavigate } from "react-router-dom";
-
-const FormContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-`;
-
-const Input = styled.input`
-  margin: 10px 0;
-  padding: 10px;
-  width: 100%;
-  max-width: 300px;
-`;
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { FormContainer, Input, StyledHeading, SubmitButton } from './CheckAlcoholLevelForm.styled';
+import { checkAlcoholLevel } from '../../../../services/PoliceService';
+import { useNavigate } from 'react-router-dom';
 
 interface CheckAlcoholLevelFormProps {
   closeModal: () => void;
 }
 
 const CheckAlcoholLevelForm: React.FC<CheckAlcoholLevelFormProps> = ({ closeModal }) => {
-  const [alcoholLevel, setAlcoholLevel] = useState("");
-  const [jmbg, setJmbg] = useState("");
-  const [location, setLocation] = useState("");
+  const [alcoholLevel, setAlcoholLevel] = useState('');
+  const [jmbg, setJmbg] = useState('');
+  const [location, setLocation] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const data = {
@@ -42,18 +26,18 @@ const CheckAlcoholLevelForm: React.FC<CheckAlcoholLevelFormProps> = ({ closeModa
     try {
       const response = await checkAlcoholLevel(data);
       console.log(response);
-      toast.success(response.data.message || "Alcohol level checked successfully");
-      navigate("/home/police");
+      toast.success(response.data.message || 'Alcohol level checked successfully');
+      navigate('/home/police');
       closeModal();
     } catch (error: any) {
       console.error(error);
-      toast.error("Failed to check alcohol level, check driver JMBG");
+      toast.error('Failed to check alcohol level, check driver JMBG');
     }
   };
 
   return (
     <FormContainer>
-      <HeadingStyled>Check Alcohol Level</HeadingStyled>
+      <StyledHeading>Check Alcohol Level</StyledHeading>
       <form onSubmit={handleSubmit}>
         <Input
           type="text"
@@ -77,7 +61,7 @@ const CheckAlcoholLevelForm: React.FC<CheckAlcoholLevelFormProps> = ({ closeModa
           onChange={(e) => setLocation(e.target.value)}
           required
         />
-        <Button buttonType="submit" label="Check Alcohol Level" />
+        <SubmitButton buttonType="submit" label="Check Alcohol Level" />
       </form>
     </FormContainer>
   );

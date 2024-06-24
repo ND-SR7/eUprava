@@ -1,25 +1,11 @@
-// components/Police/TrafficViolation/CheckDriverBanForm.js ili CheckDriverBanForm.tsx
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import styled from "styled-components";
-import HeadingStyled from "../../Shared/Heading/Heading.styled";
-import Button from "../../Shared/Button/Button";
+import HeadingStyled from "../../../Shared/Heading/Heading.styled";
+import Button from "../../../Shared/Button/Button";
 import { useNavigate } from "react-router-dom";
-import { checkDriverBan } from "../../../services/PoliceService";
-
-const FormContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-`;
-
-const Input = styled.input`
-  margin: 10px 0;
-  padding: 10px;
-  width: 100%;
-  max-width: 300px;
-`;
+import { checkDriverBan } from "../../../../services/PoliceService";
+import { FormContainer } from "./CheckDriverBanForm.styled";
+import { Input } from "../AlcoholLevel/CheckAlcoholLevelForm.styled";
 
 interface CheckDriverBanFormProps {
   closeModal: () => void;

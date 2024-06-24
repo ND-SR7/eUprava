@@ -1,24 +1,10 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import styled from "styled-components";
-import HeadingStyled from "../../Shared/Heading/Heading.styled";
-import Button from "../../Shared/Button/Button";
+import HeadingStyled from "../../../Shared/Heading/Heading.styled";
+import Button from "../../../Shared/Button/Button";
 import { useNavigate } from "react-router-dom";
-import { CheckDriverPermitValidation } from "../../../services/PoliceService";
-
-const FormContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-`;
-
-const Input = styled.input`
-  margin: 10px 0;
-  padding: 10px;
-  width: 100%;
-  max-width: 300px;
-`;
+import { CheckDriverPermitValidation } from "../../../../services/PoliceService";
+import { FormContainer, Input } from "./CheckDriverPermitValidity.styled";
 
 interface CheckDriverPermitValidityFormProps {
   closeModal: () => void;

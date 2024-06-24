@@ -1,5 +1,4 @@
 import axios from "axios";
-import CheckDriverPermitValidityForm from "../components/Police/TrafficViolation/CheckDriverPermitValidityForm";
 
 const BASE_URL_POLICE = process.env.REACT_APP_API_BASE_URL_POLICE;
 

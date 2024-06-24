@@ -9,11 +9,10 @@ import RegisterPage from './pages/RegisterPage';
 import { Toaster } from 'react-hot-toast';
 import HomePage from './pages/HomePage';
 import MupPage from './pages/MupPage';
-import PolicePage from './pages/Police/PolicePage';
 import CourtPage from './pages/CourtPage';
 import StatisticsPage from './pages/StatisticsPage';
 import PasswordResetPage from './pages/PasswordResetPage';
-import GetAllPages from './pages/Police/GetAllPages';
+import PolicePage from './pages/PolicePage';
 
 function App() {
   return (
@@ -32,7 +31,6 @@ function App() {
             <Route path="/home/police" element={<PolicePage />} />
             <Route path="/home/court" element={<CourtPage />} />
             <Route path="/home/statistics" element={<StatisticsPage />} />
-            <Route path='/home/police/traffic-violations' element={<GetAllPages />}/>
             <Route path="*" element={<NoPage />} />
           </Routes>
           <br />
