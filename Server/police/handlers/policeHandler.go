@@ -309,6 +309,8 @@ func (ph *PoliceHandler) CheckDriverPermitValidity(w http.ResponseWriter, r *htt
 		Location:     driverBan.Location,
 	}
 
+	response := data.Response{}
+
 	token := ph.extractTokenFromHeader(r)
 
 	jmbgRequest := data.JMBGRequest{
@@ -323,7 +325,7 @@ func (ph *PoliceHandler) CheckDriverPermitValidity(w http.ResponseWriter, r *htt
 	}
 
 	if permit.Number == "" {
-		fmt.Printf("Not found driving permit.")
+		log.Printf("Not found driving permit.")
 		http.Error(w, "Not found driving permit.", http.StatusBadRequest)
 		return
 	}
@@ -333,9 +335,10 @@ func (ph *PoliceHandler) CheckDriverPermitValidity(w http.ResponseWriter, r *htt
 		violation.Description += "Driver was found to have an expired driving permit. \n"
 		log.Print("Driving permit is expired")
 	} else {
+		response.Message = "The driver permit is valid."
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "The driver permit is valid.")
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
@@ -353,9 +356,12 @@ func (ph *PoliceHandler) CheckDriverPermitValidity(w http.ResponseWriter, r *htt
 		return
 	}
 
+	response.Message = "Driver has an expired driving permit."
+	response.Data = violation
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(violation)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (ph *PoliceHandler) CheckVehicleTire(w http.ResponseWriter, r *http.Request) {

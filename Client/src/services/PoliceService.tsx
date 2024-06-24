@@ -1,4 +1,5 @@
 import axios from "axios";
+import CheckDriverPermitValidityForm from "../components/Police/TrafficViolation/CheckDriverPermitValidityForm";
 
 const BASE_URL_POLICE = process.env.REACT_APP_API_BASE_URL_POLICE;
 
@@ -24,7 +25,6 @@ export async function checkAlcoholLevel (data: any) {
       Authorization: `Bearer ${token}`,
     },
   });
-  console.log(response); 
   return response;
 };
 
@@ -35,7 +35,6 @@ export async function checkVehicleTire (data: any) {
       Authorization: `Bearer ${token}`,
     },
   });
-  console.log(response); 
   return response;
 };
 
@@ -46,6 +45,15 @@ export async function checkDriverBan(data: any){
       Authorization: `Bearer ${token}`,
     },
   });
-  console.log(response);
   return response;
+}
+
+export async function CheckDriverPermitValidation(data: any){
+  const token = localStorage.getItem("token");
+  const response = await axios.post(`${BASE_URL_POLICE}/traffic-violation/check-driver-permit`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
 }
