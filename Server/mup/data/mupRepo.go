@@ -69,7 +69,62 @@ func (mr *MUPRepo) Ping() {
 
 // Initialize database
 func (mr *MUPRepo) Initialize(ctx context.Context) error {
-	// TODO
+	db := mr.cli.Database("mupDB")
+
+	err := db.Collection("vehicle").Drop(ctx)
+	if err != nil {
+		return err
+	}
+
+	vehicles := []Vehicle{
+		{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Toyota",
+			Model:        "Corolla",
+			Year:         2020,
+			Registration: "",
+			Plates:       "",
+			Owner:        "123456789",
+		},
+		{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Honda",
+			Model:        "Civic",
+			Year:         2019,
+			Registration: "",
+			Plates:       "",
+			Owner:        "123456789",
+		},
+		{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Ford",
+			Model:        "Focus",
+			Year:         2018,
+			Registration: "",
+			Plates:       "",
+			Owner:        "33355577799",
+		},
+		{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Chevrolet",
+			Model:        "Malibu",
+			Year:         2021,
+			Registration: "",
+			Plates:       "",
+			Owner:        "33355577799",
+		},
+	}
+
+	var bsonVehicles []interface{}
+	for _, v := range vehicles {
+		bsonVehicles = append(bsonVehicles, v)
+	}
+
+	_, err = db.Collection("vehicle").InsertMany(ctx, bsonVehicles)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
