@@ -67,14 +67,130 @@ func (mr *MUPRepo) Ping() {
 	mr.logger.Println(databases)
 }
 
-// Initialize database
+// Initialize database with initial data
 func (mr *MUPRepo) Initialize(ctx context.Context) error {
-	// TODO
+
+	initialVehicles := []interface{}{
+		Vehicle{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Toyota",
+			Model:        "Corolla",
+			Year:         2020,
+			Owner:        "1234567891111",
+			Registration: "NS123AB",
+			Plates:       "NS123AB",
+		},
+		Vehicle{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Ford",
+			Model:        "Focus",
+			Year:         2018,
+			Owner:        "1234567891111",
+			Registration: "BG456CD",
+			Plates:       "BG456CD",
+		},
+	}
+
+	issuedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	expirationDateFuture := time.Date(2024, 8, 1, 0, 0, 0, 0, time.UTC)
+	expirationDatePast := time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)
+
+	initialRegistrations := []interface{}{
+		Registration{
+			VehicleID:          initialVehicles[0].(Vehicle).ID,
+			RegistrationNumber: "NS123AB",
+			IssuedDate:         issuedDate,
+			ExpirationDate:     expirationDateFuture,
+			Owner:              "1234567891111",
+			Plates:             "NS123AB",
+			Approved:           false,
+		},
+		Registration{
+			VehicleID:          initialVehicles[1].(Vehicle).ID,
+			RegistrationNumber: "BG456CD",
+			IssuedDate:         issuedDate,
+			ExpirationDate:     expirationDatePast,
+			Owner:              "1234567891111",
+			Plates:             "BG456CD",
+			Approved:           false,
+		},
+	}
+
+	// Insert initial data into Vehicle collection
+	vehicleCollection := mr.getMupCollection("vehicle")
+	_, err := vehicleCollection.InsertMany(ctx, initialVehicles)
+	if err != nil {
+		return fmt.Errorf("failed to insert initial vehicles: %v", err)
+	}
+
+	// Insert initial data into Registration collection
+	registrationCollection := mr.getMupCollection("registration")
+	_, err = registrationCollection.InsertMany(ctx, initialRegistrations)
+	if err != nil {
+		return fmt.Errorf("failed to insert initial registrations: %v", err)
+	}
+
+	// Example initial data for Mup collection
+	initialMup := Mup{
+		ID:   primitive.NewObjectID(),
+		Name: "Mup",
+		Address: Address{
+			Municipality: "",
+			Locality:     "Novi Sad",
+			StreetName:   "Dunavska",
+			StreetNumber: 1,
+		},
+		Vehicles:       []primitive.ObjectID{initialVehicles[0].(Vehicle).ID, initialVehicles[1].(Vehicle).ID},
+		TrafficPermits: []primitive.ObjectID{},
+		Plates:         []string{},
+		DrivingBans:    []primitive.ObjectID{},
+		Registrations:  []string{"NS123AB", "BG456CD"},
+	}
+
+	mupCollection := mr.getMupCollection("mup")
+	_, err = mupCollection.InsertOne(ctx, initialMup)
+	if err != nil {
+		return fmt.Errorf("failed to insert initial mup: %v", err)
+	}
+
+	// Initial data for DrivingBan collection
+	initialDrivingBans := []interface{}{
+		DrivingBan{
+			ID:       primitive.NewObjectID(),
+			Reason:   "Speeding",
+			Duration: time.Date(2024, 5, 31, 0, 0, 0, 0, time.UTC),
+			Person:   "1234567891111",
+		},
+	}
+
+	drivingBanCollection := mr.getMupCollection("drivingBan")
+	_, err = drivingBanCollection.InsertMany(ctx, initialDrivingBans)
+	if err != nil {
+		return fmt.Errorf("failed to insert initial driving bans: %v", err)
+	}
+
+	// Initial data for TrafficPermit collection
+	initialTrafficPermits := []interface{}{
+		TrafficPermit{
+			ID:             primitive.NewObjectID(),
+			Number:         "TP123456",
+			IssuedDate:     time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC),
+			ExpirationDate: time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
+			Approved:       true,
+			Person:         "1234567891111",
+		},
+	}
+
+	trafficPermitCollection := mr.getMupCollection("trafficPermit")
+	_, err = trafficPermitCollection.InsertMany(ctx, initialTrafficPermits)
+	if err != nil {
+		return fmt.Errorf("failed to insert initial traffic permits: %v", err)
+	}
+
 	return nil
 }
 
-//Vehicle methods
-
+// Vehicle methods
 func (mr *MUPRepo) SaveVehicle(ctx context.Context, vehicle *Vehicle) error {
 	collection := mr.getMupCollection("vehicle")
 	println("owner ", vehicle.Owner)
@@ -385,17 +501,19 @@ func (mr *MUPRepo) IssueDrivingBan(ctx context.Context, drivingBan *DrivingBan) 
 	return nil
 }
 
-func (mr *MUPRepo) GetDrivingBan(ctx context.Context, jmbg string, now time.Time) (DrivingBan, error) {
+func (mr *MUPRepo) GetDrivingBan(ctx context.Context, jmbg string) (DrivingBan, error) {
 	collection := mr.getMupCollection("drivingBan")
 
 	filter := bson.D{
-		{"person", jmbg},
-		{"duration", bson.D{{"$lt", now}}},
+		{Key: "person", Value: jmbg},
 	}
+
+	options := options.FindOne()
+	options.SetSort(bson.D{{Key: "duration", Value: -1}}) // Sortiraj po duration u opadajućem redosledu
 
 	var drivingBan DrivingBan
 
-	err := collection.FindOne(ctx, filter).Decode(&drivingBan)
+	err := collection.FindOne(ctx, filter, options).Decode(&drivingBan)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return DrivingBan{}, nil

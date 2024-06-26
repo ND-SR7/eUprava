@@ -3,13 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
 	"log"
 	"mup/data"
 	"mup/services"
 	"net/http"
-	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 )
 
 const ApplicationJson = "application/json"
@@ -154,7 +154,7 @@ func (mh *MupHandler) GetDrivingBan(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	drivingBan, err := mh.service.GetDrivingBan(ctx, request.JMBG, time.Now())
+	drivingBan, err := mh.service.GetDrivingBan(ctx, request.JMBG)
 	if err != nil {
 		http.Error(rw, "Failed to retrieve driving ban", http.StatusInternalServerError)
 		return

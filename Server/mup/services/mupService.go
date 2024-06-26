@@ -138,8 +138,8 @@ func (ms *MupService) ApproveTrafficPermitRequest(ctx context.Context, permitID 
 func (ms *MupService) GetRegistrationByPlate(ctx context.Context, plate string) (data.Registration, error) {
 	return ms.repo.GetRegistrationByPlate(ctx, plate)
 }
-func (ms *MupService) GetDrivingBan(ctx context.Context, jmbg string, now time.Time) (data.DrivingBan, error) {
-	return ms.repo.GetDrivingBan(ctx, jmbg, now)
+func (ms *MupService) GetDrivingBan(ctx context.Context, jmbg string) (data.DrivingBan, error) {
+	return ms.repo.GetDrivingBan(ctx, jmbg)
 }
 
 func (ms *MupService) GetDrivingPermitByJMBG(ctx context.Context, jmbg string) (data.TrafficPermit, error) {

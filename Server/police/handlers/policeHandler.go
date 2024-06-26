@@ -504,6 +504,7 @@ func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "The vehicle registration has not expired.")
+		log.Print("Vehicle registration has nor expired")
 		return
 	}
 
