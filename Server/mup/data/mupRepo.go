@@ -154,6 +154,32 @@ func (mr *MUPRepo) RetrieveRegisteredVehicles(ctx context.Context) (Vehicles, er
 	return vehicles, nil
 }
 
+func (mr *MUPRepo) GetPlatesByVehicleID(ctx context.Context, vehicleID primitive.ObjectID) (Plates, error) {
+	collection := mr.getMupCollection("plates")
+	var plates Plates
+	err := collection.FindOne(ctx, bson.M{"vehicleID": vehicleID}).Decode(&plates)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return Plates{}, nil
+		}
+		return Plates{}, err
+	}
+	return plates, nil
+}
+
+func (mr *MUPRepo) GetRegistrationByVehicleID(ctx context.Context, vehicleID primitive.ObjectID) (Registration, error) {
+	collection := mr.getMupCollection("registration")
+	var registration Registration
+	err := collection.FindOne(ctx, bson.M{"vehicleID": vehicleID}).Decode(&registration)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return Registration{}, nil
+		}
+		return Registration{}, err
+	}
+	return registration, nil
+}
+
 //Mup methods
 
 func (mr *MUPRepo) SaveVehicleIntoMup(ctx context.Context, vehicle *Vehicle) error {
@@ -278,6 +304,33 @@ func (mr *MUPRepo) ApproveRegistration(ctx context.Context, registration Registr
 
 	fmt.Println("Traffic permit approved successfully!")
 
+	return nil
+}
+
+func (mr *MUPRepo) DeletePendingRegistration(ctx context.Context, registrationNumber string) error {
+	collection := mr.getMupCollection("registration")
+	filter := bson.D{{"registrationNumber", registrationNumber}, {"approved", false}}
+
+	_, err := collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Pending registration request deleted successfully!")
+	return nil
+}
+
+// Delete pending traffic permit request
+func (mr *MUPRepo) DeletePendingTrafficPermit(ctx context.Context, permitID primitive.ObjectID) error {
+	collection := mr.getMupCollection("trafficPermit")
+	filter := bson.D{{"_id", permitID}, {"approved", false}}
+
+	_, err := collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Pending traffic permit request deleted successfully!")
 	return nil
 }
 
@@ -485,7 +538,7 @@ func (mr *MUPRepo) GetPersonsRegistrations(ctx context.Context, jmbg string) (Re
 func (mr *MUPRepo) GetUserDrivingPermit(ctx context.Context, jmbg string) (TrafficPermits, error) {
 	collection := mr.getMupCollection("trafficPermit")
 
-	filter := bson.D{{"person", jmbg}}
+	filter := bson.D{{"person", jmbg}, {"approved", true}}
 
 	var drivingPermits TrafficPermits
 

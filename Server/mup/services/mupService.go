@@ -131,6 +131,47 @@ func (ms *MupService) ApproveRegistration(ctx context.Context, registration data
 	return ms.repo.IssuePlates(ctx, plates)
 }
 
+func (ms *MupService) DeletePendingRegistration(ctx context.Context, registrationNumber string) error {
+	return ms.repo.DeletePendingRegistration(ctx, registrationNumber)
+}
+
+func (ms *MupService) DeletePendingTrafficPermit(ctx context.Context, permitID primitive.ObjectID) error {
+	return ms.repo.DeletePendingTrafficPermit(ctx, permitID)
+}
+
+func (ms *MupService) GetVehiclesDTOByJMBG(ctx context.Context, jmbg string) (data.VehiclesDTO, error) {
+	vehicles, err := ms.repo.GetPersonsVehicles(ctx, jmbg)
+	if err != nil {
+		return nil, err
+	}
+
+	var vehicleDTOs data.VehiclesDTO
+	for _, vehicle := range vehicles {
+		plates, err := ms.repo.GetPlatesByVehicleID(ctx, vehicle.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		registration, err := ms.repo.GetRegistrationByVehicleID(ctx, vehicle.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		vehicleDTO := data.VehicleDTO{
+			ID:           vehicle.ID,
+			Brand:        vehicle.Brand,
+			Model:        vehicle.Model,
+			Year:         vehicle.Year,
+			Registration: registration,
+			Plates:       plates,
+			Owner:        vehicle.Owner,
+		}
+		vehicleDTOs = append(vehicleDTOs, vehicleDTO)
+	}
+
+	return vehicleDTOs, nil
+}
+
 func (ms *MupService) ApproveTrafficPermitRequest(ctx context.Context, permitID primitive.ObjectID) error {
 	return ms.repo.ApproveTrafficPermitRequest(ctx, permitID)
 }
