@@ -46,6 +46,18 @@ type PlateRequest struct {
 	Plate string `json:"plates"`
 }
 
+type VehicleDTO struct {
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Brand        string             `bson:"brand" json:"brand"`
+	Model        string             `bson:"model" json:"model"`
+	Year         int                `bson:"year" json:"year"`
+	Registration Registration       `bson:"registration" json:"registration"`
+	Plates       Plates             `bson:"plates" json:"plates"`
+	Owner        string             `bson:"owner" json:"owner"`
+}
+
+type VehiclesDTO []VehicleDTO
+
 func (v *Vehicle) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(v)
@@ -102,6 +114,26 @@ func (p *ListOfPlates) ToJSON(w io.Writer) error {
 }
 
 func (p *ListOfPlates) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(p)
+}
+
+func (p *VehicleDTO) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(p)
+}
+
+func (p *VehicleDTO) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(p)
+}
+
+func (p *VehiclesDTO) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(p)
+}
+
+func (p *VehiclesDTO) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(p)
 }

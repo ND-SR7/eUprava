@@ -47,6 +47,14 @@ func main() {
 		}
 	}
 
+	// Set LOAD_DB_TEST_DATA to 'false' for persistence between shutdowns
+	if os.Getenv("LOAD_DB_TEST_DATA") == "true" {
+		err = store.Initialize(context.Background())
+		if err != nil {
+			logger.Fatalf("Failed to initialize DB: %s", err.Error())
+		}
+	}
+
 	courtClient := &http.Client{
 		Transport: &http.Transport{
 			MaxIdleConns:        10,
@@ -72,7 +80,7 @@ func main() {
 	router := mux.NewRouter()
 
 	//GET
-	router.HandleFunc("/api/v1/persons-vehicles", mupHandler.GetPersonsVehicles).Methods("GET")
+	router.HandleFunc("/api/v1/persons-vehicles", mupHandler.GetVehiclesDTOByJMBG).Methods("GET")
 	router.HandleFunc("/api/v1/driving-bans", mupHandler.CheckForPersonsDrivingBans).Methods("GET")
 	router.HandleFunc("/api/v1/persons-registrations", mupHandler.GetPersonsRegistrations).Methods("GET")
 	router.HandleFunc("/api/v1/persons-driving-permit", mupHandler.GetUserDrivingPermit).Methods("GET")
@@ -82,11 +90,13 @@ func main() {
 	router.HandleFunc("/api/v1/registration-request", mupHandler.SubmitRegistrationRequest).Methods("POST")
 	router.HandleFunc("/api/v1/traffic-permit-request", mupHandler.SubmitTrafficPermitRequest).Methods("POST")
 
-	authorizedRouter := router.Methods("GET", "POST").Subrouter()
+	authorizedRouter := router.Methods("GET", "POST", "DELETE").Subrouter()
 	authorizedRouter.HandleFunc("/api/v1/pending-registration-requests", mupHandler.GetPendingRegistrationRequests).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/pending-traffic-permit-requests", mupHandler.GetPendingTrafficPermitRequests).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/approve-registration-request", mupHandler.ApproveRegistration).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/approve-traffic-permit-request", mupHandler.ApproveTrafficPermitRequest).Methods("POST")
+	authorizedRouter.HandleFunc("/api/v1/delete-pending-registration-request/{request}", mupHandler.DeletePendingRegistration).Methods("DELETE")
+	authorizedRouter.HandleFunc("/api/v1/delete-pending-traffic-permit-request/{request}", mupHandler.DeletePendingTrafficPermit).Methods("DELETE")
 
 	// For clients
 	authorizedRouter.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")

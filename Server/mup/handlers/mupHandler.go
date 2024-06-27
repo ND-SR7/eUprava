@@ -8,6 +8,8 @@ import (
 	"mup/services"
 	"net/http"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 )
@@ -39,7 +41,7 @@ func (mh *MupHandler) Ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// GET Handlers
+// GET METHODS
 func (mh *MupHandler) CheckForPersonsDrivingBans(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -255,7 +257,29 @@ func (mh *MupHandler) GetPersonsVehicles(rw http.ResponseWriter, r *http.Request
 	}
 }
 
-// POST Handlers
+func (mh *MupHandler) GetVehiclesDTOByJMBG(rw http.ResponseWriter, r *http.Request) {
+	tokenStr := mh.extractTokenFromHeader(r)
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
+	if err != nil {
+		fmt.Printf("Error while reading JMBG from token: %v", err)
+		http.Error(rw, FailedToReadUsernameFromToken, http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	vehicleDTOs, err := mh.service.GetVehiclesDTOByJMBG(ctx, jmbg)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(rw).Encode(vehicleDTOs); err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// POST METHODS
 func (mh *MupHandler) SubmitRegistrationRequest(rw http.ResponseWriter, r *http.Request) {
 	var registration data.Registration
 
@@ -402,6 +426,8 @@ func (mh *MupHandler) ApproveRegistration(rw http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	registration.Approved = true
+
 	rw.Header().Set(ContentType, ApplicationJson)
 	rw.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(rw).Encode(registration); err != nil {
@@ -435,6 +461,52 @@ func (mh *MupHandler) ApproveTrafficPermitRequest(rw http.ResponseWriter, r *htt
 		http.Error(rw, "Failed to encode approved traffic permit", http.StatusInternalServerError)
 	}
 	log.Printf("Successfully updated traffic permit '%s'", trafficPermit.ID.Hex())
+}
+
+// DELETE METHODS
+
+func (mh *MupHandler) DeletePendingRegistration(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	request := vars["request"]
+
+	if request == "" {
+		http.Error(rw, "registration number is required", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	err := mh.service.DeletePendingRegistration(ctx, request)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (mh *MupHandler) DeletePendingTrafficPermit(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	request := vars["request"]
+
+	if request == "" {
+		http.Error(rw, "permit ID is required", http.StatusBadRequest)
+		return
+	}
+
+	permitID, err := primitive.ObjectIDFromHex(request)
+	if err != nil {
+		http.Error(rw, "Invalid permit ID", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	err = mh.service.DeletePendingTrafficPermit(ctx, permitID)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
 }
 
 // JWT middleware
