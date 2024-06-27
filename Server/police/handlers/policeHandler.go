@@ -70,6 +70,12 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if driverCheck.JMBG == "" || driverCheck.AlcoholLevel == 0 || driverCheck.Tire == "" || driverCheck.Location == "" {
+		http.Error(w, "All fields (JMBG, AlcoholLevel, Tire, Location) are required", http.StatusBadRequest)
+		log.Printf("Missing required fields: JMBG=%v, AlcoholLevel=%v, Tire=%v, Location=%v\n", driverCheck.JMBG, driverCheck.AlcoholLevel, driverCheck.Tire, driverCheck.Location)
+		return
+	}
+
 	violation := data.TrafficViolation{
 		ID:           primitive.NewObjectID(),
 		Time:         time.Now(),
@@ -77,49 +83,42 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 		Location:     driverCheck.Location,
 	}
 
+	// Check alcohol level
 	if driverCheck.AlcoholLevel < 0 {
 		http.Error(w, "Alcohol level must be bigger than 0.", http.StatusBadRequest)
 		return
 	} else if driverCheck.AlcoholLevel > 0.2 {
-		violation.Reason = fmt.Sprintf("drunk driving: %.2f \n", driverCheck.AlcoholLevel)
-		violation.Description = "Driver was caught operating a vehicle with a blood alcohol level above the legal limit. \n"
+		violation.Reason += fmt.Sprintf("Drunk driving: %.2f. ", driverCheck.AlcoholLevel)
+		violation.Description += "Driver was caught operating a vehicle with a blood alcohol level above the legal limit. "
 	} else {
 		log.Printf("Driver was caught operating a vehicle with a blood alcohol level within the legal limit.")
 	}
 
-	if driverCheck.Tire != "" {
-		switch driverCheck.Tire {
-		case "SUMMER":
-			now := time.Now()
-			month := now.Month()
-			day := now.Day()
-
-			winterTiresRequired := (month >= time.November && month <= time.December) || (month == time.January && day <= 1)
-
-			if winterTiresRequired {
-				violation.Reason += fmt.Sprintf("Winter tires required, provided tire type: %s \n", driverCheck.Tire)
-				violation.Description += "Additionally, the vehicle was equipped with incorrect tires for the current date."
-			}
-
-		case "WINTER":
-			now := time.Now()
-			month := now.Month()
-			day := now.Day()
-
-			winterTiresRequired := (month >= time.November && month <= time.December) || (month == time.January && day <= 1)
-			if !winterTiresRequired {
-				violation.Reason += fmt.Sprintf("Winter tires not required, provided tire type: %s \n", driverCheck.Tire)
-				violation.Description += "The vehicle was equipped with winter tires outside of the required period. \n"
-			}
-
-		default:
-			http.Error(w, "Invalid tire type provided. Must be either SUMMER or WINTER", http.StatusBadRequest)
-			return
+	// Check tire type
+	now := time.Now()
+	switch driverCheck.Tire {
+	case "SUMMER":
+		if now.Month() >= time.November || now.Month() < time.April {
+			violation.Reason += "Improper tire usage: SUMMER tires during winter period. "
+			violation.Description += "Driver was caught operating a vehicle with SUMMER tires during the winter period. "
+			log.Printf("Improper tire usage: JMBG=%v, Tire=%v\n", driverCheck.JMBG, driverCheck.Tire)
 		}
+	case "WINTER":
+		if now.Month() >= time.April && now.Month() < time.November {
+			violation.Reason += "Improper tire usage: WINTER tires during summer period. "
+			violation.Description += "Driver was caught operating a vehicle with WINTER tires during the summer period. "
+			log.Printf("Improper tire usage: JMBG=%v, Tire=%v\n", driverCheck.JMBG, driverCheck.Tire)
+		}
+	default:
+		http.Error(w, "Invalid tire type provided. Must be either SUMMER or WINTER", http.StatusBadRequest)
+		log.Printf("Invalid tire type: JMBG=%v, Tire=%v\n", driverCheck.JMBG, driverCheck.Tire)
+		return
 	}
 
+	// Extract token
 	token := ph.extractTokenFromHeader(r)
 
+	// Check driving ban
 	jmbgRequest := data.JMBGRequest{JMBG: driverCheck.JMBG}
 	drivingBan, err := ph.mup.CheckDrivigBan(r.Context(), jmbgRequest, token)
 	if err != nil {
@@ -129,13 +128,14 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if drivingBan {
-		violation.Reason += "Driving ban is effect \n"
-		violation.Description += "Driver was found to be operating a vehicle under active driving ban. \n"
-		log.Print("drivingBan is true")
+		violation.Reason += "Driving ban in effect. "
+		violation.Description += "Driver was found to be operating a vehicle under an active driving ban. "
+		log.Print("Driving ban is true")
 	} else {
 		log.Print("The driver is not under a driving ban.")
 	}
 
+	// Check driving permit
 	permit, err := ph.mup.GetDrivingPermitByJMBG(r.Context(), jmbgRequest, token)
 	if err != nil {
 		log.Printf("Failed to check driving permit: %v\n", err)
@@ -144,34 +144,71 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if permit.Number == "" {
-		fmt.Printf("Not found driving permit.")
+		log.Printf("Not found driving permit.")
 		http.Error(w, "Not found driving permit.", http.StatusBadRequest)
 		return
 	}
 
 	if permit.ExpirationDate.Before(time.Now()) {
-		violation.Reason += "Driving permit expired \n"
-		violation.Description += "Driver was found to have an expired driving permit. \n"
+		violation.Reason += "Driving permit expired. "
+		violation.Description += "Driver was found to have an expired driving permit. "
 		log.Print("Driving permit is expired")
 	}
 
-	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
+	// Check vehicle registration
+	plates := data.PlateRequest{
+		Plate: driverCheck.PlatesNumber,
+	}
+
+	registration, err := ph.mup.GetRegistrationByPlate(r.Context(), plates, token)
 	if err != nil {
-		http.Error(w, "Failed to create traffic violation", http.StatusInternalServerError)
-		log.Printf("Failed to create traffic violation: %v\n", err)
+		log.Printf("Failed to check registration by plate: %v\n", err)
+		http.Error(w, "Failed to check registration by plate", http.StatusBadRequest)
 		return
 	}
 
-	err = ph.court.CreateCrimeReport(r.Context(), violation, token)
-	if err != nil {
-		http.Error(w, "Failed to send crime report", http.StatusInternalServerError)
-		log.Printf("Failed to send crime report: %v\n", err)
+	if registration.RegistrationNumber == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Wrong plates number in body request")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(violation)
+	if registration.ExpirationDate.Before(time.Now()) {
+		violation.Reason += "Vehicle registration expired. "
+		violation.Description += "Driver was found to be operating a vehicle with an expired registration. "
+		log.Print("Vehicle registration is expired")
+	}
+
+	// Create traffic violation if any reasons exist
+	if violation.Reason != "" {
+		err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
+		if err != nil {
+			http.Error(w, "Failed to create traffic violation", http.StatusInternalServerError)
+			log.Printf("Failed to create traffic violation: %v\n", err)
+			return
+		}
+
+		err = ph.court.CreateCrimeReport(r.Context(), violation, token)
+		if err != nil {
+			http.Error(w, "Failed to send crime report", http.StatusInternalServerError)
+			log.Printf("Failed to send crime report: %v\n", err)
+			return
+		}
+
+		response := data.Response{
+			Data:    violation,
+			Message: "Driver has been fined",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(response)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "All checks passed, no violations found.")
+	}
 }
 
 func (ph *PoliceHandler) CheckAlcoholLevel(w http.ResponseWriter, r *http.Request) {

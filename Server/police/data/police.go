@@ -26,6 +26,7 @@ type DriverCheck struct {
 	JMBG         string  `bson:"jmbg" json:"jmbg"`
 	AlcoholLevel float64 `bson:"alcoholLevel" json:"alcoholLevel"`
 	Tire         string  `bson:"tire" json:"tire"`
+	PlatesNumber string  `bson:"platesNumber" json:"platesNumber"`
 	Location     string  `bson:"location" json:"location"`
 }
 
