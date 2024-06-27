@@ -11,7 +11,7 @@ const WarrantList = ({warrants}: WarrantListProps) => {
     <WarrantCardStyled>
       <h1>{warrant.trafficViolation}</h1>
       <h6>{warrant.id}</h6>
-      <h3>Issued on: {warrant.issuedOn.replace("T", " ").replace("Z", "")}</h3>
+      <h3>Issued on: {warrant.issuedOn!.replace("T", " ").replace("Z", "")}</h3>
     </WarrantCardStyled>
   );
 

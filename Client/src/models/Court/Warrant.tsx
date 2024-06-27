@@ -1,7 +1,7 @@
 type Warrant = {
-  id: string;
+  id?: string;
   trafficViolation: string;
-  issuedOn: string;
+  issuedOn?: string;
   issuedFor: string;
 };
 

@@ -1,5 +1,5 @@
 type Suspension = {
-  id: string;
+  id?: string;
   from: string;
   to: string;
   person: string;
