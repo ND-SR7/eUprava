@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import HeadingStyled from "../../../Shared/Heading/Heading.styled";
-import Button from "../../../Shared/Button/Button";
+import HeadingStyled from "../../Shared/Heading/Heading.styled";
+import Button from "../../Shared/Button/Button";
 import { useNavigate } from "react-router-dom";
-import { checkVehicleTire } from "../../../../services/PoliceService";
-import Select from "../../../Shared/Select/Select";
+import { checkVehicleTire } from "../../../services/PoliceService";
+import Select from "../../Shared/Select/Select";
 import { FormContainer, Input } from "./CheckVehicleTireForm.stled";
 
 interface CheckVehicleTireFormProps {

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import HeadingStyled from "../../../Shared/Heading/Heading.styled";
-import Button from "../../../Shared/Button/Button";
+import HeadingStyled from "../../Shared/Heading/Heading.styled";
+import Button from "../../Shared/Button/Button";
 import { useNavigate } from "react-router-dom";
-import { checkDriverBan } from "../../../../services/PoliceService";
+import { checkDriverBan } from "../../../services/PoliceService";
 import { FormContainer } from "./CheckDriverBanForm.styled";
 import { Input } from "../AlcoholLevel/CheckAlcoholLevelForm.styled";
 
@@ -16,7 +16,7 @@ const CheckDriverBanForm: React.FC<CheckDriverBanFormProps> = ({ closeModal }) =
   const [location, setLocation] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const data = {
@@ -27,7 +27,7 @@ const CheckDriverBanForm: React.FC<CheckDriverBanFormProps> = ({ closeModal }) =
     try {
       const response = await checkDriverBan(data);
       console.log(response);
-      toast.success(response.data || "Driver ban status checked successfully");
+      toast.success(response.data.message || "Driver ban status checked successfully");
       navigate("/home/police");
       closeModal();
     } catch (error: any) {

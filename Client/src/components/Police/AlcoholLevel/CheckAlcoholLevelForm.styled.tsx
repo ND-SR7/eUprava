@@ -1,6 +1,6 @@
 import styled from 'styled-components';
-import HeadingStyled from '../../../Shared/Heading/Heading.styled';
-import Button from '../../../Shared/Button/Button';
+import HeadingStyled from '../../Shared/Heading/Heading.styled';
+import Button from '../../Shared/Button/Button';
 
 export const FormContainer = styled.div`
   display: flex;

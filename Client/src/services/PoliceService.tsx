@@ -56,3 +56,13 @@ export async function CheckDriverPermitValidation(data: any){
   });
   return response.data;
 }
+
+export async function checkAll(data: any){
+  const token = localStorage.getItem("token");
+  const response = await axios.post(`${BASE_URL_POLICE}/traffic-violation/check-all`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+}

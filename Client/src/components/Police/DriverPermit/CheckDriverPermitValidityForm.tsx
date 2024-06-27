@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import HeadingStyled from "../../../Shared/Heading/Heading.styled";
-import Button from "../../../Shared/Button/Button";
+import HeadingStyled from "../../Shared/Heading/Heading.styled";
+import Button from "../../Shared/Button/Button";
 import { useNavigate } from "react-router-dom";
-import { CheckDriverPermitValidation } from "../../../../services/PoliceService";
+import { CheckDriverPermitValidation } from "../../../services/PoliceService";
 import { FormContainer, Input } from "./CheckDriverPermitValidity.styled";
 
 interface CheckDriverPermitValidityFormProps {

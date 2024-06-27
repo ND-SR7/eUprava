@@ -158,7 +158,7 @@ func (mr *MUPRepo) Initialize(ctx context.Context) error {
 		DrivingBan{
 			ID:       primitive.NewObjectID(),
 			Reason:   "Speeding",
-			Duration: time.Date(2024, 5, 31, 0, 0, 0, 0, time.UTC),
+			Duration: time.Date(2024, 8, 31, 0, 0, 0, 0, time.UTC),
 			Person:   "1234567891111",
 		},
 	}
@@ -174,8 +174,8 @@ func (mr *MUPRepo) Initialize(ctx context.Context) error {
 		TrafficPermit{
 			ID:             primitive.NewObjectID(),
 			Number:         "TP123456",
-			IssuedDate:     time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC),
-			ExpirationDate: time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
+			IssuedDate:     time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC),
+			ExpirationDate: time.Date(2024, 8, 1, 0, 0, 0, 0, time.UTC),
 			Approved:       true,
 			Person:         "1234567891111",
 		},

@@ -7,20 +7,24 @@ import { useEffect, useState } from "react";
 const HomePage = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const [role, setRole] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
-    if (token === "") navigate("/");
-
-    let tokenName = decodeJwtToken(token).name;
-    setName(tokenName);
+    if (token === "") {
+      navigate("/");
+    } else {
+      const decodedToken = decodeJwtToken(token);
+      setName(decodedToken.name);
+      setRole(decodedToken.role);
+    }
     // eslint-disable-next-line
   }, []);
 
   const logout = () => {
     localStorage.removeItem("token");
     navigate("/");
-  }
+  };
   
   return (
     <>
@@ -32,12 +36,15 @@ const HomePage = () => {
         label="MUP"
         buttonType="button"
         onClick={() => navigate("/home/mup")} />
-      <Button
-        key="navPolice"
-        id="navPolice"
-        label="Traffic Police"
-        buttonType="button"
-        onClick={() => navigate("/home/police")} />
+      {role === "ADMIN" && (
+        <Button
+          key="navPolice"
+          id="navPolice"
+          label="Traffic Police"
+          buttonType="button"
+          onClick={() => navigate("/home/police")}
+        />
+      )}
       <Button
         key="navCourt"
         id="navCourt"

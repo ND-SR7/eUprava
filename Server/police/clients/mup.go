@@ -56,15 +56,15 @@ func (mc MupClient) GetRegistrationByPlate(ctx context.Context, plates data.Plat
 	return registration, nil
 }
 
-func (mc MupClient) CheckDrivigBan(ctx context.Context, jmbg data.JMBGRequest, token string) (bool, error) {
+func (mc MupClient) CheckDrivingBan(ctx context.Context, jmbg data.JMBGRequest, token string) (*data.DrivingBan, error) {
 	requestBody, err := json.Marshal(jmbg)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, mc.address+"/check-persons-driving-ban", bytes.NewBuffer(requestBody))
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -72,26 +72,24 @@ func (mc MupClient) CheckDrivigBan(ctx context.Context, jmbg data.JMBGRequest, t
 
 	resp, err := mc.client.Do(req)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return false, errors.New("unexpected status code: " + resp.Status)
+		return nil, errors.New("unexpected status code: " + resp.Status)
 	}
 
-	var result struct {
-		DrivingBan bool `json:"drivingBan"`
-	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	var drivingBan data.DrivingBan
+	err = json.NewDecoder(resp.Body).Decode(&drivingBan)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return false, nil
+			return nil, nil
 		}
-		return false, err
+		return nil, err
 	}
 
-	return result.DrivingBan, nil
+	return &drivingBan, nil
 }
 
 func (mc MupClient) GetDrivingPermitByJMBG(ctx context.Context, jmbg data.JMBGRequest, token string) (data.TrafficPermit, error) {

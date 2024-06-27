@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { TrafficViolationsTable } from "./GetAllTrafficViolation.styled";
-import TrafficViolation from "../../../../models/Police/TrafficViolation";
-import { getAllTrafficViolations } from "../../../../services/PoliceService";
+import TrafficViolation from "../../../models/Police/TrafficViolation";
+import { getAllTrafficViolations } from "../../../services/PoliceService";
 
 const GetAllTrafficViolations: React.FC = () => {
   const [violations, setViolations] = useState<TrafficViolation[]>([]);

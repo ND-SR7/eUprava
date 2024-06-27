@@ -58,6 +58,13 @@ type Response struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
+type DrivingBan struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Reason   string             `bson:"reason" json:"reason"`
+	Duration time.Time          `bson:"duration" json:"duration"`
+	Person   string             `bson:"person" json:"person"`
+}
+
 func (tp *TrafficPolice) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(tp)
@@ -94,6 +101,16 @@ func (r *Response) ToJSON(w io.Writer) error {
 }
 
 func (r *Response) FromJSON(re io.Reader) error {
+	d := json.NewDecoder(re)
+	return d.Decode(r)
+}
+
+func (r *DrivingBan) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(r)
+}
+
+func (r *DrivingBan) FromJSON(re io.Reader) error {
 	d := json.NewDecoder(re)
 	return d.Decode(r)
 }

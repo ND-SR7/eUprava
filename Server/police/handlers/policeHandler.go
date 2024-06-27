@@ -70,9 +70,9 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if driverCheck.JMBG == "" || driverCheck.AlcoholLevel == 0 || driverCheck.Tire == "" || driverCheck.Location == "" {
+	if driverCheck.JMBG == "" || driverCheck.AlcoholLevel == 0 || driverCheck.Tire == "" || driverCheck.Location == "" || driverCheck.PlatesNumber == "" {
 		http.Error(w, "All fields (JMBG, AlcoholLevel, Tire, Location) are required", http.StatusBadRequest)
-		log.Printf("Missing required fields: JMBG=%v, AlcoholLevel=%v, Tire=%v, Location=%v\n", driverCheck.JMBG, driverCheck.AlcoholLevel, driverCheck.Tire, driverCheck.Location)
+		log.Printf("Missing required fields: JMBG=%v, AlcoholLevel=%v, Tire=%v, Location=%v, Plates Number=%v\n", driverCheck.JMBG, driverCheck.AlcoholLevel, driverCheck.Tire, driverCheck.Location, driverCheck.PlatesNumber)
 		return
 	}
 
@@ -120,19 +120,17 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 
 	// Check driving ban
 	jmbgRequest := data.JMBGRequest{JMBG: driverCheck.JMBG}
-	drivingBan, err := ph.mup.CheckDrivigBan(r.Context(), jmbgRequest, token)
+	drivingBan, err := ph.mup.CheckDrivingBan(r.Context(), jmbgRequest, token)
 	if err != nil {
 		http.Error(w, "Failed to check driving ban: "+err.Error(), http.StatusBadRequest)
 		log.Printf("Failed to check driving ban: %v\n", err)
 		return
 	}
 
-	if drivingBan {
-		violation.Reason += "Driving ban in effect. "
-		violation.Description += "Driver was found to be operating a vehicle under an active driving ban. "
-		log.Print("Driving ban is true")
-	} else {
-		log.Print("The driver is not under a driving ban.")
+	if drivingBan != nil && drivingBan.Duration.After(time.Now()) {
+		violation.Reason += "Driving ban is in effect \n"
+		violation.Description += "Driver was found to be operating a vehicle under active driving ban. Reason: " + drivingBan.Reason + "\n"
+		log.Print("Driving ban is in effect")
 	}
 
 	// Check driving permit
@@ -205,9 +203,12 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(response)
 	} else {
+		response := data.Response{
+			Message: "All checks passed, no violations found.",
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "All checks passed, no violations found.")
+		json.NewEncoder(w).Encode(response)
 	}
 }
 
@@ -293,21 +294,31 @@ func (ph *PoliceHandler) CheckDriverBan(w http.ResponseWriter, r *http.Request) 
 		JMBG: driverBan.JMBG,
 	}
 
-	drivingBan, err := ph.mup.CheckDrivigBan(r.Context(), jmbgRequest, token)
+	_, err = ph.sso.GetPersonByJMBG(r.Context(), driverBan.JMBG, token)
+	if err != nil {
+		http.Error(w, "Error with services communication", http.StatusBadRequest)
+		log.Printf("Error while communicating with SSO service: %s", err.Error())
+		return
+	}
+
+	drivingBan, err := ph.mup.CheckDrivingBan(r.Context(), jmbgRequest, token)
 	if err != nil {
 		http.Error(w, "Failed to check driving ban: "+err.Error(), http.StatusBadRequest)
 		log.Printf("Failed to check driving ban: %v\n", err)
 		return
 	}
 
-	if drivingBan {
-		violation.Reason += "Driving ban is effect \n"
-		violation.Description += "Driver was found to be operating a vehicle under active driving ban. \n"
-		log.Print("drivingBan is true")
+	if drivingBan != nil && drivingBan.Duration.After(time.Now()) {
+		violation.Reason += "Driving ban is in effect \n"
+		violation.Description += "Driver was found to be operating a vehicle under active driving ban. Reason: " + drivingBan.Reason + "\n"
+		log.Print("Driving ban is in effect")
 	} else {
+		response := data.Response{
+			Message: "The driver is not under a driving ban.",
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "The driver is not under a driving ban.")
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
@@ -325,9 +336,14 @@ func (ph *PoliceHandler) CheckDriverBan(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	response := data.Response{
+		Message: "Traffic violation created successfully",
+		Data:    violation,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(violation)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (ph *PoliceHandler) CheckDriverPermitValidity(w http.ResponseWriter, r *http.Request) {

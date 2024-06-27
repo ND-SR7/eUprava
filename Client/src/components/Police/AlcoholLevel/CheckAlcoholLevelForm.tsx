@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { FormContainer, Input, StyledHeading, SubmitButton } from './CheckAlcoholLevelForm.styled';
-import { checkAlcoholLevel } from '../../../../services/PoliceService';
 import { useNavigate } from 'react-router-dom';
+import { checkAlcoholLevel } from '../../../services/PoliceService';
 
 interface CheckAlcoholLevelFormProps {
   closeModal: () => void;

@@ -1,6 +1,9 @@
+// components/Police/CheckVehicleTireForm.styled.ts
+
 import styled from 'styled-components';
-import HeadingStyled from '../../../Shared/Heading/Heading.styled';
-import Button from '../../../Shared/Button/Button';
+import HeadingStyled from '../../Shared/Heading/Heading.styled';
+import Button from '../../Shared/Button/Button';
+import Select from '../../Shared/Select/Select';
 
 export const FormContainer = styled.div`
   display: flex;
@@ -28,6 +31,15 @@ export const StyledHeading = styled(HeadingStyled)`
   font-size: 1.5em;
   color: #009879;
   margin-bottom: 20px;
+`;
+
+export const StyledSelect = styled(Select)`
+  margin: 10px 0;
+  padding: 12px;
+  width: 100%;
+  max-width: 300px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 `;
 
 export const SubmitButton = styled(Button)`
