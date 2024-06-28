@@ -17,30 +17,6 @@ export const Form = styled.form`
     margin-bottom: 20px;
 `;
 
-export const Label = styled.label`
-    margin-right: 10px;
-`;
-
-export const Input = styled.input`
-    margin-right: 10px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-`;
-
-export const Button = styled.button`
-    padding: 5px 10px;
-    border: none;
-    background-color: #007bff;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-
-    &:hover {
-        background-color: #0056b3;
-    }
-`;
-
 export const Table = styled.table`
     width: 100%;
     border-collapse: collapse;
@@ -77,9 +53,5 @@ export const Loader = styled.div`
 export const ErrorMessage = styled.div`
     color: red;
     text-align: center;
-    margin-top: 20px;
-`;
-
-export const DownloadButton = styled(Button)`
     margin-top: 20px;
 `;

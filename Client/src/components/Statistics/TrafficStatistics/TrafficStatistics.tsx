@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getTrafficStatistics } from "../../../services/StatisticsService";
-import { TrafficStatisticsTable, NoTrafficStatisticsMessage, DownloadButton } from "./TrafficStatistics.styled";
+import { TrafficStatisticsTable, NoTrafficStatisticsMessage } from "./TrafficStatistics.styled";
+import Button from "../../Shared/Button/Button";
 import TrafficStatistic from "../../../models/Statistics/TrafficStatistic";
 import React from "react";
 import jsPDF from 'jspdf';
@@ -47,6 +48,8 @@ const TrafficStatistics: React.FC = () => {
     }
   };
 
+  const isDownloadDisabled = trafficStatistics === null;
+
   return (
     <>
     <div id="traffic-statistics-table">
@@ -90,7 +93,12 @@ const TrafficStatistics: React.FC = () => {
         <NoTrafficStatisticsMessage>No traffic statistics available</NoTrafficStatisticsMessage>
       )}
       </div>
-      <DownloadButton onClick={generatePDF}>Download PDF</DownloadButton>
+      <Button 
+            label="Download PDF" 
+            buttonType="button" 
+            onClick={generatePDF} 
+            disabled={isDownloadDisabled} 
+          />
     </>
   );
 };

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Button, Container, Form, Input, Label, Title, ErrorMessage, Loader, Table, TableHeader, TableRow, TableData, DownloadButton } from './TrafficViolations.styled';
+import { Container, Form, Title, ErrorMessage, Loader, Table, TableHeader, TableRow, TableData } from './TrafficViolations.styled';
 import { getTrafficViolationsByYear } from '../../../services/StatisticsService';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import Button from '../../Shared/Button/Button';
+import Input from '../../Shared/Input/Input';
 
 interface TrafficViolationsReport {
     [key: string]: number;
@@ -67,19 +69,22 @@ const TrafficViolations: React.FC = () => {
         }
     };
 
+    // Proveri da li postoje podaci u violationsReport
+    const isDownloadDisabled = !violationsReport || Object.values(violationsReport).every(count => count === 0);
+
     return (
         <Container>
             <Title>Traffic Violations</Title>
             <Form onSubmit={handleSearch}>
-                <Label htmlFor="year">Year:</Label>
                 <Input
                     type="text"
                     id="year"
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    placeholder="Enter year"
+                    label="Year"
+                    attrName="year"
+                    handleChange={(e: React.ChangeEvent<HTMLInputElement>) => setYear(e.target.value)}
+                    data={year}
                 />
-                <Button type="submit">Fetch Violations</Button>
+                <Button label="Fetch Violations" buttonType="submit" />
             </Form>
             {loading && <Loader>Loading...</Loader>}
             {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -103,7 +108,7 @@ const TrafficViolations: React.FC = () => {
                             </tbody>
                         </Table>
                     </div>
-                    <DownloadButton onClick={generatePDF}>Download PDF</DownloadButton>
+                    <Button label="Download PDF" buttonType="button" onClick={generatePDF} disabled={isDownloadDisabled} />
                 </>
             )}
         </Container>

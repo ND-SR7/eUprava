@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { getRegisteredVehiclesByYear } from '../../../services/StatisticsService';
-import { Container, Input, Button, Table, Loader, ErrorMessage, DownloadButton } from './RegisteredVehicles.styled';
+import { Container, Table, Loader, ErrorMessage } from './RegisteredVehicles.styled';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import Button from '../../Shared/Button/Button';
+import Input from '../../Shared/Input/Input';
+import LabelStyled from '../../Shared/Label/Label.styled';
 
 const RegisteredVehicles: React.FC = () => {
   const [year, setYear] = useState('');
@@ -61,17 +64,25 @@ const RegisteredVehicles: React.FC = () => {
     }
   };
 
+  const isDownloadDisabled = vehicleCount === null || vehicleCount === 0;
+
   return (
     <Container>
       <h1>Search Registered Vehicles by Year</h1>
       <div>
         <Input
           type="text"
-          value={year}
-          onChange={(e) => setYear(e.target.value)}
-          placeholder="Enter year"
+          label="Year"
+          id="year"
+          attrName="year"
+          handleChange={(e) => setYear(e.target.value)}
+          data={year}
         />
-        <Button onClick={handleSearch}>Search</Button>
+        <Button 
+          label="Search" 
+          buttonType="button" 
+          onClick={handleSearch} 
+        />
       </div>
       {loading && <Loader>Loading...</Loader>}
       {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -93,7 +104,12 @@ const RegisteredVehicles: React.FC = () => {
               </tbody>
             </Table>
           </div>
-          <DownloadButton onClick={generatePDF}>Download PDF</DownloadButton>
+          <Button 
+            label="Download PDF" 
+            buttonType="button" 
+            onClick={generatePDF} 
+            disabled={isDownloadDisabled} 
+          />
         </>
       )}
     </Container>

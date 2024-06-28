@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getVehicleStatisticsByYear } from '../../../services/StatisticsService';
-import { VehicleStatisticsTable, NoVehicleStatisticsMessage, ModalContent, ModalHeader, StyledButton, DownloadButton } from './VehicleStatistics.styled';
+import { VehicleStatisticsTable, NoVehicleStatisticsMessage, ModalContent, ModalHeader } from './VehicleStatistics.styled';
+import Button from '../../Shared/Button/Button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -46,6 +47,8 @@ const VehicleStatistics: React.FC = () => {
     }
   };
 
+  const isDownloadDisabled = vehicleStatistics === null;
+
   return (
     <ModalContent>
       <div id="vehicle-statistics-content">
@@ -90,7 +93,12 @@ const VehicleStatistics: React.FC = () => {
         <NoVehicleStatisticsMessage>No statistics available</NoVehicleStatisticsMessage>
       )}
       </div>
-      <DownloadButton onClick={generatePDF}>Download PDF</DownloadButton>
+      <Button 
+            label="Download PDF" 
+            buttonType="button" 
+            onClick={generatePDF} 
+            disabled={isDownloadDisabled} 
+          />
     </ModalContent>
   );
 };

@@ -5,28 +5,6 @@ export const Container = styled.div`
   margin: 20px;
 `;
 
-export const Input = styled.input`
-  padding: 10px;
-  margin-right: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-`;
-
-export const Button = styled.button`
-  padding: 10px;
-  font-size: 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #45a049;
-  }
-`;
-
 export const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -79,12 +57,4 @@ export const ErrorMessage = styled.p`
 export const Loader = styled.div`
   font-size: 18px;
   margin-top: 20px;
-`;
-
-export const DownloadButton = styled(Button)`
-  background-color: #007bff;
-
-  &:hover {
-    background-color: #000fff;
-  }
 `;

@@ -1,24 +1,5 @@
 import styled from 'styled-components';
 
-export const StyledButton = styled.button`
-  background-color: #4CAF50;
-  border: none;
-  color: white;
-  padding: 15px 32px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: #45a049;
-  }
-`;
-
 export const TrafficStatisticsTable = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -62,26 +43,4 @@ export const NoTrafficStatisticsMessage = styled.div`
   font-size: 1.2em;
   color: #ff0000;
   margin: 20px 0;
-`;
-
-export const Button = styled.button`
-  padding: 10px;
-  font-size: 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #45a049;
-  }
-`;
-
-export const DownloadButton = styled(Button)`
-  background-color: #007bff;
-
-  &:hover {
-    background-color: #000fff;
-  }
 `;
