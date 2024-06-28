@@ -122,6 +122,22 @@ export async function createWarrant(warrant: Warrant) {
   }
 };
 
+export function updateHearing(hearingID: string, dateTime: string): Promise<any> {
+  const token = localStorage.getItem("token");
+  const jmbg = decodeJwtToken(token!).sub;
+
+  const hearingUpdate = {
+    hearingID: hearingID,
+    dateTime: dateTime + ":00"
+  };
+
+  let response;
+  if (jmbg.length > 8) response = updateHearingPerson(hearingUpdate);
+  else  response = updateHearingLegalEntity(hearingUpdate);
+
+  return response;
+};
+
 export async function updateHearingPerson(hearing: RescheduleCourtHearing) {
   const token = localStorage.getItem("token");
 

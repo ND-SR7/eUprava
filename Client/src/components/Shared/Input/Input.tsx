@@ -11,11 +11,12 @@ interface InputProps {
   accept?: string;
   min?: string;
   max?: string;
+  disabled?: boolean;
 }
 
 type InputType = string | number;
 
-const Input = ( {type, label, id, attrName, handleChange, data, accept, min, max} : InputProps ) => {
+const Input = ( {type, label, id, attrName, handleChange, data, accept, min, max, disabled} : InputProps ) => {
   function setInputValue(): InputType {
     if (type === "number")
       return data as number;
@@ -35,6 +36,7 @@ const Input = ( {type, label, id, attrName, handleChange, data, accept, min, max
           accept={accept ? accept : ""}
           min={min ? min : ""}
           max={max ? max : ""}
+          disabled={disabled}
         />
     </LabelStyled>
   );

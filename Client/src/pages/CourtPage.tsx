@@ -5,7 +5,10 @@ import { useEffect, useState } from "react";
 import { pingCourt } from "../services/PingService";
 import toast from "react-hot-toast";
 import Modal from "../components/Shared/Modal/Modal";
-import { createHearingLegalEntity, createHearingPerson, createSuspension, createWarrant, getHearingsByJMBG, getSuspensionByJMBG, getWarrantsByJMBG } from "../services/CourtService";
+import {
+  createHearingLegalEntity, createHearingPerson, createSuspension,
+  createWarrant, getHearingsByJMBG, getSuspensionByJMBG, getWarrantsByJMBG
+} from "../services/CourtService";
 import CourtHearing from "../models/Court/CourtHearing";
 import SuspensionModel from "../models/Court/Suspension";
 import Warrant from "../models/Court/Warrant";
@@ -56,7 +59,7 @@ const CourtPage = () => {
   const checkHearings = () => {
     getHearingsByJMBG().then((hearings: CourtHearing[]) => {
       if (hearings.length > 0) {
-        setModalContent(<HearingList hearings={hearings} />);
+        setModalContent(<HearingList hearings={hearings} closeParent={closeModal} />);
         setModalHeading("Your hearings");
       } else {
         setModalContent("");
