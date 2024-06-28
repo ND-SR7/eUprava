@@ -28,6 +28,20 @@ const LoginPage = () => {
   });
 
   function loginUser(formData: any): void {
+    // eslint-disable-next-line
+    const emailPattern = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    const passwordPattern = /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
+
+    if (!emailPattern.test(formData["email"])) {
+      toast.error("Email format is not valid");
+      return;
+    }
+    
+    if (!passwordPattern.test(formData["password"])) {
+      toast.error("Password should include at least one uppercase letter, one number and lowercase letters");
+      return;
+    }
+
     login({
       email: formData["email"],
       password: formData["password"]

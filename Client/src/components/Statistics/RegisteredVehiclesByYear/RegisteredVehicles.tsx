@@ -5,7 +5,6 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import Button from '../../Shared/Button/Button';
 import Input from '../../Shared/Input/Input';
-import LabelStyled from '../../Shared/Label/Label.styled';
 
 const RegisteredVehicles: React.FC = () => {
   const [year, setYear] = useState('');
