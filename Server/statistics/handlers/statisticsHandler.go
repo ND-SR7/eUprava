@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sort"
 	"statistics/clients"
 	"statistics/data"
 	"strconv"
@@ -247,8 +248,15 @@ func (sh *StatisticsHandler) GetRegisteredVehiclesByYear(rw http.ResponseWriter,
 }
 
 func (sh *StatisticsHandler) GetMostPopularBrands(rw http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	vars := mux.Vars(r)
+	yearStr := vars["year"]
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		http.Error(rw, "Invalid year", http.StatusBadRequest)
+		return
+	}
 
+	ctx := r.Context()
 	token := sh.extractTokenFromHeader(r)
 
 	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx, token)
@@ -261,12 +269,28 @@ func (sh *StatisticsHandler) GetMostPopularBrands(rw http.ResponseWriter, r *htt
 	brandCount := make(map[string]int)
 
 	for _, vehicle := range vehicles {
-		brandCount[vehicle.Brand]++
+		if vehicle.Year == year {
+			brandCount[vehicle.Brand]++
+		}
 	}
 
-	rw.Header().Set(ContentType, ApplicationJson)
+	var sortedBrands []data.BrandCount
+	for brand, count := range brandCount {
+		sortedBrands = append(sortedBrands, data.BrandCount{Brand: brand, Count: count})
+	}
+
+	sort.Slice(sortedBrands, func(i, j int) bool {
+		return sortedBrands[i].Count > sortedBrands[j].Count
+	})
+
+	topBrands := sortedBrands
+	if len(topBrands) > 3 {
+		topBrands = topBrands[:3]
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(rw).Encode(brandCount); err != nil {
+	if err := json.NewEncoder(rw).Encode(topBrands); err != nil {
 		sh.logger.Println("Failed to encode most popular brands:", err)
 		http.Error(rw, "Failed to encode most popular brands", http.StatusInternalServerError)
 	}

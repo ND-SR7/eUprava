@@ -22,6 +22,7 @@ const TrafficViolations: React.FC = () => {
         if (!/^\d{4}$/.test(year)) {
             setError('Please enter a valid year');
             setViolationsReport(null);
+            setSearchYear(null);
             return;
         }
 
@@ -32,7 +33,11 @@ const TrafficViolations: React.FC = () => {
             const response = await getTrafficViolationsByYear(year);
             setViolationsReport(response);
             setSearchYear(year);
-            setError(null);
+            if (Object.values(response).every(count => count === 0)) {
+                setError(`No traffic violations found for the year ${year}`);
+            } else {
+                setError(null);
+            }
         } catch (error) {
             setError('Error fetching traffic violations');
             setViolationsReport(null);
@@ -87,8 +92,8 @@ const TrafficViolations: React.FC = () => {
                 <Button label="Fetch Violations" buttonType="submit" />
             </Form>
             {loading && <Loader>Loading...</Loader>}
-            {error && <ErrorMessage>{error}</ErrorMessage>}
-            {violationsReport && searchYear && (
+            {error && searchYear && <ErrorMessage>{error}</ErrorMessage>}
+            {violationsReport && searchYear && Object.values(violationsReport).some(count => count > 0) && (
                 <>
                     <div id="report-content">
                         <Table>

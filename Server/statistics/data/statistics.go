@@ -70,6 +70,11 @@ type TrafficViolation struct {
 
 type TrafficViolations []TrafficViolation
 
+type BrandCount struct {
+	Brand string `json:"brand"`
+	Count int    `json:"count"`
+}
+
 func (i *InstituteForStatistics) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(i)
@@ -168,4 +173,14 @@ func (tv *TrafficViolations) ToJSON(w io.Writer) error {
 func (tv *TrafficViolations) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(tv)
+}
+
+func (bc *BrandCount) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(bc)
+}
+
+func (bc *BrandCount) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(bc)
 }

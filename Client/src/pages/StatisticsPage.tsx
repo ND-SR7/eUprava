@@ -9,6 +9,7 @@ import TrafficStatistics from "../components/Statistics/TrafficStatistics/Traffi
 import VehicleStatistics from "../components/Statistics/VehicleStatistics/VehicleStatistics";
 import RegisteredVehicles from "../components/Statistics/RegisteredVehiclesByYear/RegisteredVehicles";
 import TrafficViolations from "../components/Statistics/TrafficViolationsByYear/TrafficViolations";
+import MostPopularBrands from "../components/Statistics/MostPopularBrands/MostPopularBrands";
 
 const StatisticsPage = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const StatisticsPage = () => {
         setModalContent(<VehicleStatistics />);
         setIsModalVisible(true);
       }} />
-      <br />
+      {/* <br /> */}
       <Button buttonType="button" label="Fetch Traffic Statistics" onClick={() => {
         setModalContent(<TrafficStatistics />);
         setIsModalVisible(true);
@@ -53,9 +54,14 @@ const StatisticsPage = () => {
         setModalContent(<RegisteredVehicles />);
         setIsModalVisible(true);
       }} />
-      <br />
+      {/* <br /> */}
       <Button buttonType="button" label="Search Traffic Violations by Year" onClick={() => {
         setModalContent(<TrafficViolations />);
+        setIsModalVisible(true);
+      }} />
+      {/* <br /> */}
+      <Button buttonType="button" label="Search Most Popular Brands by Year" onClick={() => {
+        setModalContent(<MostPopularBrands />);
         setIsModalVisible(true);
       }} />
       <br />

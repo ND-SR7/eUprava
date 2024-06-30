@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
-import { getRegisteredVehiclesByYear } from '../../../services/StatisticsService';
-import { Container, Table, Loader, ErrorMessage } from './RegisteredVehicles.styled';
+import { getMostPopularBrands } from '../../../services/StatisticsService';
+import { Container, Table, Loader, ErrorMessage } from './MostPopularBrands.styled';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import Button from '../../Shared/Button/Button';
 import Input from '../../Shared/Input/Input';
 
-const RegisteredVehicles: React.FC = () => {
+interface BrandCount {
+  brand: string;
+  count: number;
+}
+
+const MostPopularBrands: React.FC = () => {
   const [year, setYear] = useState('');
-  const [vehicleCount, setVehicleCount] = useState<number | null>(null);
+  const [brands, setBrands] = useState<BrandCount[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchYear, setSearchYear] = useState<string | null>(null);
@@ -16,25 +21,25 @@ const RegisteredVehicles: React.FC = () => {
   const handleSearch = async () => {
     if (!/^\d{4}$/.test(year)) {
       setError('Please enter a valid year');
-      setVehicleCount(null);
+      setBrands([]);
       setSearchYear(null);
       return;
     }
 
     setLoading(true);
     setError(null);
-
+    
     try {
-      const data = await getRegisteredVehiclesByYear(year);
-      setVehicleCount(data.count);
+      const data = await getMostPopularBrands(year);
+      setBrands(data);
       setSearchYear(year);
       setError(null);
-      if (data.count === 0) {
+      if (data.length === 0) {
         setError(`No registered vehicles found for the year ${year}`);
       }
     } catch (err) {
-      setError('Failed to fetch registered vehicles');
-      setVehicleCount(null);
+      setError('Failed to fetch most popular brands');
+      setBrands([]);
     }
     setLoading(false);
   };
@@ -62,16 +67,16 @@ const RegisteredVehicles: React.FC = () => {
           heightLeft -= pageHeight;
         }
 
-        pdf.save(`Registered_Vehicles_Report_${searchYear}.pdf`);
+        pdf.save(`Most_Popular_Brands_Report_${searchYear}.pdf`);
       });
     }
   };
 
-  const isDownloadDisabled = vehicleCount === null || vehicleCount === 0;
+  const isDownloadDisabled = brands.length === 0;
 
   return (
     <Container>
-      <h1>Search Registered Vehicles by Year</h1>
+      <h1>Search Most Popular Vehicle Brands by Year</h1>
       <div>
         <Input
           type="text"
@@ -89,21 +94,23 @@ const RegisteredVehicles: React.FC = () => {
       </div>
       {loading && <Loader>Loading...</Loader>}
       {error && searchYear && <ErrorMessage>{error}</ErrorMessage>}
-      {vehicleCount !== null && searchYear !== null && vehicleCount > 0 && (
+      {brands.length > 0 && searchYear !== null && (
         <>
           <div id="report-content">
             <Table>
               <thead>
                 <tr>
-                  <th>Year</th>
+                  <th>Brand</th>
                   <th>Number of Registered Vehicles</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>{searchYear}</td>
-                  <td>{vehicleCount}</td>
-                </tr>
+                {brands.map((brand) => (
+                  <tr key={brand.brand}>
+                    <td>{brand.brand}</td>
+                    <td>{brand.count}</td>
+                  </tr>
+                ))}
               </tbody>
             </Table>
           </div>
@@ -119,4 +126,4 @@ const RegisteredVehicles: React.FC = () => {
   );
 };
 
-export default RegisteredVehicles;
+export default MostPopularBrands;

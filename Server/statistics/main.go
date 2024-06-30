@@ -104,7 +104,7 @@ func main() {
 	getRegisteredVehiclesRouter := router.Methods(http.MethodGet).Path("/api/v1/registered-vehicles").Subrouter()
 	getRegisteredVehiclesRouter.HandleFunc("", statisticsHandler.GetRegisteredVehicles)
 
-	getMostPopularVehicleBrendsRouter := router.Methods(http.MethodGet).Path("/api/v1/most-popular-vehicles").Subrouter()
+	getMostPopularVehicleBrendsRouter := router.Methods(http.MethodGet).Path("/api/v1/most-popular-brands/{year}").Subrouter()
 	getMostPopularVehicleBrendsRouter.HandleFunc("", statisticsHandler.GetMostPopularBrands)
 
 	router.HandleFunc("/api/v1/registered-vehicles/{year}", statisticsHandler.GetRegisteredVehiclesByYear).Methods("GET")
