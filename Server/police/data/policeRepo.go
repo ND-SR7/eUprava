@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -118,6 +119,25 @@ func (pr *PoliceRepo) GetTrafficViolationByID(ctx context.Context, id primitive.
 		return nil, err
 	}
 	return violation, nil
+}
+
+func (pr *PoliceRepo) GetTrafficViolationsByJMBG(ctx context.Context, violatorJMBG string) ([]*TrafficViolation, error) {
+	collection := pr.getPoliceCollection("traffic_violations")
+	cursor, err := collection.Find(ctx, bson.M{"violatorJMBG": violatorJMBG})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var violations []*TrafficViolation
+	if err = cursor.All(ctx, &violations); err != nil {
+		return nil, err
+	}
+	if len(violations) == 0 {
+		return nil, fmt.Errorf("no traffic violations found for JMBG: %s", violatorJMBG)
+	}
+
+	return violations, nil
 }
 
 func (pr *PoliceRepo) GetAllTrafficViolations(ctx context.Context) ([]*TrafficViolation, error) {

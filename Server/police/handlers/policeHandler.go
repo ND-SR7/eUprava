@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"police/clients"
 	"police/data"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -604,6 +605,48 @@ func (ph *PoliceHandler) GetTrafficViolationByID(w http.ResponseWriter, r *http.
 	}
 
 	json.NewEncoder(w).Encode(violation)
+}
+
+func (ph *PoliceHandler) GetTrafficViolationsByJMBG(w http.ResponseWriter, r *http.Request) {
+
+	tokenString := ph.extractTokenFromHeader(r)
+	if tokenString == "" {
+		http.Error(w, "Missing token", http.StatusUnauthorized)
+		return
+	}
+
+	claims := &jwt.StandardClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte("eUpravaT2"), nil
+	})
+
+	if err != nil || !token.Valid {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	violationJMBG := claims.Subject
+	violations, err := ph.repo.GetTrafficViolationsByJMBG(r.Context(), violationJMBG)
+	if err != nil {
+		if strings.Contains(err.Error(), "no traffic violations found") {
+			response := data.Response{
+				Message: fmt.Sprintf("No traffic violations found for JMBG: %s", violationJMBG),
+			}
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+
+		http.Error(w, "Failed to retrieve traffic violations", http.StatusInternalServerError)
+		log.Printf("Failed to retrieve traffic violations: %v\n", err)
+		return
+	}
+
+	response := data.Response{
+		Message: fmt.Sprintf("Traffic violations found for JMBG: %s", violationJMBG),
+		Data:    violations,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func (ph *PoliceHandler) GetAllTrafficViolations(w http.ResponseWriter, r *http.Request) {

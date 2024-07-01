@@ -78,17 +78,22 @@ func main() {
 
 	router := mux.NewRouter()
 	// Router methods
-	router.HandleFunc("/api/v1/traffic-violation", handler.CreateTrafficViolation).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traffic-violation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/traffic-violation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/traffic-violation/check-all", handler.CheckAll).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traffic-violation/check-alcohol-level", handler.CheckAlcoholLevel).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traffic-violation/check-driver-ban", handler.CheckDriverBan).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traffic-violation/check-driver-permit", handler.CheckDriverPermitValidity).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traffic-violation/check-vehicle-registration", handler.CheckVehicleRegistration).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traffic-violation/check-vehicle-tire", handler.CheckVehicleTire).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traffic-violation/jmbg", handler.GetTrafficViolationsByJMBG).Methods(http.MethodGet)
+
+	authorizedRouter := router.Methods("GET", "POST", "PUT", "DELETE").Subrouter()
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation", handler.CreateTrafficViolation).Methods(http.MethodPost)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation/check-all", handler.CheckAll).Methods(http.MethodPost)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation/check-alcohol-level", handler.CheckAlcoholLevel).Methods(http.MethodPost)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation/check-driver-ban", handler.CheckDriverBan).Methods(http.MethodPost)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation/check-driver-permit", handler.CheckDriverPermitValidity).Methods(http.MethodPost)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation/check-vehicle-registration", handler.CheckVehicleRegistration).Methods(http.MethodPost)
+	authorizedRouter.HandleFunc("/api/v1/traffic-violation/check-vehicle-tire", handler.CheckVehicleTire).Methods(http.MethodPost)
+
+	authorizedRouter.Use(handler.AuthorizeRoles("ADMIN"))
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
