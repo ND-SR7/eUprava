@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import Button from "../../Shared/Button/Button";
@@ -9,7 +9,8 @@ import HearingListStyled from "./HearingList.styled";
 
 import CourtHearing from "../../../models/Court/CourtHearing";
 
-import { updateHearing } from "../../../services/CourtService";
+import { getCourt, updateHearing } from "../../../services/CourtService";
+import Court from "../../../models/Court/Court";
 
 interface HearingsProps {
   hearings: CourtHearing[];
@@ -23,6 +24,17 @@ const HearingList = ({hearings, closeParent}: HearingsProps) => {
   const closeModal = () => {
     setModalVisible(false);
   };
+
+  const [courtName, setCourtName] = useState("");
+
+  useEffect(() => {
+    getCourt("64c13ab08edf48a008793cac").then((court: Court) => {
+      setCourtName(court.name);
+    }).catch(error => {
+      toast.error("Failed to retrieve court name");
+      console.error(error);
+    });
+  }, []);
 
   const rescheduleHearing = (formData: any) => {
     const retVal = updateHearing(formData["hearingID"], formData["dateTime"]);
@@ -58,7 +70,7 @@ const HearingList = ({hearings, closeParent}: HearingsProps) => {
       <h1>{hearing.reason}</h1>
       <h6>{hearing.id}</h6>
       <h3>Date and time: {hearing.dateTime.replace("T", " ").replace("Z", "")}</h3>
-      <p><b>Court: {hearing.court}</b></p>
+      <p><b>Court: {courtName}</b></p>
       <Button
         buttonType="button"
         label="Reschedule"

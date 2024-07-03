@@ -67,12 +67,18 @@ func (cr *CourtRepo) Ping() {
 
 // Initialize database
 func (cr *CourtRepo) Initialize(ctx context.Context) error {
+	courtCollection := cr.getCourtCollection()
 	hearingsPersonCollection := cr.getHearingsPersonCollection()
 	hearingsLegalEntityCollection := cr.getHearingsLegalEntityCollection()
 	suspensionsCollection := cr.getSuspensionsCollection()
 	warrantsCollection := cr.getWarrantsCollection()
 
-	err := hearingsPersonCollection.Drop(ctx)
+	err := courtCollection.Drop(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = hearingsPersonCollection.Drop(ctx)
 	if err != nil {
 		return err
 	}
@@ -90,20 +96,37 @@ func (cr *CourtRepo) Initialize(ctx context.Context) error {
 	}
 
 	hearingDateTime, _ := time.Parse("2006-01-02T15:04:05", "2024-07-05T16:00:00")
+	courtID, _ := primitive.ObjectIDFromHex("64c13ab08edf48a008793cac")
+
+	court := Court{
+		ID:   courtID,
+		Name: "Sud eUprave",
+		Address: Address{
+			Municipality: "Novi Sad",
+			Locality:     "Novi Sad",
+			StreetName:   "Jovana Zmaja",
+			StreetNumber: 3,
+		},
+	}
+
+	_, err = courtCollection.InsertOne(ctx, court)
+	if err != nil {
+		return err
+	}
 
 	courtHearingsPerson := []CourtHearingPerson{
 		{
 			ID:       primitive.NewObjectID(),
 			Reason:   "Speeding violation hearing",
 			DateTime: hearingDateTime,
-			Court:    primitive.NewObjectID(), // TODO
+			Court:    courtID,
 			Person:   "147258369",
 		},
 		{
 			ID:       primitive.NewObjectID(),
 			Reason:   "Drunk driving violation hearing",
 			DateTime: hearingDateTime.Add(time.Hour),
-			Court:    primitive.NewObjectID(),
+			Court:    courtID,
 			Person:   "369258147",
 		},
 	}
@@ -123,7 +146,7 @@ func (cr *CourtRepo) Initialize(ctx context.Context) error {
 			ID:          primitive.NewObjectID(),
 			Reason:      "Speeding violation hearing",
 			DateTime:    hearingDateTime.Add(time.Hour * 2),
-			Court:       primitive.NewObjectID(), // TODO
+			Court:       courtID,
 			LegalEntity: "147369258",
 		},
 	}
@@ -139,6 +162,30 @@ func (cr *CourtRepo) Initialize(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// Finds court based on provided id
+func (cr *CourtRepo) GetCourtByID(id string) (Court, error) {
+	collection := cr.getCourtCollection()
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return Court{}, err
+	}
+
+	filter := bson.M{"_id": objID}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var court Court
+
+	err = collection.FindOne(ctx, filter).Decode(&court)
+	if err != nil {
+		return Court{}, err
+	}
+
+	return court, nil
 }
 
 // Finds court hearing based on provided id
@@ -500,6 +547,10 @@ func (cr *CourtRepo) RescheduleCourtHearingLegalEntity(rescheduledHearing Resche
 }
 
 // Getters for collections
+
+func (cr *CourtRepo) getCourtCollection() *mongo.Collection {
+	return cr.cli.Database("courtDB").Collection("court")
+}
 
 func (cr *CourtRepo) getHearingsPersonCollection() *mongo.Collection {
 	return cr.cli.Database("courtDB").Collection("hearingsPerson")

@@ -6,6 +6,21 @@ import Warrant from "../models/Court/Warrant";
 
 const BASE_URL_COURT = process.env.REACT_APP_API_BASE_URL_COURT;
 
+export async function getCourt(id: string) {
+  const token = localStorage.getItem("token");
+
+  try {
+    const response = await axios.get(`${BASE_URL_COURT}/courts/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response.data.message || 'Failed to retrieve court');
+  }
+}
+
 export async function getHearingsByJMBG() {
   const token = localStorage.getItem("token");
   const jmbg = decodeJwtToken(token!).sub;

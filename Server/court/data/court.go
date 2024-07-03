@@ -9,11 +9,9 @@ import (
 )
 
 type Court struct {
-	ID                  primitive.ObjectID        `bson:"_id, omitempty" json:"id"`
-	Name                string                    `bson:"name" json:"name"`
-	Address             Address                   `bson:"address" json:"address"`
-	HearingsPerson      []CourtHearingPerson      `bson:"hearingsPerson" json:"hearingsPerson"`
-	HearingsLegalEntity []CourtHearingLegalEntity `bson:"hearingsLegalEntity" json:"hearingsLegalEntity"`
+	ID      primitive.ObjectID `bson:"_id, omitempty" json:"id"`
+	Name    string             `bson:"name" json:"name"`
+	Address Address            `bson:"address" json:"address"`
 }
 
 type CourtHearing interface {

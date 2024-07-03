@@ -82,6 +82,7 @@ func main() {
 	adminRouter.Use(courtHandler.AuthorizeRoles("ADMIN"))
 
 	authorizedRouter := router.Methods("GET", "PUT").Subrouter()
+	authorizedRouter.HandleFunc("/api/v1/courts/{id}", courtHandler.GetCourtByID).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/update-hearing-person", courtHandler.UpdateHearingPerson).Methods("PUT")
 	authorizedRouter.HandleFunc("/api/v1/update-hearing-entity", courtHandler.UpdateHearingLegalEntity).Methods("PUT")
 	authorizedRouter.HandleFunc("/api/v1/hearings/{jmbg}", courtHandler.GetCourtHearingsByJMBG).Methods("GET")

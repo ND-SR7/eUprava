@@ -41,6 +41,32 @@ func (ch *CourtHandler) Ping(w http.ResponseWriter, r *http.Request) {
 
 // Handler methods
 
+// Retrieves court based on provided ID
+func (ch *CourtHandler) GetCourtByID(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	courtID := params["id"]
+
+	log.Printf("Retrieving court with id '%s'", courtID)
+
+	court, err := ch.repo.GetCourtByID(courtID)
+	if err != nil {
+		http.Error(w, "Failed to get court", http.StatusInternalServerError)
+		log.Printf("Failed to get court: %s", err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(court); err != nil {
+		http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+		log.Printf("Error while encoding court: %s", err.Error())
+		return
+	}
+
+	log.Printf("Successfully retrieved court with id '%s'", courtID)
+}
+
 // Retrieves hearing based on provided ID
 func (ch *CourtHandler) GetCourtHearingByID(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -356,10 +382,12 @@ func (ch *CourtHandler) RecieveCrimeReport(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	courtID, _ := primitive.ObjectIDFromHex("64c13ab08edf48a008793cac")
+
 	courtHearing := data.NewCourtHearingPerson{
 		Reason:   trafficViolation.Reason,
 		DateTime: time.Now().Add(72 * time.Hour).Format("2006-01-02T15:04:05"),
-		Court:    primitive.NewObjectID().Hex(), // TODO
+		Court:    courtID.Hex(),
 		Person:   person.Account.ID.Hex(),
 	}
 
