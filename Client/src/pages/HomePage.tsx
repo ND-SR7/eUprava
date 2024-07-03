@@ -25,7 +25,7 @@ const HomePage = () => {
     localStorage.removeItem("token");
     navigate("/");
   };
-  
+
   return (
     <>
       <HeadingStyled>Welcome to eUprava, {name}</HeadingStyled>
@@ -36,15 +36,13 @@ const HomePage = () => {
         label="MUP"
         buttonType="button"
         onClick={() => navigate("/home/mup")} />
-      {role === "ADMIN" && (
-        <Button
-          key="navPolice"
-          id="navPolice"
-          label="Traffic Police"
-          buttonType="button"
-          onClick={() => navigate("/home/police")}
-        />
-      )}
+      <Button
+        key="navPolice"
+        id="navPolice"
+        label="Traffic Police"
+        buttonType="button"
+        onClick={() => navigate("/home/police")}
+      />
       <Button
         key="navCourt"
         id="navCourt"

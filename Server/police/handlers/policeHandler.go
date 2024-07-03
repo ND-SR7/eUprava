@@ -518,7 +518,12 @@ func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http
 	var checkVehicleRegistration data.CheckVehicleRegistration
 	err := json.NewDecoder(r.Body).Decode(&checkVehicleRegistration)
 	if err != nil {
-		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
+		response := data.Response{
+			Message: "Failed to decode request body",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
 		log.Printf("Failed to decode request body: %v\n", err)
 		return
 	}
@@ -538,15 +543,23 @@ func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http
 
 	registration, err := ph.mup.GetRegistrationByPlate(r.Context(), plates, token)
 	if err != nil {
+		response := data.Response{
+			Message: "Failed to check registration by plate",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
 		log.Printf("Failed to check registration by plate: %v\n", err)
-		http.Error(w, "Failed to check registration by plate", http.StatusBadRequest)
 		return
 	}
 
 	if registration.RegistrationNumber == "" {
+		response := data.Response{
+			Message: "Wrong plates number in body request",
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Wrong plates number in body request")
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
@@ -555,30 +568,47 @@ func (ph *PoliceHandler) CheckVehicleRegistration(w http.ResponseWriter, r *http
 		violation.Description = "Driver was found to be operating a vehicle with an expired registration."
 		log.Print("Vehicle registration is expired")
 	} else {
+		response := data.Response{
+			Message: "The vehicle registration has not expired.",
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "The vehicle registration has not expired.")
-		log.Print("Vehicle registration has nor expired")
+		json.NewEncoder(w).Encode(response)
+		log.Print("Vehicle registration has not expired")
 		return
 	}
 
 	err = ph.repo.CreateTrafficViolation(r.Context(), &violation)
 	if err != nil {
-		http.Error(w, "Failed to create traffic violation", http.StatusBadRequest)
+		response := data.Response{
+			Message: "Failed to create traffic violation",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
 		log.Printf("Failed to create traffic violation: %v\n", err)
 		return
 	}
 
 	err = ph.court.CreateCrimeReport(r.Context(), violation, token)
 	if err != nil {
-		http.Error(w, "Failed to send crime report", http.StatusBadRequest)
+		response := data.Response{
+			Message: "Failed to send crime report",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
 		log.Printf("Failed to send crime report: %v\n", err)
 		return
 	}
 
+	response := data.Response{
+		Message: "Traffic violation recorded successfully",
+		Data:    violation,
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(violation)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (ph *PoliceHandler) GetTrafficViolationByID(w http.ResponseWriter, r *http.Request) {

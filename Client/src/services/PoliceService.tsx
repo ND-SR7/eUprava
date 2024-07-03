@@ -17,6 +17,21 @@ export async function getAllTrafficViolations(){
     }
 }
 
+export async function getAllTrafficViolationsForUser() {
+  const token = localStorage.getItem("token");
+
+  try {
+    const response = await axios.get(`${BASE_URL_POLICE}/traffic-violation/jmbg`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.data; // Adjust this line based on actual response format
+  } catch (error: any) {
+    throw new Error(error.response.data.message || 'Failed to retrieve traffic violations.');
+  }
+}
+
 export async function checkAlcoholLevel (data: any) {
   const token = localStorage.getItem("token");
   const response = await axios.post(`${BASE_URL_POLICE}/traffic-violation/check-alcohol-level`, data, {
@@ -50,6 +65,16 @@ export async function checkDriverBan(data: any){
 export async function CheckDriverPermitValidation(data: any){
   const token = localStorage.getItem("token");
   const response = await axios.post(`${BASE_URL_POLICE}/traffic-violation/check-driver-permit`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+}
+
+export async function CheckVehicleRegistration(data: any){
+  const token = localStorage.getItem("token");
+  const response = await axios.post(`${BASE_URL_POLICE}/traffic-violation/check-vehicle-registration`, data, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
