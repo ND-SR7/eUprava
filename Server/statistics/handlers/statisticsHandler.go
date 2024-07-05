@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sort"
 	"statistics/clients"
 	"statistics/data"
+	"strconv"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
@@ -24,10 +26,11 @@ type StatisticsHandler struct {
 	logger *log.Logger
 	repo   *data.StatisticsRepo
 	mup    clients.MupClient
+	police clients.PoliceClient
 }
 
-func NewStatisticsHandler(l *log.Logger, r *data.StatisticsRepo, mc clients.MupClient) *StatisticsHandler {
-	return &StatisticsHandler{l, r, mc}
+func NewStatisticsHandler(l *log.Logger, r *data.StatisticsRepo, mc clients.MupClient, pc clients.PoliceClient) *StatisticsHandler {
+	return &StatisticsHandler{l, r, mc, pc}
 }
 
 // Ping
@@ -209,9 +212,51 @@ func (sh *StatisticsHandler) GetRegisteredVehicles(rw http.ResponseWriter, r *ht
 	}
 }
 
-func (sh *StatisticsHandler) GetMostPopularBrands(rw http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+func (sh *StatisticsHandler) GetRegisteredVehiclesByYear(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	yearStr := vars["year"]
 
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		http.Error(rw, "Invalid year", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	token := sh.extractTokenFromHeader(r)
+
+	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx, token)
+	if err != nil {
+		sh.logger.Println("Failed to retrieve registered vehicles:", err)
+		http.Error(rw, "Failed to retrieve registered vehicles", http.StatusInternalServerError)
+		return
+	}
+
+	count := 0
+	for _, vehicle := range vehicles {
+		if vehicle.Year == year {
+			count++
+		}
+	}
+
+	rw.Header().Set(ContentType, ApplicationJson)
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(map[string]int{"count": count}); err != nil {
+		sh.logger.Println("Failed to encode registered vehicles count:", err)
+		http.Error(rw, "Failed to encode registered vehicles count", http.StatusInternalServerError)
+	}
+}
+
+func (sh *StatisticsHandler) GetMostPopularBrands(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	yearStr := vars["year"]
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		http.Error(rw, "Invalid year", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
 	token := sh.extractTokenFromHeader(r)
 
 	vehicles, err := sh.mup.GetAllRegisteredVehicles(ctx, token)
@@ -224,14 +269,69 @@ func (sh *StatisticsHandler) GetMostPopularBrands(rw http.ResponseWriter, r *htt
 	brandCount := make(map[string]int)
 
 	for _, vehicle := range vehicles {
-		brandCount[vehicle.Brand]++
+		if vehicle.Year == year {
+			brandCount[vehicle.Brand]++
+		}
 	}
 
-	rw.Header().Set(ContentType, ApplicationJson)
+	var sortedBrands []data.BrandCount
+	for brand, count := range brandCount {
+		sortedBrands = append(sortedBrands, data.BrandCount{Brand: brand, Count: count})
+	}
+
+	sort.Slice(sortedBrands, func(i, j int) bool {
+		return sortedBrands[i].Count > sortedBrands[j].Count
+	})
+
+	topBrands := sortedBrands
+	if len(topBrands) > 3 {
+		topBrands = topBrands[:3]
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(rw).Encode(brandCount); err != nil {
+	if err := json.NewEncoder(rw).Encode(topBrands); err != nil {
 		sh.logger.Println("Failed to encode most popular brands:", err)
 		http.Error(rw, "Failed to encode most popular brands", http.StatusInternalServerError)
+	}
+}
+
+// Police client method
+
+func (sh *StatisticsHandler) GetTrafficViolationsReport(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	yearStr := vars["year"]
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		http.Error(rw, "Invalid year", http.StatusBadRequest)
+		return
+	}
+
+	token := sh.extractTokenFromHeader(r)
+	violations, err := sh.police.GetTrafficViolations(r.Context(), token)
+	if err != nil {
+		sh.logger.Println("Failed to retrieve traffic violations:", err)
+		http.Error(rw, "Failed to retrieve traffic violations", http.StatusInternalServerError)
+		return
+	}
+
+	report := make(map[string]int)
+	totalViolations := 0
+
+	for _, violation := range violations {
+		if violation.Time.Year() == year {
+			report[violation.Reason]++
+			totalViolations++
+		}
+	}
+
+	report["Total Violations"] = totalViolations
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(report); err != nil {
+		sh.logger.Println("Failed to encode traffic violations report:", err)
+		http.Error(rw, "Failed to encode traffic violations report", http.StatusInternalServerError)
 	}
 }
 

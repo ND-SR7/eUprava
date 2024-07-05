@@ -111,7 +111,7 @@ func (sr *StatisticsRepo) Initialize(ctx context.Context) error {
 	return nil
 }
 
-// TODO: Repo methods
+// Repo methods
 
 func (sr *StatisticsRepo) CreateTrafficStatisticData(ctx context.Context, trafficStatistic *TrafficData) error {
 	collection := sr.getTrafficStatisticsCollection()

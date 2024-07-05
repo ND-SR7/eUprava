@@ -62,13 +62,23 @@ func main() {
 
 	mup := clients.NewMupClient(mupClient, os.Getenv("MUP_SERVICE_URI"))
 
-	// TODO: Handler init
+	policeClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     10,
+		},
+	}
 
-	statisticsHandler := handlers.NewStatisticsHandler(logger, store, mup)
+	police := clients.NewPoliceClient(policeClient, os.Getenv("POLICE_SERVICE_URI"))
+
+	// Handler init
+
+	statisticsHandler := handlers.NewStatisticsHandler(logger, store, mup, police)
 
 	router := mux.NewRouter()
 
-	// TODO: Router methods
+	// Router methods
 
 	createTrafficStatisticRouter := router.Methods(http.MethodPost).Path("/api/v1/traffic-statistic").Subrouter()
 	createTrafficStatisticRouter.HandleFunc("", statisticsHandler.CreateTrafficStatistic)
@@ -94,13 +104,16 @@ func main() {
 	getRegisteredVehiclesRouter := router.Methods(http.MethodGet).Path("/api/v1/registered-vehicles").Subrouter()
 	getRegisteredVehiclesRouter.HandleFunc("", statisticsHandler.GetRegisteredVehicles)
 
-	getMostPopularVehicleBrendsRouter := router.Methods(http.MethodGet).Path("/api/v1/most-popular-vehicles").Subrouter()
+	getMostPopularVehicleBrendsRouter := router.Methods(http.MethodGet).Path("/api/v1/most-popular-brands/{year}").Subrouter()
 	getMostPopularVehicleBrendsRouter.HandleFunc("", statisticsHandler.GetMostPopularBrands)
+
+	router.HandleFunc("/api/v1/registered-vehicles/{year}", statisticsHandler.GetRegisteredVehiclesByYear).Methods("GET")
+	router.HandleFunc("/api/v1/traffic-violations-report/{year}", statisticsHandler.GetTrafficViolationsReport).Methods("GET")
 
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
 		gorillaHandlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"}),
-		gorillaHandlers.AllowedHeaders([]string{"Content-Type"}),
+		gorillaHandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
 
 	pingRouter := router.Methods("GET").Subrouter()

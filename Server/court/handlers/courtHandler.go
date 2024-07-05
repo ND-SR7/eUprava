@@ -41,6 +41,32 @@ func (ch *CourtHandler) Ping(w http.ResponseWriter, r *http.Request) {
 
 // Handler methods
 
+// Retrieves court based on provided ID
+func (ch *CourtHandler) GetCourtByID(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	courtID := params["id"]
+
+	log.Printf("Retrieving court with id '%s'", courtID)
+
+	court, err := ch.repo.GetCourtByID(courtID)
+	if err != nil {
+		http.Error(w, "Failed to get court", http.StatusInternalServerError)
+		log.Printf("Failed to get court: %s", err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(court); err != nil {
+		http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+		log.Printf("Error while encoding court: %s", err.Error())
+		return
+	}
+
+	log.Printf("Successfully retrieved court with id '%s'", courtID)
+}
+
 // Retrieves hearing based on provided ID
 func (ch *CourtHandler) GetCourtHearingByID(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -63,6 +89,34 @@ func (ch *CourtHandler) GetCourtHearingByID(w http.ResponseWriter, r *http.Reque
 	}
 
 	log.Println("Successfully retrieved requested hearing")
+}
+
+// Retrieves hearings based on provided JMBG or MB
+func (ch *CourtHandler) GetCourtHearingsByJMBG(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	jmbg := params["jmbg"]
+
+	log.Printf("Retrieving hearings for identifier '%s'", jmbg)
+
+	hearings, err := ch.getHearings(jmbg)
+	if err != nil && err.Error() != "hearings not found" {
+		http.Error(w, "Failed to retrieve court hearings", http.StatusInternalServerError)
+		log.Printf("Failed to retrieve court hearings: %s", err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(hearings); err != nil {
+		http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+		log.Printf("Error while encoding court hearings: %s", err.Error())
+	}
+
+	if len(hearings) > 0 {
+		log.Println("Successfully retrieved requested hearings")
+	} else {
+		log.Printf("No hearings found for '%s'", jmbg)
+	}
 }
 
 // Creates a new hearing for a person
@@ -243,6 +297,35 @@ func (ch *CourtHandler) CheckForWarrants(w http.ResponseWriter, r *http.Request)
 	}
 }
 
+func (ch *CourtHandler) CheckForSuspension(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	jmbg := params["jmbg"]
+
+	log.Printf("Recieved check for suspension for JMBG: %s", jmbg)
+
+	suspension, err := ch.repo.GetSuspensionByJMBG(jmbg)
+	if err != nil {
+		http.Error(w, "Failed to get suspension", http.StatusInternalServerError)
+		log.Printf("Failed to get suspension: %s", err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if suspension.Person == "" {
+		log.Println("Successfully searched and not found suspension")
+	} else {
+		if err := json.NewEncoder(w).Encode(suspension); err != nil {
+			http.Error(w, "Error while encoding body", http.StatusInternalServerError)
+			log.Printf("Error while encoding suspension: %s", err.Error())
+			return
+		}
+
+		log.Println("Successfully searched and found suspension")
+	}
+}
+
 func (ch *CourtHandler) CreateSuspension(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating a new suspension")
 
@@ -299,10 +382,12 @@ func (ch *CourtHandler) RecieveCrimeReport(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	courtID, _ := primitive.ObjectIDFromHex("64c13ab08edf48a008793cac")
+
 	courtHearing := data.NewCourtHearingPerson{
 		Reason:   trafficViolation.Reason,
 		DateTime: time.Now().Add(72 * time.Hour).Format("2006-01-02T15:04:05"),
-		Court:    primitive.NewObjectID().Hex(), // TODO
+		Court:    courtID.Hex(),
 		Person:   person.Account.ID.Hex(),
 	}
 
@@ -332,6 +417,35 @@ func (ch *CourtHandler) getHearing(id string) (data.CourtHearing, error) {
 	}
 
 	return nil, fmt.Errorf("could not convert retrieved court hearing to any type")
+}
+
+// Helper function for parsing an array of court hearing interfaces into structs
+func (ch *CourtHandler) getHearings(jmbg string) ([]data.CourtHearing, error) {
+	hearings, err := ch.repo.GetHearingsByJMBG(jmbg)
+	if err != nil {
+		return nil, err
+	}
+
+	var chp []data.CourtHearing
+	var chle []data.CourtHearing
+
+	for _, hearing := range hearings {
+		if hearingPerson, ok := hearing.(*data.CourtHearingPerson); ok {
+			chp = append(chp, hearingPerson)
+		} else if hearingLegalEntity, ok := hearing.(*data.CourtHearingLegalEntity); ok {
+			chle = append(chle, hearingLegalEntity)
+		} else {
+			return nil, fmt.Errorf("could not convert retrieved court hearing to any type")
+		}
+	}
+
+	if len(chp) > 0 {
+		return chp, nil
+	} else if len(chle) > 0 {
+		return chle, nil
+	}
+
+	return nil, fmt.Errorf("no hearings found for the given JMBG")
 }
 
 // JWT middleware

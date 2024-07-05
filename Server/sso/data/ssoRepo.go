@@ -127,6 +127,52 @@ func (sr *SSORepo) Initialize(ctx context.Context) error {
 				StreetNumber: 11,
 			},
 		},
+		{
+			FirstName:   "Pera",
+			LastName:    "Peric",
+			DOB:         "2001-01-12",
+			Sex:         "MALE",
+			Citizenship: "serbian",
+			JMBG:        "147258369",
+			Account: Account{
+				ID:                primitive.NewObjectID(),
+				Email:             "pera@mail.com",
+				Password:          "$2a$10$W4luGgc9Ibjf4beZTBkkWuqMWSnT2yQoBGi2CB8f8PyZSHrnDH.La",
+				ActivationCode:    uuid.New().String(),
+				PasswordResetCode: uuid.New().String(),
+				Role:              "ADMIN",
+				Activated:         true,
+			},
+			Address: Address{
+				Municipality: "Zrenjanin",
+				Locality:     "Zeleno brdo",
+				StreetName:   "Petrova",
+				StreetNumber: 111,
+			},
+		},
+		{
+			FirstName:   "Zika",
+			LastName:    "Zikic",
+			DOB:         "1999-08-12",
+			Sex:         "MALE",
+			Citizenship: "serbian",
+			JMBG:        "369258147",
+			Account: Account{
+				ID:                primitive.NewObjectID(),
+				Email:             "zika@mail.com",
+				Password:          "$2a$10$gAoCTLX.cz.5lGz9uLhC.eF7rrZD5eZtLchcFnq.IEWz0iNuKYaeC",
+				ActivationCode:    uuid.New().String(),
+				PasswordResetCode: uuid.New().String(),
+				Role:              "ADMIN",
+				Activated:         true,
+			},
+			Address: Address{
+				Municipality: "Subotica",
+				Locality:     "Tavankut",
+				StreetName:   "Bunjevacka",
+				StreetNumber: 30,
+			},
+		},
 	}
 
 	var bsonPersons []interface{}

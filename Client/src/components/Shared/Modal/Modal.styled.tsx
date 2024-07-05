@@ -5,7 +5,7 @@ const ModalStyled = styled.div`
   z-index: 1;
   left: 0;
   top: 0;
-  padding-top: 20%;
+  padding-top: 5%;
   width: ${(props) => props.theme.widths.full};
   height: ${(props) => props.theme.heights.full};
   overflow: auto;

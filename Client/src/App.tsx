@@ -9,10 +9,10 @@ import RegisterPage from './pages/RegisterPage';
 import { Toaster } from 'react-hot-toast';
 import HomePage from './pages/HomePage';
 import MupPage from './pages/MupPage';
-import PolicePage from './pages/PolicePage';
 import CourtPage from './pages/CourtPage';
 import StatisticsPage from './pages/StatisticsPage';
 import PasswordResetPage from './pages/PasswordResetPage';
+import PolicePage from './pages/PolicePage';
 
 function App() {
   return (

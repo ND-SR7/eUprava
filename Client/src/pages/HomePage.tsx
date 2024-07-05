@@ -20,8 +20,8 @@ const HomePage = () => {
   const logout = () => {
     localStorage.removeItem("token");
     navigate("/");
-  }
-  
+  };
+
   return (
     <>
       <HeadingStyled>Welcome to eUprava, {name}</HeadingStyled>
@@ -37,7 +37,8 @@ const HomePage = () => {
         id="navPolice"
         label="Traffic Police"
         buttonType="button"
-        onClick={() => navigate("/home/police")} />
+        onClick={() => navigate("/home/police")}
+      />
       <Button
         key="navCourt"
         id="navCourt"

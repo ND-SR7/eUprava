@@ -48,10 +48,74 @@ const RegisterPage = () => {
   }
 
   function registerUser(formData: any) {
-    // TODO: Validation
-    console.log(formData);
+    // eslint-disable-next-line
+    const emailPattern = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    const passwordPattern = /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
+    const namePattern = /^[A-Za-z]+(?:['\s-][A-Za-z]+)*$/;
+    const eighteenYearsAgo = new Date();
+    eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
+    const jmbgPattern = /^\d{13}$/;
+    const pibPattern = /^\d{9}$/;
+    const mbPattern = /^\d{8}$/;
+    const streetNumberPattern = /^\d+[A-Za-z]*$/;
+    const textFieldsPattern = /^[A-Za-z\s-']+$/;
+
+    if (!emailPattern.test(formData["email"])) {
+      toast.error("Email format is not valid");
+      return;
+    }
+    
+    if (!passwordPattern.test(formData["password"])) {
+      toast.error("Password should include at least one uppercase letter, one number and lowercase letters");
+      return;
+    }
+    
+    if (!textFieldsPattern.test(formData["citizenship"])) {
+      toast.error("Citizenship format is not valid");
+      return;
+    }
+
+    if (!textFieldsPattern.test(formData["municipality"])) {
+      toast.error("Municipality format is not valid");
+      return;
+    }
+    
+    if (!textFieldsPattern.test(formData["locality"])) {
+      toast.error("Locality format is not valid");
+      return;
+    }
+    
+    if (!textFieldsPattern.test(formData["streetName"])) {
+      toast.error("Street name format is not valid");
+      return;
+    }
+
+    if (!streetNumberPattern.test(formData["streetNumber"])) {
+      toast.error("Street number format is not valid, must include number and optionaly letters");
+      return;
+    }
 
     if (personRegistration) {
+      if (!namePattern.test(formData["firstName"])) {
+        toast.error("First name format is not valid");
+        return;
+      }
+      
+      if (!namePattern.test(formData["lastName"])) {
+        toast.error("Last name format is not valid");
+        return;
+      }
+
+      if (new Date(formData["dob"]) > eighteenYearsAgo) {
+        toast.error("You must be 18+ to register");
+        return;
+      }
+  
+      if (!jmbgPattern.test(formData["jmbg"])) {
+        toast.error("JMBG format is not valid, 13 digits required");
+        return;
+      }
+
       registerPerson({
         email: formData["email"],
         password: setPassword(formData["password"], formData["passwordRepeat"]),
@@ -73,6 +137,21 @@ const RegisterPage = () => {
         toast.error("Failed to register user");
       });
     } else {
+      if (!namePattern.test(formData["name"])) {
+        toast.error("Name format is not valid");
+        return;
+      }
+
+      if (!pibPattern.test(formData["pib"])) {
+        toast.error("PIB format is not valid, 9 digits required");
+        return;
+      }
+
+      if (!mbPattern.test(formData["mb"])) {
+        toast.error("MB format is not valid, 8 digits required");
+        return;
+      }
+
       registerLegalEntity({
         email: formData["email"],
         password: setPassword(formData["password"], formData["passwordRepeat"]),

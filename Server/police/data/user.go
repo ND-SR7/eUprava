@@ -56,7 +56,7 @@ type TrafficPermit struct {
 	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Number         string             `bson:"number" json:"number"`
 	ExpirationDate time.Time          `bson:"expirationDate" json:"expirationDate"`
-	Person         Person             `bson:"person" json:"person"`
+	Person         string             `bson:"person" json:"person"`
 }
 
 type Address struct {

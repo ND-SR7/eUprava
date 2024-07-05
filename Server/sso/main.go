@@ -67,7 +67,7 @@ func main() {
 	cors := gorillaHandlers.CORS(
 		gorillaHandlers.AllowedOrigins([]string{"*"}),
 		gorillaHandlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"}),
-		gorillaHandlers.AllowedHeaders([]string{"Content-Type"}),
+		gorillaHandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
 
 	// Initialize the server

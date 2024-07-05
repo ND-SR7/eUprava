@@ -46,7 +46,7 @@ type Plates struct {
 }
 
 type PlateRequest struct {
-	Plate string `json:"plate"`
+	Plate string `json:"plates"`
 }
 
 type ListOfPlates []Plates

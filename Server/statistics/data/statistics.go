@@ -59,6 +59,22 @@ type Plates struct {
 
 type ListOfPlates []Plates
 
+type TrafficViolation struct {
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ViolatorJMBG string             `bson:"violatorJMBG" json:"violatorJMBG"`
+	Reason       string             `bson:"reason" json:"reason"`
+	Description  string             `bson:"description" json:"description"`
+	Time         time.Time          `bson:"time" json:"time"`
+	Location     string             `bson:"location" json:"location"`
+}
+
+type TrafficViolations []TrafficViolation
+
+type BrandCount struct {
+	Brand string `json:"brand"`
+	Count int    `json:"count"`
+}
+
 func (i *InstituteForStatistics) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(i)
@@ -137,4 +153,34 @@ func (p *ListOfPlates) ToJSON(w io.Writer) error {
 func (p *ListOfPlates) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(p)
+}
+
+func (tv *TrafficViolation) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(tv)
+}
+
+func (tv *TrafficViolation) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(tv)
+}
+
+func (tv *TrafficViolations) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(tv)
+}
+
+func (tv *TrafficViolations) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(tv)
+}
+
+func (bc *BrandCount) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(bc)
+}
+
+func (bc *BrandCount) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(bc)
 }

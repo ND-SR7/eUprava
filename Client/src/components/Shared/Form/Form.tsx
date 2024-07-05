@@ -12,6 +12,7 @@ interface FormField {
   options?: string[];
   min?: string;
   max?: string;
+  disabled?: boolean;
   onchange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -65,6 +66,7 @@ const Form = ({ heading, formFields, onSubmit }: FormProps) => {
                 value={option}
                 checked={formData[field.attrName].includes(option)}
                 onChange={(event) => handleChange(event, field.attrName)}
+                disabled={field.disabled}
               />
               <label htmlFor={`checkbox_${field.attrName}_${optionIndex}`}>{option}</label>
             </div>
@@ -84,6 +86,7 @@ const Form = ({ heading, formFields, onSubmit }: FormProps) => {
                 value={option}
                 checked={formData[field.attrName] === option}
                 onChange={(event) => handleChange(event, field.attrName)}
+                disabled={field.disabled}
               />
               <label htmlFor={`radio_${field.attrName}_${optionIndex}`}>{option}</label>
             </div>
@@ -120,7 +123,8 @@ const Form = ({ heading, formFields, onSubmit }: FormProps) => {
             handleChange={handleChange}
             data={formData[field.attrName]}
             min={field.min}
-            max={field.max} />
+            max={field.max} 
+            disabled={field.disabled}/>
         </FormBoxStyled>
       );
     }
