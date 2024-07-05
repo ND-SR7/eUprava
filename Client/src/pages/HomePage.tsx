@@ -7,17 +7,13 @@ import { useEffect, useState } from "react";
 const HomePage = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const [role, setRole] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
-    if (token === "") {
-      navigate("/");
-    } else {
-      const decodedToken = decodeJwtToken(token);
-      setName(decodedToken.name);
-      setRole(decodedToken.role);
-    }
+    if (token === "") navigate("/");
+
+    let tokenName = decodeJwtToken(token).name;
+    setName(tokenName);
     // eslint-disable-next-line
   }, []);
 

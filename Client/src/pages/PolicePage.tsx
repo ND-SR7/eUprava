@@ -12,24 +12,18 @@ import Modal from "../components/Shared/Modal/Modal";
 import GetAllTrafficViolations from "../components/Police/GetAllTrafficViolation/GetAllTrafficViolation";
 import CheckAllForm from "../components/Police/CheckAll/CheckAllForm";
 import CheckVehicleRegistrationForm from "../components/Police/VehicleRegistration/CheckVehicleRegistrationFrom";
-import decodeJwtToken from "../services/JwtService";
 import GetTrafficViolationsForUser from "../components/Police/GetTrafficViolationForUser/GetTrafficViolationForUser";
+import AuthWrapper, { UserRole } from "../components/Security/AuthWrapper";
 
 const PolicePage = () => {
   const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState<any>(null);
-  const [role, setRole] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
-    if (token === "") {
-      navigate("/");
-    } else {
-      const decodedToken = decodeJwtToken(token);
-      setRole(decodedToken.role);
-    }
-  }, [navigate]);
+    if (token === "") navigate("/");
+  });
 
   const ping = () => {
     pingPolice().then(() => {
@@ -88,34 +82,30 @@ const PolicePage = () => {
     <>
       <HeadingStyled>Traffic Police</HeadingStyled>
       <br />
-      {role === "ADMIN" && (
-        <>
-          <Button buttonType="button" label="Ping Service" onClick={() => ping()} />
-          <br />
-          <Button buttonType="button" label="Get All Traffic Violations" onClick={openTrafficViolationsModal} />
-          <br />
-          <Button buttonType="button" label="Check Alcohol Level" onClick={openCheckAlcoholLevelModal} />
-          <br />
-          <Button buttonType="button" label="Check Vehicle Tire" onClick={openCheckVehicleTireModal} />
-          <br />
-          <Button buttonType="button" label="Check Driver Ban" onClick={openCheckDriverBanModal} />
-          <br />
-          <Button buttonType="button" label="Check Driver Permit Validity" onClick={openCheckDriverPermitValidityModal} />
-          <br />
-          <Button buttonType="button" label="Check Vehicle Registration Validity" onClick={openCheckVehicleRegistrationModal} />
-          <br />
-          <Button buttonType="button" label="Check Driver" onClick={openCheckAllModal} />
-          <br />
-        </>
-      )}
-      { role === "USER" && (
-        <>
-        <Button buttonType="button" label="Get My Traffic Violations" onClick={openTrafficViolationsForUserModal} />
+      <Button buttonType="button" label="Ping Service" onClick={() => ping()} />
+      <br />
+      <br />
+      <AuthWrapper allowedRoles={[UserRole.Admin]}>
+        <Button buttonType="button" label="Get All Traffic Violations" onClick={openTrafficViolationsModal} />
         <br />
-        </>
-      )}
+        <Button buttonType="button" label="Check Alcohol Level" onClick={openCheckAlcoholLevelModal} />
+        <Button buttonType="button" label="Check Vehicle Tire" onClick={openCheckVehicleTireModal} />
+        <Button buttonType="button" label="Check Driver Ban" onClick={openCheckDriverBanModal} />
+        <br />
+        <Button buttonType="button" label="Check Driver Permit Validity" onClick={openCheckDriverPermitValidityModal} />
+        <Button buttonType="button" label="Check Vehicle Registration Validity" onClick={openCheckVehicleRegistrationModal} />
+        <br />
+        <Button buttonType="button" label="Check Driver" onClick={openCheckAllModal} />
+        <br />
+      </AuthWrapper>
+      <AuthWrapper allowedRoles={[UserRole.User]}>
+        <Button buttonType="button" label="Get My Traffic Violations" onClick={openTrafficViolationsForUserModal} />
+      </AuthWrapper>
+      <br />
+      <br />
       <Button buttonType="button" label="Go Back" onClick={() => window.history.back()} />
       <br />
+
       <Modal
         heading="Traffic Violations"
         content={modalContent}

@@ -25,7 +25,6 @@ const CheckAlcoholLevelForm: React.FC<CheckAlcoholLevelFormProps> = ({ closeModa
 
     try {
       const response = await checkAlcoholLevel(data);
-      console.log(response);
       toast.success(response.data.message || 'Alcohol level checked successfully');
       navigate('/home/police');
       closeModal();

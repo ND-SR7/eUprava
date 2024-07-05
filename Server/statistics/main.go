@@ -72,13 +72,13 @@ func main() {
 
 	police := clients.NewPoliceClient(policeClient, os.Getenv("POLICE_SERVICE_URI"))
 
-	// TODO: Handler init
+	// Handler init
 
 	statisticsHandler := handlers.NewStatisticsHandler(logger, store, mup, police)
 
 	router := mux.NewRouter()
 
-	// TODO: Router methods
+	// Router methods
 
 	createTrafficStatisticRouter := router.Methods(http.MethodPost).Path("/api/v1/traffic-statistic").Subrouter()
 	createTrafficStatisticRouter.HandleFunc("", statisticsHandler.CreateTrafficStatistic)

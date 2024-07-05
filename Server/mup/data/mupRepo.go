@@ -606,7 +606,7 @@ func (mr *MUPRepo) GetDrivingBan(ctx context.Context, jmbg string) (DrivingBan, 
 	}
 
 	options := options.FindOne()
-	options.SetSort(bson.D{{Key: "duration", Value: -1}}) // Sortiraj po duration u opadajućem redosledu
+	options.SetSort(bson.D{{Key: "duration", Value: -1}}) // Sort by duration, desceding
 
 	var drivingBan DrivingBan
 

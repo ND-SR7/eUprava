@@ -1,5 +1,3 @@
-// components/Police/CheckVehicleTireForm.styled.ts
-
 import styled from 'styled-components';
 import HeadingStyled from '../../Shared/Heading/Heading.styled';
 import Button from '../../Shared/Button/Button';

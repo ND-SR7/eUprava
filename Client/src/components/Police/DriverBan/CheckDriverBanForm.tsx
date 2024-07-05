@@ -26,7 +26,6 @@ const CheckDriverBanForm: React.FC<CheckDriverBanFormProps> = ({ closeModal }) =
 
     try {
       const response = await checkDriverBan(data);
-      console.log(response);
       toast.success(response.data.message || "Driver ban status checked successfully");
       navigate("/home/police");
       closeModal();

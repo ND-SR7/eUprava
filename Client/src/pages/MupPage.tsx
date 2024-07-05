@@ -15,6 +15,7 @@ import DrivingPermitsRequestCard from "../components/Mup/DrivingPermitRequest/Dr
 import RegistrationRequestCard from "../components/Mup/RegistrationRequest/RegistrationRequestList";
 import Registration from "../models/Shared/Registration";
 import VehicleDTO from "../models/Mup/VehicleDetails";
+import AuthWrapper, { UserRole } from "../components/Security/AuthWrapper";
 
 const MupPage = () => {
   const navigate = useNavigate();
@@ -146,8 +147,11 @@ const MupPage = () => {
       <Button buttonType="button" label="Check my vehicles" onClick={() => checkVehicles()}/>
       <Button buttonType="button" label="Check my driving bans" onClick={() => checkDrivingBans()}/>
       <Button buttonType="button" label="Check my driving permit" onClick={() => checkDrivingPermit()}/>
-      <Button buttonType="button" label="Pending traffic permit requests" onClick={() => checkDrivingPermitRequest()}/>
-      <Button buttonType="button" label="Pending registration requests" onClick={() => checkRegistrationRequest()}/>
+      <br />
+      <AuthWrapper allowedRoles={[UserRole.Admin]}>
+        <Button buttonType="button" label="Pending traffic permit requests" onClick={() => checkDrivingPermitRequest()}/>
+        <Button buttonType="button" label="Pending registration requests" onClick={() => checkRegistrationRequest()}/>
+      </AuthWrapper>
       <br />
       <br />
       <Button buttonType="button" label="Go Back" onClick={() => window.history.back()}/>

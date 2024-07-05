@@ -16,6 +16,7 @@ import HearingList from "../components/Court/Hearing/HearingList";
 import Suspension from "../components/Court/Suspension/Suspension";
 import WarrantList from "../components/Court/Warrant/WarrantList";
 import Form from "../components/Shared/Form/Form";
+import AuthWrapper, { UserRole } from "../components/Security/AuthWrapper";
 
 const CourtPage = () => {
   const navigate = useNavigate();
@@ -209,10 +210,11 @@ const CourtPage = () => {
       <Button buttonType="button" label="Check for suspensions" onClick={() => checkSuspensions()} />
       <Button buttonType="button" label="Check for warrants" onClick={() => checkWarrants()} />
       <br />
-      <br />
-      <Button buttonType="button" label="Create hearing" onClick={() => newHearing()} />
-      <Button buttonType="button" label="Create suspension" onClick={() => newSuspension()} />
-      <Button buttonType="button" label="Create warrant" onClick={() => newWarrant()} />
+      <AuthWrapper allowedRoles={[UserRole.Admin]}>
+        <Button buttonType="button" label="Create hearing" onClick={() => newHearing()} />
+        <Button buttonType="button" label="Create suspension" onClick={() => newSuspension()} />
+        <Button buttonType="button" label="Create warrant" onClick={() => newWarrant()} />
+      </AuthWrapper>
       <br />
       <br />
       <Button buttonType="button" label="Go Back" onClick={() => window.history.back()}/>

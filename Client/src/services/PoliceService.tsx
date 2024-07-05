@@ -26,7 +26,7 @@ export async function getAllTrafficViolationsForUser() {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data.data; // Adjust this line based on actual response format
+    return response.data.data;
   } catch (error: any) {
     throw new Error(error.response.data.message || 'Failed to retrieve traffic violations.');
   }

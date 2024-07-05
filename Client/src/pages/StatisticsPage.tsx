@@ -40,11 +40,11 @@ const StatisticsPage = () => {
       <br />
       <Button buttonType="button" label="Ping Service" onClick={() => ping()} />
       <br />
+      <br />
       <Button buttonType="button" label="Fetch Vehicle Statistics" onClick={() => {
         setModalContent(<VehicleStatistics />);
         setIsModalVisible(true);
       }} />
-      {/* <br /> */}
       <Button buttonType="button" label="Fetch Traffic Statistics" onClick={() => {
         setModalContent(<TrafficStatistics />);
         setIsModalVisible(true);
@@ -54,17 +54,16 @@ const StatisticsPage = () => {
         setModalContent(<RegisteredVehicles />);
         setIsModalVisible(true);
       }} />
-      {/* <br /> */}
       <Button buttonType="button" label="Search Traffic Violations by Year" onClick={() => {
         setModalContent(<TrafficViolations />);
         setIsModalVisible(true);
       }} />
-      {/* <br /> */}
       <Button buttonType="button" label="Search Most Popular Brands by Year" onClick={() => {
         setModalContent(<MostPopularBrands />);
         setIsModalVisible(true);
       }} />
       <br />
+      <br />  
       <Button buttonType="button" label="Go Back" onClick={() => window.history.back()} />
       <br />
       <Modal

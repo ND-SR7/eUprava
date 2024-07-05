@@ -25,7 +25,6 @@ const CheckDriverPermitValidityForm: React.FC<CheckDriverPermitValidityFormProps
 
     try {
       const response = await CheckDriverPermitValidation(data);
-      console.log(response);
       toast.success(response.message || "Driver permit status checked successfully");
       navigate("/home/police");
       closeModal();

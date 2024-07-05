@@ -27,11 +27,8 @@ const CheckDriverForm: React.FC<CheckDriverFormProps> = ({ closeModal }) => {
       location,
     };
 
-    console.log("Submitting data:", data);
-
     try {
       const response = await checkAll(data);
-      console.log("API response:", response);
   
       const message = response?.message;
       if (message) {

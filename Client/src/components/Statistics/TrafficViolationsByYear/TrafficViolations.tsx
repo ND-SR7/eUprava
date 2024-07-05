@@ -74,7 +74,6 @@ const TrafficViolations: React.FC = () => {
         }
     };
 
-    // Proveri da li postoje podaci u violationsReport
     const isDownloadDisabled = !violationsReport || Object.values(violationsReport).every(count => count === 0);
 
     return (

@@ -28,7 +28,6 @@ const CheckVehicleTireForm: React.FC<CheckVehicleTireFormProps> = ({ closeModal 
 
         try {
             const response = await checkVehicleTire(data);
-            console.log(response);
             toast.success(response.data.message || "Vehicle tire checked successfully");
             navigate("/home/police");
             closeModal();

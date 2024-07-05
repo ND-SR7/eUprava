@@ -25,7 +25,6 @@ const CheckVehicleRegistrationForm: React.FC<CheckVehicleRegistrationFormProps> 
 
     try {
       const response = await CheckVehicleRegistration(data);
-      console.log(response);
       toast.success(response.message || "Vehicle registration checked successfully");
       navigate('/home/police');
       closeModal();

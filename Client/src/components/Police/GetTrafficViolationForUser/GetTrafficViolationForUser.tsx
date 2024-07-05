@@ -12,9 +12,7 @@ const GetTrafficViolationForUser: React.FC = () => {
     const fetchViolations = async () => {
       try {
         const data = await getAllTrafficViolationsForUser();
-        console.log("API Response Data:", data); // Log the response data
 
-        // Check if data is an array
         if (Array.isArray(data)) {
           setViolations(data);
         } else {
