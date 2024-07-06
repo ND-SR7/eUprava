@@ -84,6 +84,15 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 		Location:     driverCheck.Location,
 	}
 
+	token := ph.extractTokenFromHeader(r)
+
+	_, err = ph.sso.GetPersonByJMBG(r.Context(), driverCheck.JMBG, token)
+	if err != nil {
+		http.Error(w, "Error with services communication", http.StatusBadRequest)
+		log.Printf("Error while communicating with SSO service: %s", err.Error())
+		return
+	}
+
 	// Check alcohol level
 	if driverCheck.AlcoholLevel < 0 {
 		http.Error(w, "Alcohol level must be bigger than 0.", http.StatusBadRequest)
@@ -115,9 +124,6 @@ func (ph *PoliceHandler) CheckAll(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Invalid tire type: JMBG=%v, Tire=%v\n", driverCheck.JMBG, driverCheck.Tire)
 		return
 	}
-
-	// Extract token
-	token := ph.extractTokenFromHeader(r)
 
 	// Check driving ban
 	jmbgRequest := data.JMBGRequest{JMBG: driverCheck.JMBG}

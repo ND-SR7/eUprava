@@ -79,10 +79,10 @@ func main() {
 	router := mux.NewRouter()
 	// Router methods
 	router.HandleFunc("/api/v1/traffic-violation/jmbg", handler.GetTrafficViolationsByJMBG).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/traffic-violation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
 
 	authorizedRouter := router.Methods("GET", "POST", "PUT", "DELETE").Subrouter()
 	authorizedRouter.HandleFunc("/api/v1/traffic-violation", handler.CreateTrafficViolation).Methods(http.MethodPost)
-	authorizedRouter.HandleFunc("/api/v1/traffic-violation", handler.GetAllTrafficViolations).Methods(http.MethodGet)
 	authorizedRouter.HandleFunc("/api/v1/traffic-violation/{id}", handler.GetTrafficViolationByID).Methods(http.MethodGet)
 	authorizedRouter.HandleFunc("/api/v1/traffic-violation/{id}", handler.UpdateTrafficViolation).Methods(http.MethodPut)
 	authorizedRouter.HandleFunc("/api/v1/traffic-violation/{id}", handler.DeleteTrafficViolation).Methods(http.MethodDelete)

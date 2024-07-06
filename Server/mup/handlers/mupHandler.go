@@ -131,10 +131,34 @@ func (mh *MupHandler) GetUserDrivingPermit(rw http.ResponseWriter, r *http.Reque
 	}
 }
 
+func (mh *MupHandler) GetUserDrivingPermitDetails(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	tokenStr := mh.extractTokenFromHeader(r)
+	jmbg, err := mh.getJMBGFromToken(tokenStr)
+	if err != nil {
+		http.Error(rw, "Failed to read JMBG from token", http.StatusBadRequest)
+		return
+	}
+
+	drivingPermitDetails, err := mh.service.GetUserDrivingPermitDetails(ctx, jmbg, tokenStr)
+	if err != nil {
+		http.Error(rw, "Failed to retrieve user driving permits", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(drivingPermitDetails); err != nil {
+		http.Error(rw, "Failed to encode driving permits", http.StatusInternalServerError)
+	}
+}
+
 func (mh *MupHandler) GetPendingRegistrationRequests(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	pendingRequests, err := mh.service.GetPendingRegistrationRequests(ctx)
+	tokenStr := mh.extractTokenFromHeader(r)
+	pendingRequests, err := mh.service.GetPendingRegistrationRequests(ctx, tokenStr)
 	if err != nil {
 		http.Error(rw, "Failed to retrieve pending registration requests", http.StatusInternalServerError)
 		return
@@ -172,7 +196,8 @@ func (mh *MupHandler) GetDrivingBan(rw http.ResponseWriter, r *http.Request) {
 func (mh *MupHandler) GetPendingTrafficPermitRequests(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	pendingRequests, err := mh.service.GetPendingTrafficPermitRequests(ctx)
+	tokenStr := mh.extractTokenFromHeader(r)
+	pendingRequests, err := mh.service.GetPendingTrafficPermitRequests(ctx, tokenStr)
 	if err != nil {
 		http.Error(rw, "Failed to retrieve pending traffic permit requests", http.StatusInternalServerError)
 		return

@@ -47,14 +47,6 @@ func main() {
 		}
 	}
 
-	// Set LOAD_DB_TEST_DATA to 'false' for persistence between shutdowns
-	if os.Getenv("LOAD_DB_TEST_DATA") == "true" {
-		err = store.Initialize(context.Background())
-		if err != nil {
-			logger.Fatalf("Failed to initialize DB: %s", err.Error())
-		}
-	}
-
 	courtClient := &http.Client{
 		Transport: &http.Transport{
 			MaxIdleConns:        10,
@@ -83,7 +75,7 @@ func main() {
 	router.HandleFunc("/api/v1/persons-vehicles", mupHandler.GetVehiclesDTOByJMBG).Methods("GET")
 	router.HandleFunc("/api/v1/driving-bans", mupHandler.CheckForPersonsDrivingBans).Methods("GET")
 	router.HandleFunc("/api/v1/persons-registrations", mupHandler.GetPersonsRegistrations).Methods("GET")
-	router.HandleFunc("/api/v1/persons-driving-permit", mupHandler.GetUserDrivingPermit).Methods("GET")
+	router.HandleFunc("/api/v1/persons-driving-permit", mupHandler.GetUserDrivingPermitDetails).Methods("GET")
 
 	//POST
 	router.HandleFunc("/api/v1/vehicle", mupHandler.SaveVehicle).Methods("POST")
@@ -99,7 +91,7 @@ func main() {
 	authorizedRouter.HandleFunc("/api/v1/delete-pending-traffic-permit-request/{request}", mupHandler.DeletePendingTrafficPermit).Methods("DELETE")
 
 	// For clients
-	authorizedRouter.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
+	router.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/driving-ban", mupHandler.IssueDrivingBan).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/registration-by-plate", mupHandler.GetRegistrationByPlate).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/check-persons-driving-ban", mupHandler.GetDrivingBan).Methods("GET")

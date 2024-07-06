@@ -35,12 +35,102 @@ func (ms *MupService) GetUserDrivingPermit(ctx context.Context, jmbg string) (da
 	return ms.repo.GetUserDrivingPermit(ctx, jmbg)
 }
 
-func (ms *MupService) GetPendingRegistrationRequests(ctx context.Context) (data.Registrations, error) {
-	return ms.repo.GetPendingRegistrationRequests(ctx)
+func (ms *MupService) GetUserDrivingPermitDetails(ctx context.Context, jmbg, tokenStr string) (data.DrivingPermitDetailsList, error) {
+	drivingPermits, err := ms.repo.GetUserDrivingPermits(ctx, jmbg)
+	if err != nil {
+		return nil, err
+	}
+
+	var drivingPermitDetailsList data.DrivingPermitDetailsList
+	for _, permit := range drivingPermits {
+		user, err := ms.ssoc.GetUserByJMBG(ctx, permit.Person, tokenStr)
+		if err != nil {
+			return nil, err
+		}
+
+		drivingPermitDetails := data.DrivingPermitDetails{
+			ID:             permit.ID,
+			Number:         permit.Number,
+			IssuedDate:     permit.IssuedDate,
+			ExpirationDate: permit.ExpirationDate,
+			Approved:       permit.Approved,
+			Person:         permit.Person,
+			FirstName:      user.FirstName,
+			LastName:       user.LastName,
+		}
+
+		drivingPermitDetailsList = append(drivingPermitDetailsList, drivingPermitDetails)
+	}
+
+	return drivingPermitDetailsList, nil
 }
 
-func (ms *MupService) GetPendingTrafficPermitRequests(ctx context.Context) (data.TrafficPermits, error) {
-	return ms.repo.GetPendingTrafficPermitRequests(ctx)
+func (ms *MupService) GetPendingRegistrationRequests(ctx context.Context, tokenStr string) (data.RegistrationDetailsList, error) {
+	pendingRequests, err := ms.repo.GetPendingRegistrationRequests(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var registrationDetailsList data.RegistrationDetailsList
+	for _, reg := range pendingRequests {
+		user, err := ms.ssoc.GetUserByJMBG(ctx, reg.Owner, tokenStr)
+		if err != nil {
+			return nil, err
+		}
+
+		vehicle, err := ms.repo.GetVehicleByID(ctx, reg.VehicleID)
+		if err != nil {
+			return nil, err
+		}
+
+		registrationDetails := data.RegistrationDetails{
+			RegistrationNumber: reg.RegistrationNumber,
+			IssuedDate:         reg.IssuedDate,
+			ExpirationDate:     reg.ExpirationDate,
+			VehicleID:          reg.VehicleID,
+			Owner:              reg.Owner,
+			Plates:             reg.Plates,
+			Approved:           reg.Approved,
+			FirstName:          user.FirstName,
+			LastName:           user.LastName,
+			VehicleBrand:       vehicle.Brand,
+			VehicleModel:       vehicle.Model,
+		}
+
+		registrationDetailsList = append(registrationDetailsList, registrationDetails)
+	}
+
+	return registrationDetailsList, nil
+}
+
+func (ms *MupService) GetPendingTrafficPermitRequests(ctx context.Context, tokenStr string) (data.TrafficPermitDetailsList, error) {
+	pendingRequests, err := ms.repo.GetPendingTrafficPermitRequests(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var trafficPermitDetailsList data.TrafficPermitDetailsList
+	for _, permit := range pendingRequests {
+		user, err := ms.ssoc.GetUserByJMBG(ctx, permit.Person, tokenStr)
+		if err != nil {
+			return nil, err
+		}
+
+		trafficPermitDetails := data.TrafficPermitDetails{
+			ID:             permit.ID,
+			Number:         permit.Number,
+			IssuedDate:     permit.IssuedDate,
+			ExpirationDate: permit.ExpirationDate,
+			Approved:       permit.Approved,
+			Person:         permit.Person,
+			FirstName:      user.FirstName,
+			LastName:       user.LastName,
+		}
+
+		trafficPermitDetailsList = append(trafficPermitDetailsList, trafficPermitDetails)
+	}
+
+	return trafficPermitDetailsList, nil
 }
 
 func (ms *MupService) RetrieveRegisteredVehicles(ctx context.Context) (data.Vehicles, error) {
