@@ -67,7 +67,6 @@ func (mr *MUPRepo) Ping() {
 	mr.logger.Println(databases)
 }
 
-// Initialize database with initial data
 func (mr *MUPRepo) Initialize(ctx context.Context) error {
 	db := mr.cli.Database("mupDB")
 
@@ -92,6 +91,11 @@ func (mr *MUPRepo) Initialize(ctx context.Context) error {
 	}
 
 	err = db.Collection("trafficPermit").Drop(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = db.Collection("plates").Drop(ctx)
 	if err != nil {
 		return err
 	}
@@ -133,6 +137,69 @@ func (mr *MUPRepo) Initialize(ctx context.Context) error {
 			Plates:       "",
 			Owner:        "33355577799",
 		},
+		Vehicle{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Audi",
+			Model:        "A4",
+			Year:         2016,
+			Owner:        "1234567891122",
+			Registration: "BG123AA",
+			Plates:       "BG123AA",
+		},
+		Vehicle{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Skoda",
+			Model:        "Octavia",
+			Year:         2017,
+			Owner:        "1234567891133",
+			Registration: "NS456BB",
+			Plates:       "NS456BB",
+		},
+		Vehicle{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Renault",
+			Model:        "Clio",
+			Year:         2017,
+			Owner:        "1234567891144",
+			Registration: "SU789CC",
+			Plates:       "SU789CC",
+		},
+		Vehicle{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Audi",
+			Model:        "Q5",
+			Year:         2018,
+			Owner:        "1234567891155",
+			Registration: "KA123DD",
+			Plates:       "KA123DD",
+		},
+		Vehicle{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Skoda",
+			Model:        "Superb",
+			Year:         2017,
+			Owner:        "1234567891166",
+			Registration: "KA456EE",
+			Plates:       "KA456EE",
+		},
+		Vehicle{
+			ID:           primitive.NewObjectID(),
+			Brand:        "Volkswagen",
+			Model:        "Passat",
+			Year:         2019,
+			Owner:        "123456789",
+			Registration: "",
+			Plates:       "",
+		},
+		Vehicle{
+			ID:           primitive.NewObjectID(),
+			Brand:        "BMW",
+			Model:        "X5",
+			Year:         2020,
+			Owner:        "1234567891111",
+			Registration: "",
+			Plates:       "",
+		},
 	}
 
 	// Insert initial data into Vehicle collection
@@ -154,7 +221,7 @@ func (mr *MUPRepo) Initialize(ctx context.Context) error {
 			ExpirationDate:     expirationDateFuture,
 			Owner:              "1234567891111",
 			Plates:             "NS123AB",
-			Approved:           false,
+			Approved:           true,
 		},
 		Registration{
 			VehicleID:          initialVehicles[1].(Vehicle).ID,
@@ -163,7 +230,52 @@ func (mr *MUPRepo) Initialize(ctx context.Context) error {
 			ExpirationDate:     expirationDatePast,
 			Owner:              "1234567891111",
 			Plates:             "BG456CD",
-			Approved:           false,
+			Approved:           true,
+		},
+		Registration{
+			VehicleID:          initialVehicles[4].(Vehicle).ID,
+			RegistrationNumber: "BG123AA",
+			IssuedDate:         issuedDate,
+			ExpirationDate:     expirationDateFuture,
+			Owner:              "1234567891122",
+			Plates:             "BG123AA",
+			Approved:           true,
+		},
+		Registration{
+			VehicleID:          initialVehicles[5].(Vehicle).ID,
+			RegistrationNumber: "NS456BB",
+			IssuedDate:         issuedDate,
+			ExpirationDate:     expirationDateFuture,
+			Owner:              "1234567891133",
+			Plates:             "NS456BB",
+			Approved:           true,
+		},
+		Registration{
+			VehicleID:          initialVehicles[6].(Vehicle).ID,
+			RegistrationNumber: "SU789CC",
+			IssuedDate:         issuedDate,
+			ExpirationDate:     expirationDatePast,
+			Owner:              "1234567891144",
+			Plates:             "SU789CC",
+			Approved:           true,
+		},
+		Registration{
+			VehicleID:          initialVehicles[7].(Vehicle).ID,
+			RegistrationNumber: "KA123DD",
+			IssuedDate:         issuedDate,
+			ExpirationDate:     expirationDateFuture,
+			Owner:              "1234567891155",
+			Plates:             "KA123DD",
+			Approved:           true,
+		},
+		Registration{
+			VehicleID:          initialVehicles[8].(Vehicle).ID,
+			RegistrationNumber: "KA456EE",
+			IssuedDate:         issuedDate,
+			ExpirationDate:     expirationDateFuture,
+			Owner:              "1234567891166",
+			Plates:             "KA456EE",
+			Approved:           true,
 		},
 	}
 
@@ -172,6 +284,22 @@ func (mr *MUPRepo) Initialize(ctx context.Context) error {
 	_, err = registrationCollection.InsertMany(ctx, initialRegistrations)
 	if err != nil {
 		return fmt.Errorf("failed to insert initial registrations: %v", err)
+	}
+
+	// Save plates for each registration
+	for _, reg := range initialRegistrations {
+		r := reg.(Registration)
+		plates := Plates{
+			RegistrationNumber: r.RegistrationNumber,
+			PlatesNumber:       r.Plates,
+			PlateType:          "Standard", // Assuming a default plate type
+			Owner:              r.Owner,
+			VehicleID:          r.VehicleID,
+		}
+		err = mr.SavePlates(ctx, plates)
+		if err != nil {
+			return fmt.Errorf("failed to save plates: %v", err)
+		}
 	}
 
 	// Example initial data for Mup collection
@@ -186,9 +314,9 @@ func (mr *MUPRepo) Initialize(ctx context.Context) error {
 		},
 		Vehicles:       []primitive.ObjectID{initialVehicles[0].(Vehicle).ID, initialVehicles[1].(Vehicle).ID},
 		TrafficPermits: []primitive.ObjectID{},
-		Plates:         []string{},
+		Plates:         []string{"NS123AB", "BG456CD", "BG123AA", "NS456BB", "SU789CC", "KA123DD", "KA456EE"},
 		DrivingBans:    []primitive.ObjectID{},
-		Registrations:  []string{"NS123AB", "BG456CD"},
+		Registrations:  []string{"NS123AB", "BG456CD", "BG123AA", "NS456BB", "SU789CC", "KA123DD", "KA456EE"},
 	}
 
 	mupCollection := mr.getMupCollection("mup")
@@ -219,7 +347,7 @@ func (mr *MUPRepo) Initialize(ctx context.Context) error {
 			ID:             primitive.NewObjectID(),
 			Number:         "TP123456",
 			IssuedDate:     time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC),
-			ExpirationDate: time.Date(2024, 8, 1, 0, 0, 0, 0, time.UTC),
+			ExpirationDate: time.Date(2034, 3, 1, 0, 0, 0, 0, time.UTC),
 			Approved:       true,
 			Person:         "1234567891111",
 		},
@@ -551,6 +679,30 @@ func (mr *MUPRepo) ApproveTrafficPermitRequest(ctx context.Context, permitID pri
 }
 
 //Plates methods
+
+func (mr *MUPRepo) SavePlates(ctx context.Context, plates Plates) error {
+	collection := mr.getMupCollection("plates")
+
+	_, err := collection.InsertOne(ctx, plates)
+	if err != nil {
+		log.Printf("Failed to create plates: %v", err)
+		return err
+	}
+
+	err = mr.SavePlatesIntoMup(ctx, plates)
+	if err != nil {
+		log.Printf("Failed to save plates into mup: %v", err)
+		return err
+	}
+
+	err = mr.SavePlatesIntoVehicle(ctx, plates)
+	if err != nil {
+		log.Printf("Failed to save plates into vehicle: %v", err)
+		return err
+	}
+
+	return nil
+}
 
 func (mr *MUPRepo) IssuePlates(ctx context.Context, plates Plates) error {
 	collection := mr.getMupCollection("plates")
