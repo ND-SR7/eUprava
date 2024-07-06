@@ -8,13 +8,14 @@ import { useState } from "react";
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [personRegistration, setPersonRegistration] = useState(true);
+  const today = new Date().toISOString().split('T')[0];
   
   const formFieldsPerson = [
     { label: "First Name", attrName: "firstName", type: "text"},
     { label: "Last Name", attrName: "lastName", type: "text"},
     { label: "Sex", attrName: "sex", type: "radio", options: ["MALE", "FEMALE"]},
     { label: "Citizenship", attrName: "citizenship", type: "text"},
-    { label: "Date of Birth", attrName: "dob", type: "date"},
+    { label: "Date of Birth", attrName: "dob", type: "date", max: today},
     { label: "JMBG", attrName: "jmbg", type: "text"},
     { label: "Municipality", attrName: "municipality", type: "text"},
     { label: "Locality", attrName: "locality", type: "text"},
