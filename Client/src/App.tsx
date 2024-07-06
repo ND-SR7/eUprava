@@ -22,18 +22,19 @@ function App() {
           <Header />
           <br />
           <Toaster position="top-right" />
-          <Routes>
-            <Route index element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path='/reset-password' element={<PasswordResetPage />} />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/home/mup" element={<MupPage />} />
-            <Route path="/home/police" element={<PolicePage />} />
-            <Route path="/home/court" element={<CourtPage />} />
-            <Route path="/home/statistics" element={<StatisticsPage />} />
-            <Route path="*" element={<NoPage />} />
-          </Routes>
-          <br />
+          <div className="content">
+            <Routes>
+              <Route index element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path='/reset-password' element={<PasswordResetPage />} />
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/home/mup" element={<MupPage />} />
+              <Route path="/home/police" element={<PolicePage />} />
+              <Route path="/home/court" element={<CourtPage />} />
+              <Route path="/home/statistics" element={<StatisticsPage />} />
+              <Route path="*" element={<NoPage />} />
+            </Routes>
+          </div>
           <Footer />
         </BrowserRouter>
       </div>
