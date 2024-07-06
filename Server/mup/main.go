@@ -83,15 +83,15 @@ func main() {
 	router.HandleFunc("/api/v1/traffic-permit-request", mupHandler.SubmitTrafficPermitRequest).Methods("POST")
 
 	authorizedRouter := router.Methods("GET", "POST", "DELETE").Subrouter()
-	authorizedRouter.HandleFunc("/api/v1/pending-registration-requests", mupHandler.GetPendingRegistrationRequests).Methods("GET")    //dodati vozilo
-	authorizedRouter.HandleFunc("/api/v1/pending-traffic-permit-requests", mupHandler.GetPendingTrafficPermitRequests).Methods("GET") //dodati usera
+	authorizedRouter.HandleFunc("/api/v1/pending-registration-requests", mupHandler.GetPendingRegistrationRequests).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/pending-traffic-permit-requests", mupHandler.GetPendingTrafficPermitRequests).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/approve-registration-request", mupHandler.ApproveRegistration).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/approve-traffic-permit-request", mupHandler.ApproveTrafficPermitRequest).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/delete-pending-registration-request/{request}", mupHandler.DeletePendingRegistration).Methods("DELETE")
 	authorizedRouter.HandleFunc("/api/v1/delete-pending-traffic-permit-request/{request}", mupHandler.DeletePendingTrafficPermit).Methods("DELETE")
 
 	// For clients
-	authorizedRouter.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
+	router.HandleFunc("/api/v1/registered-vehicles", mupHandler.CheckForRegisteredVehicles).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/driving-ban", mupHandler.IssueDrivingBan).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/registration-by-plate", mupHandler.GetRegistrationByPlate).Methods("GET")
 	authorizedRouter.HandleFunc("/api/v1/check-persons-driving-ban", mupHandler.GetDrivingBan).Methods("GET")
