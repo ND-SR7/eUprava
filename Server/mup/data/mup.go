@@ -39,6 +39,52 @@ type TrafficPermit struct {
 
 type TrafficPermits []TrafficPermit
 
+type TrafficPermitDetails struct {
+	ID             primitive.ObjectID `json:"id"`
+	Number         string             `json:"number"`
+	IssuedDate     time.Time          `json:"issuedDate"`
+	ExpirationDate time.Time          `json:"expirationDate"`
+	Approved       bool               `json:"approved"`
+	Person         string             `json:"person"`
+	FirstName      string             `json:"firstName"`
+	LastName       string             `json:"lastName"`
+}
+
+type TrafficPermitDetailsList []TrafficPermitDetails
+
+type DrivingPermitDetails struct {
+	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Number         string             `bson:"number" json:"number"`
+	IssuedDate     time.Time          `bson:"issuedDate" json:"issuedDate"`
+	ExpirationDate time.Time          `bson:"expirationDate" json:"expirationDate"`
+	Approved       bool               `bson:"approved" json:"approved"`
+	Person         string             `bson:"person" json:"person"`
+	FirstName      string             `bson:"firstName" json:"firstName"`
+	LastName       string             `bson:"lastName" json:"lastName"`
+}
+
+type DrivingPermitDetailsList []DrivingPermitDetails
+
+func (dpd *DrivingPermitDetails) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(dpd)
+}
+
+func (dpd *DrivingPermitDetails) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(dpd)
+}
+
+func (dpdl *DrivingPermitDetailsList) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(dpdl)
+}
+
+func (dpdl *DrivingPermitDetailsList) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(dpdl)
+}
+
 func (m *Mup) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(m)

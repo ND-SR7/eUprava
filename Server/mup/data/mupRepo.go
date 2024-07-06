@@ -877,6 +877,35 @@ func (mr *MUPRepo) GetUserDrivingPermit(ctx context.Context, jmbg string) (Traff
 	return drivingPermits, nil
 }
 
+func (mr *MUPRepo) GetUserDrivingPermits(ctx context.Context, jmbg string) (TrafficPermits, error) {
+	collection := mr.getMupCollection("trafficPermit")
+
+	filter := bson.D{{"person", jmbg}, {"approved", true}}
+
+	var drivingPermits TrafficPermits
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var drivingPermit TrafficPermit
+		if err := cursor.Decode(&drivingPermit); err != nil {
+			return nil, err
+		}
+
+		drivingPermits = append(drivingPermits, drivingPermit)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return drivingPermits, nil
+}
+
 func (mr *MUPRepo) GetPersonsVehicles(ctx context.Context, jmbg string) ([]Vehicle, error) {
 	collection := mr.getMupCollection("vehicle")
 
@@ -925,6 +954,16 @@ func (mr *MUPRepo) GetPendingRegistrationRequests(ctx context.Context) (Registra
 	}
 
 	return pendingRequests, nil
+}
+
+func (mr *MUPRepo) GetVehicleByID(ctx context.Context, vehicleID primitive.ObjectID) (Vehicle, error) {
+	collection := mr.getMupCollection("vehicle")
+	var vehicle Vehicle
+	err := collection.FindOne(ctx, bson.M{"_id": vehicleID}).Decode(&vehicle)
+	if err != nil {
+		return Vehicle{}, err
+	}
+	return vehicle, nil
 }
 
 func (mr *MUPRepo) GetPendingTrafficPermitRequests(ctx context.Context) (TrafficPermits, error) {

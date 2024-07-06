@@ -75,7 +75,7 @@ func main() {
 	router.HandleFunc("/api/v1/persons-vehicles", mupHandler.GetVehiclesDTOByJMBG).Methods("GET")
 	router.HandleFunc("/api/v1/driving-bans", mupHandler.CheckForPersonsDrivingBans).Methods("GET")
 	router.HandleFunc("/api/v1/persons-registrations", mupHandler.GetPersonsRegistrations).Methods("GET")
-	router.HandleFunc("/api/v1/persons-driving-permit", mupHandler.GetUserDrivingPermit).Methods("GET")
+	router.HandleFunc("/api/v1/persons-driving-permit", mupHandler.GetUserDrivingPermitDetails).Methods("GET")
 
 	//POST
 	router.HandleFunc("/api/v1/vehicle", mupHandler.SaveVehicle).Methods("POST")
@@ -83,8 +83,8 @@ func main() {
 	router.HandleFunc("/api/v1/traffic-permit-request", mupHandler.SubmitTrafficPermitRequest).Methods("POST")
 
 	authorizedRouter := router.Methods("GET", "POST", "DELETE").Subrouter()
-	authorizedRouter.HandleFunc("/api/v1/pending-registration-requests", mupHandler.GetPendingRegistrationRequests).Methods("GET")
-	authorizedRouter.HandleFunc("/api/v1/pending-traffic-permit-requests", mupHandler.GetPendingTrafficPermitRequests).Methods("GET")
+	authorizedRouter.HandleFunc("/api/v1/pending-registration-requests", mupHandler.GetPendingRegistrationRequests).Methods("GET")    //dodati vozilo
+	authorizedRouter.HandleFunc("/api/v1/pending-traffic-permit-requests", mupHandler.GetPendingTrafficPermitRequests).Methods("GET") //dodati usera
 	authorizedRouter.HandleFunc("/api/v1/approve-registration-request", mupHandler.ApproveRegistration).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/approve-traffic-permit-request", mupHandler.ApproveTrafficPermitRequest).Methods("POST")
 	authorizedRouter.HandleFunc("/api/v1/delete-pending-registration-request/{request}", mupHandler.DeletePendingRegistration).Methods("DELETE")
