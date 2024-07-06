@@ -18,6 +18,11 @@ const CheckDriverForm: React.FC<CheckDriverFormProps> = ({ closeModal }) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!jmbg || !alcoholLevel || !tire || !platesNumber || !location) {
+      toast.error('All fields must be filled out');
+      return;
+    }
 
     const data = {
       jmbg,
